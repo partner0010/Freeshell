@@ -1,0 +1,530 @@
+// Prisma 스키마 - 데이터베이스 모델 정의
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  contents      Content[]
+  schedules     Schedule[]
+  templates     ContentTemplate[]
+  accounts      MultiAccount[]
+  notifications Notification[]
+}
+
+model Content {
+  id          String   @id @default(uuid())
+  userId      String?
+  topic       String
+  contentType String
+  contentTime Int      @default(60)
+  text        String
+  status      String   @default("draft") // draft, generated, uploaded, published
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User?         @relation(fields: [userId], references: [id])
+  versions    ContentVersion[]
+  uploads     Upload[]
+  
+  @@index([userId])
+  @@index([contentType])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ContentVersion {
+  id          String   @id @default(uuid())
+  contentId   String
+  version     Int
+  title       String
+  description String
+  thumbnail   String
+  videoUrl    String?
+  reasoning   String
+  duration    Int
+  createdAt   DateTime @default(now())
+  
+  content     Content  @relation(fields: [contentId], references: [id])
+  
+  @@unique([contentId, version])
+}
+
+model Upload {
+  id          String   @id @default(uuid())
+  contentId   String
+  platform    String   // youtube, tiktok, instagram
+  videoId     String?
+  url         String?
+  status      String   @default("pending") // pending, uploading, completed, failed
+  views       Int      @default(0)
+  likes       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  content     Content  @relation(fields: [contentId], references: [id])
+  
+  @@index([contentId])
+  @@index([platform])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model JobQueue {
+  id          String   @id @default(uuid())
+  type        String
+  priority    Int      @default(0)
+  payload     String
+  status      String   @default("pending") // pending, processing, completed, failed
+  maxRetries  Int      @default(3)
+  retryCount  Int      @default(0)
+  error       String?
+  result      String?
+  scheduledAt DateTime @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([priority])
+  @@index([scheduledAt])
+}
+
+model PlatformConfig {
+  id            String   @id @default(uuid())
+  userId        String?
+  platform      String
+  email         String?
+  username      String?
+  apiKey        String?
+  // OAuth 토큰 (암호화 저장)
+  accessToken   String?
+  refreshToken  String?
+  tokenExpiry   DateTime?
+  // 추가 설정
+  channelId     String?  // YouTube 채널 ID
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([userId, platform])
+}
+
+model Ebook {
+  id          String   @id @default(uuid())
+  userId      String?
+  title       String
+  author      String
+  description String
+  language    String   @default("ko")
+  pdfPath     String?
+  epubPath    String?
+  coverImage  String?
+  keywords    String
+  status      String   @default("draft") // draft, generated, published
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  sales       EbookSale[]
+}
+
+model EbookSale {
+  id          String   @id @default(uuid())
+  ebookId     String
+  platform    String   // gumroad, etsy, amazon
+  productId   String?
+  url         String?
+  price       Float
+  status      String   @default("pending") // pending, active, sold
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  ebook       Ebook    @relation(fields: [ebookId], references: [id])
+  
+  @@index([ebookId])
+  @@index([platform])
+}
+
+model BlogPost {
+  id          String   @id @default(uuid())
+  userId      String?
+  title       String
+  content     String
+  excerpt     String
+  language    String   @default("ko")
+  tags        String
+  category    String
+  seoKeywords String
+  status      String   @default("draft") // draft, generated, published
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  publications BlogPublication[]
+}
+
+model BlogPublication {
+  id          String   @id @default(uuid())
+  blogPostId  String
+  platform    String   // wordpress, medium, blogger
+  postId      String?
+  url         String?
+  status      String   @default("pending") // pending, published, failed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  blogPost    BlogPost @relation(fields: [blogPostId], references: [id])
+  
+  @@index([blogPostId])
+  @@index([platform])
+}
+
+model Template {
+  id          String   @id @default(uuid())
+  userId      String?
+  name        String
+  description String
+  type        String   // website, video, code, design
+  filePath    String
+  thumbnail   String?
+  price       Float    @default(0)
+  status      String   @default("draft") // draft, generated, published
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  sales       TemplateSale[]
+}
+
+model TemplateSale {
+  id          String   @id @default(uuid())
+  templateId  String
+  platform    String
+  productId   String?
+  url         String?
+  price       Float
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  template    Template @relation(fields: [templateId], references: [id])
+  
+  @@index([templateId])
+  @@index([platform])
+}
+
+model Revenue {
+  id          String   @id @default(uuid())
+  platform    String
+  amount      Float
+  currency    String   @default("USD")
+  productId   String?
+  productName String?
+  date        DateTime @default(now())
+  
+  @@index([platform])
+  @@index([date])
+}
+
+model RequestLog {
+  id        String   @id @default(uuid())
+  ip        String
+  method    String
+  path      String
+  userAgent String?
+  timestamp DateTime @default(now())
+  
+  @@index([ip])
+  @@index([timestamp])
+}
+
+model SecurityLog {
+  id          String   @id @default(uuid())
+  ip          String
+  method      String
+  path        String
+  threatLevel String   // low, medium, high, critical
+  details     String
+  userAgent   String?
+  timestamp   DateTime @default(now())
+  
+  @@index([ip])
+  @@index([threatLevel])
+  @@index([timestamp])
+}
+
+model BlockedIP {
+  id         String   @id @default(uuid())
+  ip         String   @unique
+  reason     String
+  blockedAt  DateTime @default(now())
+  
+  @@index([ip])
+}
+
+// 스케줄링 시스템
+model Schedule {
+  id            String   @id @default(uuid())
+  userId        String?
+  name          String
+  description   String?
+  contentType   String
+  topic         String?  // 자동 생성 시 사용
+  topicSource   String?  // 'manual', 'trending', 'ai-suggested'
+  frequency     String   // 'daily', 'weekly', 'monthly', 'custom'
+  cronExpression String? // 커스텀 스케줄
+  nextRunAt     DateTime
+  lastRunAt     DateTime?
+  isActive      Boolean  @default(true)
+  autoUpload    Boolean  @default(true)
+  platforms     String   // JSON: ["youtube", "tiktok"]
+  settings      String?  // JSON: 추가 설정
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  user          User?    @relation(fields: [userId], references: [id])
+  executions    ScheduleExecution[]
+  
+  @@index([userId])
+  @@index([nextRunAt])
+  @@index([isActive])
+}
+
+model ScheduleExecution {
+  id          String   @id @default(uuid())
+  scheduleId  String
+  status      String   @default("pending") // pending, running, completed, failed
+  contentId   String?  // 생성된 콘텐츠 ID
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  error       String?
+  
+  schedule    Schedule @relation(fields: [scheduleId], references: [id])
+  
+  @@index([scheduleId])
+  @@index([status])
+}
+
+// 템플릿 시스템
+model ContentTemplate {
+  id          String   @id @default(uuid())
+  userId      String?
+  name        String
+  description String?
+  category    String   // 'daily', 'trending', 'educational', etc.
+  contentType String
+  settings    String   // JSON: 템플릿 설정
+  thumbnail   String?
+  usageCount  Int      @default(0)
+  isPublic    Boolean  @default(false)
+  isFavorite  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([category])
+  @@index([isPublic])
+}
+
+// 다중 계정 관리
+model MultiAccount {
+  id          String   @id @default(uuid())
+  userId      String?
+  accountName String   // 사용자 지정 이름
+  platform    String   // youtube, tiktok, instagram
+  channelId   String?  // YouTube 채널 ID 등
+  accountId   String?  // 플랫폼 계정 ID
+  credentials String?  // 암호화된 인증 정보
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, platform, accountId])
+  @@index([userId])
+  @@index([platform])
+}
+
+// 실시간 통계 및 분석
+model Analytics {
+  id          String   @id @default(uuid())
+  contentId   String?
+  platform    String
+  date        DateTime @default(now())
+  views       Int      @default(0)
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  revenue     Float    @default(0)
+  engagement  Float    @default(0) // 참여율
+  reach       Int      @default(0)
+  impressions Int      @default(0)
+  
+  @@index([contentId])
+  @@index([platform])
+  @@index([date])
+}
+
+// A/B 테스트
+model ABTest {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  contentId   String
+  variantA    String   // JSON: 버전 A 설정
+  variantB    String   // JSON: 버전 B 설정
+  status      String   @default("running") // running, completed
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  winner      String?  // 'A', 'B', 'tie'
+  createdAt   DateTime @default(now())
+  
+  @@index([contentId])
+  @@index([status])
+}
+
+// 배치 작업
+model BatchJob {
+  id          String   @id @default(uuid())
+  userId      String?
+  type        String   // 'generate', 'upload', 'publish'
+  status      String   @default("pending") // pending, running, completed, failed
+  totalItems  Int
+  completedItems Int   @default(0)
+  failedItems Int     @default(0)
+  settings    String   // JSON: 배치 설정
+  startedAt   DateTime?
+  completedAt DateTime?
+  error       String?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+}
+
+// 알림 시스템
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?
+  type      String   // 'success', 'error', 'warning', 'info'
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  link      String?  // 클릭 시 이동할 링크
+  createdAt DateTime @default(now())
+  
+  user      User?    @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// 캐시 시스템
+model Cache {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   // JSON 또는 텍스트
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@index([key])
+  @@index([expiresAt])
+}
+
+// 작업 큐
+model JobQueue {
+  id          String   @id @default(uuid())
+  type        String   // 'content-generation', 'video-processing', 'upload'
+  priority    Int      @default(0) // 높을수록 우선순위 높음
+  status      String   @default("pending") // pending, processing, completed, failed
+  payload     String   // JSON: 작업 데이터
+  result      String?  // JSON: 결과
+  error       String?
+  retryCount  Int      @default(0)
+  maxRetries  Int      @default(3)
+  scheduledAt DateTime @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  
+  @@index([status])
+  @@index([type])
+  @@index([priority])
+  @@index([scheduledAt])
+}
+
+// OAuth 토큰 관리
+model OAuthToken {
+  id           String   @id @default(uuid())
+  userId       String?
+  platform     String   // youtube, tiktok, instagram
+  accessToken  String   // 암호화 저장
+  refreshToken String?
+  tokenType    String   @default("Bearer")
+  expiresAt    DateTime?
+  scope        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([userId, platform])
+  @@index([userId])
+  @@index([platform])
+}
+
+// 저작권 검사 결과
+model CopyrightCheckResult {
+  id          String   @id @default(uuid())
+  contentId   String
+  versionId   String?
+  type        String   // text, image, video
+  source      String   // internal, external
+  matchFound  Boolean
+  details     String?
+  severity    String   // low, medium, high
+  timestamp   DateTime @default(now())
+
+  @@index([contentId])
+}
+
+// 콘텐츠 필터링 결과
+model ContentFilterResult {
+  id          String   @id @default(uuid())
+  contentId   String
+  versionId   String?
+  policyType  String   // prohibited_words, sensitive_topics, platform_guidelines
+  flagged     Boolean
+  details     String?
+  severity    String   // low, medium, high
+  timestamp   DateTime @default(now())
+
+  @@index([contentId])
+}
+
+// 법적 검토
+model LegalReview {
+  id          String   @id @default(uuid())
+  contentId   String   @unique
+  status      String   // pending, approved, rejected, review_required
+  issues      String?  // JSON string of issues
+  reviewerId  String?
+  reviewedAt  DateTime?
+  timestamp   DateTime @default(now())
+
+  @@index([contentId])
+}
+
