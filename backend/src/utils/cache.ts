@@ -51,10 +51,20 @@ export function getRedisClient(): Redis | null {
   return redisClient
 }
 
+// 메모리 캐시 (Redis가 없을 때 사용)
+const memoryCache = new Map<string, { value: any; expiresAt: number }>()
+
 /**
- * 캐시에서 값 가져오기
+ * 캐시에서 값 가져오기 (메모리 + Redis)
  */
 export async function getCache<T>(key: string): Promise<T | null> {
+  // 메모리 캐시 확인
+  const memoryCached = memoryCache.get(key)
+  if (memoryCached && memoryCached.expiresAt > Date.now()) {
+    return memoryCached.value as T
+  }
+
+  // Redis 캐시 확인
   try {
     const client = getRedisClient()
     if (!client) return null
@@ -62,7 +72,15 @@ export async function getCache<T>(key: string): Promise<T | null> {
     const value = await client.get(key)
     if (!value) return null
 
-    return JSON.parse(value) as T
+    const parsed = JSON.parse(value) as T
+    
+    // 메모리 캐시에도 저장 (5분)
+    memoryCache.set(key, {
+      value: parsed,
+      expiresAt: Date.now() + 5 * 60 * 1000
+    })
+
+    return parsed
   } catch (error) {
     logger.warn('캐시 조회 실패:', error)
     return null
@@ -70,39 +88,51 @@ export async function getCache<T>(key: string): Promise<T | null> {
 }
 
 /**
- * 캐시에 값 저장하기
+ * 캐시에 값 저장하기 (메모리 + Redis)
  */
 export async function setCache(
   key: string,
   value: any,
-  ttl: number = 3600 // 기본 1시간
+  ttl: number = 3600 // 기본 1시간 (초)
 ): Promise<boolean> {
+  // 메모리 캐시 저장 (최대 5분)
+  const memoryTtl = Math.min(ttl, 300) // 5분
+  memoryCache.set(key, {
+    value,
+    expiresAt: Date.now() + memoryTtl * 1000
+  })
+
+  // Redis 캐시 저장
   try {
     const client = getRedisClient()
-    if (!client) return false
+    if (!client) return true // 메모리 캐시만 저장해도 성공
 
     const serialized = JSON.stringify(value)
     await client.setex(key, ttl, serialized)
     return true
   } catch (error) {
-    logger.warn('캐시 저장 실패:', error)
-    return false
+    logger.warn('Redis 캐시 저장 실패 (메모리 캐시는 저장됨):', error)
+    return true // 메모리 캐시는 저장되었으므로 성공
   }
 }
 
 /**
- * 캐시 삭제
+ * 캐시 삭제 (메모리 + Redis)
  */
 export async function deleteCache(key: string): Promise<boolean> {
+  // 메모리 캐시 삭제
+  memoryCache.delete(key)
+
+  // Redis 캐시 삭제
   try {
     const client = getRedisClient()
-    if (!client) return false
+    if (!client) return true // 메모리 캐시는 삭제되었으므로 성공
 
     await client.del(key)
     return true
   } catch (error) {
-    logger.warn('캐시 삭제 실패:', error)
-    return false
+    logger.warn('Redis 캐시 삭제 실패 (메모리 캐시는 삭제됨):', error)
+    return true // 메모리 캐시는 삭제되었으므로 성공
   }
 }
 

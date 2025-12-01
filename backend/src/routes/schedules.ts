@@ -42,16 +42,26 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     const prisma = getPrismaClient()
     const userId = req.user?.id
 
-    const schedules = await prisma.schedule.findMany({
-      where: userId ? { userId } : {},
-      include: {
-        executions: {
-          orderBy: { startedAt: 'desc' },
-          take: 5
-        }
+    // 캐시된 쿼리 사용
+    const { cachedQuery } = await import('../utils/queryOptimizer')
+    const cacheKey = `schedules:${userId || 'all'}:${Date.now() - (Date.now() % 60000)}` // 1분 단위 캐시
+    
+    const schedules = await cachedQuery(
+      cacheKey,
+      async () => {
+        return await prisma.schedule.findMany({
+          where: userId ? { userId } : {},
+          include: {
+            executions: {
+              orderBy: { startedAt: 'desc' },
+              take: 5
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        })
       },
-      orderBy: { createdAt: 'desc' }
-    })
+      60 // 1분 캐시
+    )
 
     res.json({
       success: true,

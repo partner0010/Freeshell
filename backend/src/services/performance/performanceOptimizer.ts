@@ -91,13 +91,44 @@ export class PerformanceOptimizer {
   }
 
   /**
-   * 배치 쿼리 최적화
+   * 배치 쿼리 최적화 (개선)
    */
   async batchQuery<T>(
     ids: string[],
     queryFn: (ids: string[]) => Promise<T[]>,
-    batchSize: number = 100
+    batchSize: number = 100,
+    useCache: boolean = true
   ): Promise<T[]> {
+    // 중복 제거
+    const uniqueIds = Array.from(new Set(ids))
+    
+    if (uniqueIds.length === 0) return []
+
+    // 캐시 확인 (사용하는 경우)
+    if (useCache) {
+      const cacheKey = `batch:${uniqueIds.sort().join(',')}`
+      const cached = await getCache<T[]>(cacheKey)
+      if (cached) {
+        logger.debug('배치 쿼리 캐시 히트:', cacheKey)
+        return cached
+      }
+    }
+
+    // 배치로 나누어 처리
+    const results: T[] = []
+    for (let i = 0; i < uniqueIds.length; i += batchSize) {
+      const batch = uniqueIds.slice(i, i + batchSize)
+      const batchResults = await queryFn(batch)
+      results.push(...batchResults)
+    }
+
+    // 캐시 저장
+    if (useCache && results.length > 0) {
+      const cacheKey = `batch:${uniqueIds.sort().join(',')}`
+      await setCache(cacheKey, results, 300) // 5분 캐시
+    }
+
+    return results
     const results: T[] = []
 
     for (let i = 0; i < ids.length; i += batchSize) {
