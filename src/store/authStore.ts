@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { setSecureToken, getSecureToken, removeSecureToken } from '../utils/security'
 
 interface User {
   id: string
@@ -15,13 +16,32 @@ interface AuthStore {
   logout: () => void
 }
 
+// 안전한 토큰 조회
+function getStoredToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return getSecureToken('token')
+}
+
+// 안전한 사용자 정보 조회
+function getStoredUser(): User | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) return null
+    return JSON.parse(userStr) as User
+  } catch {
+    return null
+  }
+}
+
 export const useAuthStore = create<AuthStore>((set) => ({
-  user: typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null,
-  token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
-  isAuthenticated: typeof window !== 'undefined' ? !!localStorage.getItem('token') : false,
+  user: getStoredUser(),
+  token: getStoredToken(),
+  isAuthenticated: typeof window !== 'undefined' ? !!getStoredToken() : false,
   setUser: (user) => {
     if (typeof window !== 'undefined') {
       if (user) {
+        // 사용자 정보는 민감하지 않으므로 일반 저장
         localStorage.setItem('user', JSON.stringify(user))
       } else {
         localStorage.removeItem('user')
@@ -32,17 +52,20 @@ export const useAuthStore = create<AuthStore>((set) => ({
   setToken: (token) => {
     if (typeof window !== 'undefined') {
       if (token) {
-        localStorage.setItem('token', token)
+        // 토큰은 안전하게 저장
+        setSecureToken('token', token)
       } else {
-        localStorage.removeItem('token')
+        removeSecureToken('token')
       }
     }
-    set({ token })
+    set({ token, isAuthenticated: !!token })
   },
   logout: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user')
-      localStorage.removeItem('token')
+      removeSecureToken('token')
+      // CSRF 토큰도 삭제
+      sessionStorage.removeItem('csrf-token')
     }
     set({ user: null, token: null, isAuthenticated: false })
   }

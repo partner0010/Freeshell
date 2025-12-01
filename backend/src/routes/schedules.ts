@@ -61,7 +61,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       cronExpression,
       platforms,
       settings,
-      autoUpload
+      autoUpload,
+      contentCount // 생성할 콘텐츠 개수
     } = req.body
 
     const scheduleId = await scheduler.addSchedule({
@@ -71,7 +72,9 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       frequency,
       cronExpression,
       platforms: platforms || ['youtube'],
-      settings
+      settings,
+      contentCount: contentCount || 1, // 기본값 1개
+      autoUpload: autoUpload !== undefined ? autoUpload : true
     })
 
     res.json({

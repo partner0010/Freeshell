@@ -168,24 +168,62 @@ export class ContentScheduler {
       // 자동화 설정
       const platforms = schedule.platforms ? JSON.parse(schedule.platforms) : ['youtube']
       const settings = schedule.settings ? JSON.parse(schedule.settings) : {}
+      const contentCount = schedule.contentCount || 1 // 생성할 콘텐츠 개수
 
-      // 주제 생성 (AI 제안 또는 트렌딩)
-      let topic = schedule.topic
-      if (!topic || schedule.topicSource !== 'manual') {
-        topic = await this.generateTopic(schedule)
+      logger.info(`스케줄 실행: ${contentCount}개 콘텐츠 생성 예정`)
+
+      // 여러 개의 콘텐츠 생성 (병렬 처리로 빠르게)
+      const { performanceOptimizer } = await import('../performance/performanceOptimizer')
+      const results: any[] = []
+      const contentIds: string[] = []
+
+      // 콘텐츠 생성 작업들
+      const contentTasks = Array.from({ length: contentCount }, async (_, index) => {
+        // 주제 생성 (AI 제안 또는 트렌딩)
+        let topic = schedule.topic
+        if (!topic || schedule.topicSource !== 'manual') {
+          topic = await this.generateTopic(schedule)
+        }
+
+        // 여러 개 생성 시 주제에 번호 추가
+        const finalTopic = contentCount > 1 
+          ? `${topic} (${index + 1}/${contentCount})`
+          : topic
+
+        const automationConfig: AutomationConfig = {
+          topic: finalTopic || '자동 생성 주제',
+          contentType: schedule.contentType as ContentType,
+          enableYouTube: platforms.includes('youtube'),
+          youtubePlatforms: platforms.filter((p: string) => p === 'youtube'),
+          enableEbook: settings.enableEbook || false,
+          enableBlog: settings.enableBlog || false
+        }
+
+        // 자동화 실행
+        const result = await automateEverything(automationConfig)
+        
+        if (result.success && result.steps[0]?.data?.contentId) {
+          contentIds.push(result.steps[0].data.contentId)
+        }
+        
+        return result
+      })
+
+      // 병렬 처리로 여러 콘텐츠 동시 생성 (최대 5개씩)
+      const batchSize = Math.min(contentCount, 5)
+      for (let i = 0; i < contentTasks.length; i += batchSize) {
+        const batch = contentTasks.slice(i, i + batchSize)
+        const batchResults = await Promise.all(batch)
+        results.push(...batchResults)
       }
 
-      const automationConfig: AutomationConfig = {
-        topic: topic || '자동 생성 주제',
-        contentType: schedule.contentType as ContentType,
-        enableYouTube: platforms.includes('youtube'),
-        youtubePlatforms: platforms.filter((p: string) => p === 'youtube'),
-        enableEbook: settings.enableEbook || false,
-        enableBlog: settings.enableBlog || false
+      // 전체 결과 집계
+      const result = {
+        success: results.every(r => r.success),
+        steps: results.flatMap(r => r.steps || []),
+        contentIds,
+        totalGenerated: contentIds.length
       }
-
-      // 자동화 실행
-      const result = await automateEverything(automationConfig)
 
       // 다음 실행 시간 계산
       const nextRunAt = this.calculateNextRun(schedule)
@@ -205,10 +243,12 @@ export class ContentScheduler {
         data: {
           status: result.success ? 'completed' : 'failed',
           completedAt: new Date(),
-          contentId: result.steps[0]?.data?.contentId,
-          error: result.success ? null : '자동화 실패'
+          contentId: contentIds.length > 0 ? contentIds[0] : null, // 첫 번째 콘텐츠 ID
+          error: result.success ? null : `자동화 실패: ${results.filter(r => !r.success).length}개 실패`
         }
       })
+
+      logger.info(`스케줄 실행 완료: ${contentIds.length}/${contentCount}개 콘텐츠 생성 및 업로드 완료`)
 
       logger.info(`스케줄 실행 완료: ${schedule.name}`)
 
@@ -305,6 +345,8 @@ export class ContentScheduler {
     cronExpression?: string
     platforms: string[]
     settings?: any
+    contentCount?: number // 생성할 콘텐츠 개수
+    autoUpload?: boolean // 자동 업로드 여부
   }): Promise<string> {
     const prisma = getPrismaClient()
     const nextRunAt = this.calculateInitialNextRun(scheduleData.frequency, scheduleData.cronExpression)
@@ -317,6 +359,8 @@ export class ContentScheduler {
         frequency: scheduleData.frequency,
         cronExpression: scheduleData.cronExpression,
         nextRunAt,
+        contentCount: scheduleData.contentCount || 1,
+        autoUpload: scheduleData.autoUpload !== undefined ? scheduleData.autoUpload : true,
         platforms: JSON.stringify(scheduleData.platforms),
         settings: scheduleData.settings ? JSON.stringify(scheduleData.settings) : null
       }

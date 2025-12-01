@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useContentStore } from '../store/contentStore'
 import { ContentType, ContentFormat } from '../types'
 import { Sparkles, Clock, FileText, Image, Video } from 'lucide-react'
+import { sanitizeInput, containsXSS, containsSQLInjection, limitInputLength } from '../utils/security'
 
 const CONTENT_TYPES: { value: ContentType; label: string; category?: string }[] = [
   // 뉴스/트렌드
@@ -153,12 +154,33 @@ export default function ContentCreator() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // 입력 검증
+    if (!topic || topic.trim().length === 0) {
+      alert('주제를 입력해주세요')
+      return
+    }
+
+    // XSS 및 SQL Injection 검증
+    if (containsXSS(topic) || containsSQLInjection(topic)) {
+      alert('유효하지 않은 문자가 포함되어 있습니다')
+      return
+    }
+
+    if (text && (containsXSS(text) || containsSQLInjection(text))) {
+      alert('콘텐츠에 유효하지 않은 문자가 포함되어 있습니다')
+      return
+    }
+
+    // 입력 길이 제한
+    const sanitizedTopic = limitInputLength(sanitizeInput(topic), 200)
+    const sanitizedText = text ? limitInputLength(sanitizeInput(text), 10000) : ''
+    
     const formData = {
-      topic,
+      topic: sanitizedTopic,
       contentType,
       contentTime,
       contentFormat: selectedFormats,
-      text,
+      text: sanitizedText,
       images,
       videos,
     }
@@ -186,10 +208,14 @@ export default function ContentCreator() {
           <input
             type="text"
             value={topic}
-            onChange={(e) => setTopic(e.target.value)}
+            onChange={(e) => {
+              const value = limitInputLength(e.target.value, 200)
+              setTopic(value)
+            }}
             placeholder="예: 오늘 가장 핫한 이슈는..."
             className="input-field"
             required
+            maxLength={200}
           />
         </div>
 
@@ -292,10 +318,14 @@ export default function ContentCreator() {
           </label>
           <textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              const value = limitInputLength(e.target.value, 10000)
+              setText(value)
+            }}
             placeholder="콘텐츠의 내용을 작성해주세요..."
             rows={8}
             className="input-field resize-none"
+            maxLength={10000}
             required
           />
         </div>

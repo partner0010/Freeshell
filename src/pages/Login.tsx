@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { LogIn, Mail, Lock, User } from 'lucide-react'
 import axios from 'axios'
+import { sanitizeInput, validateEmail, sanitizeErrorMessage } from '../utils/security'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -17,10 +18,20 @@ export default function Login() {
     setError('')
     setLoading(true)
 
+    // 입력 검증
+    if (!validateEmail(email)) {
+      setError('유효한 이메일 주소를 입력해주세요')
+      setLoading(false)
+      return
+    }
+
+    // 입력 Sanitization
+    const sanitizedEmail = sanitizeInput(email)
+
     try {
       const response = await axios.post('/api/auth/login', {
-        email,
-        password
+        email: sanitizedEmail,
+        password // 비밀번호는 서버에서 검증
       })
 
       if (response.data.success) {
@@ -31,7 +42,7 @@ export default function Login() {
         setError(response.data.error || '로그인에 실패했습니다')
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || '로그인 중 오류가 발생했습니다')
+      setError(sanitizeErrorMessage(err))
     } finally {
       setLoading(false)
     }

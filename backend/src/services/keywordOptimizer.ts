@@ -212,32 +212,246 @@ function createBasicSEO(
 }
 
 /**
- * 해시태그 자동 생성
+ * 해시태그 자동 생성 (강화 버전)
  */
 export async function generateHashtags(
   topic: string,
   content: string,
-  count: number = 10
+  count: number = 10,
+  platform?: 'youtube' | 'tiktok' | 'instagram'
 ): Promise<string[]> {
   logger.info('해시태그 생성 시작:', topic)
 
   const keywordAnalysis = await extractKeywords(topic, content)
   
-  // 트렌딩 해시태그 추가
-  const trendingHashtags = [
+  // 트렌딩 해시태그 수집 (강화)
+  const trendingHashtags = await getTrendingHashtags(platform)
+  
+  // 플랫폼별 최적 해시태그
+  const platformHashtags = getPlatformOptimizedHashtags(platform, topic)
+  
+  // 경쟁 분석 기반 해시태그 선택
+  const optimizedHashtags = await optimizeHashtagSelection(
+    keywordAnalysis,
+    trendingHashtags,
+    platformHashtags,
+    count
+  )
+
+  return optimizedHashtags
+}
+
+/**
+ * 트렌딩 해시태그 수집 (강화)
+ */
+async function getTrendingHashtags(platform?: 'youtube' | 'tiktok' | 'instagram'): Promise<string[]> {
+  try {
+    // 트렌드 수집기 사용
+    const { TrendCollector } = await import('./trends/collector')
+    const collector = new TrendCollector()
+    const trends = await collector.collectAllTrends('ko')
+    
+    // 트렌드에서 해시태그 추출
+    const hashtags = new Set<string>()
+    trends.forEach(trend => {
+      trend.keywords.forEach(keyword => {
+        if (keyword.length > 2 && keyword.length < 20) {
+          hashtags.add(`#${keyword}`)
+        }
+      })
+    })
+    
+    // 플랫폼별 기본 해시태그 추가
+    const platformDefaults: Record<string, string[]> = {
+      youtube: ['#shorts', '#유튜브쇼츠', '#shorts영상', '#viral', '#trending'],
+      tiktok: ['#fyp', '#foryou', '#viral', '#trending', '#tiktok'],
+      instagram: ['#reels', '#viral', '#trending', '#explore', '#instagram']
+    }
+    
+    if (platform && platformDefaults[platform]) {
+      platformDefaults[platform].forEach(tag => hashtags.add(tag))
+    }
+    
+    return Array.from(hashtags).slice(0, 20)
+  } catch (error) {
+    logger.warn('트렌딩 해시태그 수집 실패:', error)
+    return ['#shorts', '#viral', '#trending']
+  }
+}
+
+/**
+ * 플랫폼별 최적화된 해시태그
+ */
+function getPlatformOptimizedHashtags(
+  platform: 'youtube' | 'tiktok' | 'instagram' | undefined,
+  topic: string
+): string[] {
+  const platformStrategies: Record<string, (topic: string) => string[]> = {
+    youtube: (topic) => {
+      const words = topic.split(/\s+/).filter(w => w.length > 1)
+      return [
+        `#${words[0] || 'shorts'}`,
+        `#${words.join('') || 'viral'}`,
+        '#유튜브쇼츠',
+        '#shorts영상'
+      ]
+    },
+    tiktok: (topic) => {
+      const words = topic.split(/\s+/).filter(w => w.length > 1)
+      return [
+        '#fyp',
+        '#foryou',
+        `#${words[0] || 'viral'}`,
+        '#tiktok',
+        '#trending'
+      ]
+    },
+    instagram: (topic) => {
+      const words = topic.split(/\s+/).filter(w => w.length > 1)
+      return [
+        '#reels',
+        `#${words[0] || 'viral'}`,
+        '#explore',
+        '#instagram',
+        '#trending'
+      ]
+    }
+  }
+  
+  if (platform && platformStrategies[platform]) {
+    return platformStrategies[platform](topic)
+  }
+  
+  // 기본 전략
+  const words = topic.split(/\s+/).filter(w => w.length > 1)
+  return [
+    `#${words[0] || 'viral'}`,
     '#shorts',
-    '#유튜브쇼츠',
-    '#shorts영상',
-    '#viral',
     '#trending'
   ]
+}
 
-  const hashtags = [
-    ...keywordAnalysis.primaryKeywords.map(k => `#${k}`),
-    ...keywordAnalysis.secondaryKeywords.map(k => `#${k}`),
-    ...trendingHashtags
-  ].slice(0, count)
+/**
+ * 해시태그 선택 최적화 (경쟁 분석 기반)
+ */
+async function optimizeHashtagSelection(
+  keywordAnalysis: KeywordAnalysis,
+  trendingHashtags: string[],
+  platformHashtags: string[],
+  count: number
+): Promise<string[]> {
+  // 점수 기반 해시태그 선택
+  const hashtagScores = new Map<string, number>()
+  
+  // 주요 키워드 해시태그 (높은 점수)
+  keywordAnalysis.primaryKeywords.forEach(keyword => {
+    const hashtag = `#${keyword}`
+    hashtagScores.set(hashtag, 100)
+  })
+  
+  // 보조 키워드 해시태그 (중간 점수)
+  keywordAnalysis.secondaryKeywords.forEach(keyword => {
+    const hashtag = `#${keyword}`
+    if (!hashtagScores.has(hashtag)) {
+      hashtagScores.set(hashtag, 70)
+    }
+  })
+  
+  // 트렌딩 해시태그 (높은 점수, 하지만 중복 방지)
+  trendingHashtags.forEach(hashtag => {
+    if (!hashtagScores.has(hashtag)) {
+      hashtagScores.set(hashtag, 80)
+    }
+  })
+  
+  // 플랫폼 해시태그 (추가 점수)
+  platformHashtags.forEach(hashtag => {
+    const currentScore = hashtagScores.get(hashtag) || 0
+    hashtagScores.set(hashtag, currentScore + 20)
+  })
+  
+  // 경쟁이 낮은 키워드에 추가 점수
+  if (keywordAnalysis.competition === 'low') {
+    keywordAnalysis.primaryKeywords.forEach(keyword => {
+      const hashtag = `#${keyword}`
+      const currentScore = hashtagScores.get(hashtag) || 0
+      hashtagScores.set(hashtag, currentScore + 30)
+    })
+  }
+  
+  // 트렌드가 상승 중인 키워드에 추가 점수
+  if (keywordAnalysis.trend === 'rising') {
+    keywordAnalysis.primaryKeywords.forEach(keyword => {
+      const hashtag = `#${keyword}`
+      const currentScore = hashtagScores.get(hashtag) || 0
+      hashtagScores.set(hashtag, currentScore + 25)
+    })
+  }
+  
+  // 점수순 정렬 및 상위 N개 반환
+  return Array.from(hashtagScores.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, count)
+    .map(([hashtag]) => hashtag)
+}
 
-  return hashtags
+/**
+ * 플랫폼별 최적화된 키워드 생성 (새로 추가)
+ */
+export async function generatePlatformKeywords(
+  topic: string,
+  content: string,
+  platform: 'youtube' | 'tiktok' | 'instagram'
+): Promise<{
+  keywords: string[]
+  hashtags: string[]
+  title: string
+  description: string
+}> {
+  const keywordAnalysis = await extractKeywords(topic, content)
+  const hashtags = await generateHashtags(topic, content, 10, platform)
+  
+  // 플랫폼별 최적화 전략
+  const platformStrategies = {
+    youtube: {
+      titleLength: 60,
+      descriptionLength: 5000,
+      keywordCount: 15
+    },
+    tiktok: {
+      titleLength: 150,
+      descriptionLength: 2200,
+      keywordCount: 5
+    },
+    instagram: {
+      titleLength: 125,
+      descriptionLength: 2200,
+      keywordCount: 30
+    }
+  }
+  
+  const strategy = platformStrategies[platform]
+  
+  // 키워드 선택 (플랫폼별 최적 개수)
+  const keywords = [
+    ...keywordAnalysis.primaryKeywords,
+    ...keywordAnalysis.secondaryKeywords,
+    ...keywordAnalysis.longTailKeywords
+  ].slice(0, strategy.keywordCount)
+  
+  // SEO 최적화
+  const seoOptimization = await optimizeSEO(
+    topic,
+    content.substring(0, 500),
+    topic,
+    content
+  )
+  
+  return {
+    keywords,
+    hashtags,
+    title: seoOptimization.optimizedTitle.substring(0, strategy.titleLength),
+    description: seoOptimization.optimizedDescription.substring(0, strategy.descriptionLength)
+  }
 }
 

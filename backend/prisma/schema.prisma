@@ -253,32 +253,33 @@ model BlockedIP {
 }
 
 // 스케줄링 시스템
-model Schedule {
-  id            String   @id @default(uuid())
-  userId        String?
-  name          String
-  description   String?
-  contentType   String
-  topic         String?  // 자동 생성 시 사용
-  topicSource   String?  // 'manual', 'trending', 'ai-suggested'
-  frequency     String   // 'daily', 'weekly', 'monthly', 'custom'
-  cronExpression String? // 커스텀 스케줄
-  nextRunAt     DateTime
-  lastRunAt     DateTime?
-  isActive      Boolean  @default(true)
-  autoUpload    Boolean  @default(true)
-  platforms     String   // JSON: ["youtube", "tiktok"]
-  settings      String?  // JSON: 추가 설정
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  user          User?    @relation(fields: [userId], references: [id])
-  executions    ScheduleExecution[]
-  
-  @@index([userId])
-  @@index([nextRunAt])
-  @@index([isActive])
-}
+  model Schedule {
+    id            String   @id @default(uuid())
+    userId        String?
+    name          String
+    description   String?
+    contentType   String
+    topic         String?  // 자동 생성 시 사용
+    topicSource   String?  // 'manual', 'trending', 'ai-suggested'
+    frequency     String   // 'daily', 'weekly', 'monthly', 'custom'
+    cronExpression String? // 커스텀 스케줄
+    nextRunAt     DateTime
+    lastRunAt     DateTime?
+    isActive      Boolean  @default(true)
+    autoUpload    Boolean  @default(true)
+    contentCount  Int      @default(1) // 한 번에 생성할 콘텐츠 개수
+    platforms     String   // JSON: ["youtube", "tiktok"]
+    settings      String?  // JSON: 추가 설정
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+    
+    user          User?    @relation(fields: [userId], references: [id])
+    executions    ScheduleExecution[]
+    
+    @@index([userId])
+    @@index([nextRunAt])
+    @@index([isActive])
+  }
 
 model ScheduleExecution {
   id          String   @id @default(uuid())

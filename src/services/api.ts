@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ContentForm, GeneratedContent, PlatformConfig } from '../types'
+import { getCSRFToken, setCSRFToken, sanitizeErrorMessage } from '../utils/security'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'
 
@@ -7,9 +8,67 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    'X-API-Key': import.meta.env.VITE_API_KEY || '', // API 키 추가
   },
+  timeout: 30000, // 30초 타임아웃
+  withCredentials: true, // 쿠키 포함 (CSRF 보호)
 })
+
+// 요청 인터셉터: CSRF 토큰 및 인증 토큰 추가
+api.interceptors.request.use(
+  (config) => {
+    // CSRF 토큰 추가
+    const csrfToken = getCSRFToken() || setCSRFToken()
+    if (csrfToken) {
+      config.headers['X-CSRF-Token'] = csrfToken
+    }
+
+    // 인증 토큰 추가 (localStorage에서 안전하게 조회)
+    if (typeof window !== 'undefined') {
+      try {
+        const encoded = localStorage.getItem('token')
+        if (encoded) {
+          const token = atob(encoded) // Base64 디코딩
+          config.headers['Authorization'] = `Bearer ${token}`
+        }
+      } catch (error) {
+        console.error('토큰 조회 실패:', error)
+      }
+    }
+
+    // API 키는 서버에서만 사용 (프론트엔드에서는 제거)
+    // config.headers['X-API-Key'] = import.meta.env.VITE_API_KEY || ''
+
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// 응답 인터셉터: 에러 처리 및 보안
+api.interceptors.response.use(
+  (response) => {
+    return response
+  },
+  (error) => {
+    // 에러 메시지 Sanitization
+    if (error.response) {
+      error.response.data.error = sanitizeErrorMessage(error.response.data)
+    }
+    
+    // 401 에러 시 로그아웃
+    if (error.response?.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user')
+        localStorage.removeItem('token')
+        sessionStorage.removeItem('csrf-token')
+        window.location.href = '/login'
+      }
+    }
+    
+    return Promise.reject(error)
+  }
+)
 
 // AI 콘텐츠 생성
 export const generateContent = async (formData: ContentForm): Promise<GeneratedContent[]> => {

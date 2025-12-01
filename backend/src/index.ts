@@ -15,6 +15,7 @@ import { advancedSecurity } from './services/security/advancedSecurity'
 import { jobQueue } from './services/queue/jobQueue'
 import { videoGenerationQueue, videoUploadQueue } from './services/queue/videoQueue'
 import { initRedis } from './utils/cache'
+import { performanceMiddleware } from './services/performance/performanceOptimizer'
 
 // Routes
 import authRoutes from './routes/auth'
@@ -35,6 +36,7 @@ import templatesRoutes from './routes/templates'
 import analyticsRoutes from './routes/analytics'
 import multiAccountRoutes from './routes/multiAccount'
 import notificationsRoutes from './routes/notifications'
+import channelRoutes from './routes/channel'
 import batchRoutes from './routes/batch'
 import optimizationRoutes from './routes/optimization'
 import legalRoutes from './routes/legal'
@@ -118,6 +120,9 @@ const contentLimiter = rateLimit({
 app.use('/api/', generalLimiter)
 app.use('/api/content/generate', contentLimiter)
 
+// 성능 최적화 미들웨어
+app.use(performanceMiddleware)
+
 // Body parsing
 app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
@@ -128,6 +133,20 @@ app.use(sanitizeLogs)
 // 보안 미들웨어 (가장 먼저 실행)
 app.use(logRequest) // 요청 로그 기록
 app.use(intrusionDetection) // 침입 탐지
+
+// CSRF 보호 (POST, PUT, DELETE 요청에만 적용)
+import { csrfProtection } from './middleware/csrf'
+// Health 체크는 CSRF 제외
+app.use('/api/', (req, res, next) => {
+  if (req.path === '/health' || req.path === '/health/csrf') {
+    return next()
+  }
+  return csrfProtection(req, res, next)
+})
+
+// CSRF 보호 (POST, PUT, DELETE 요청에만 적용)
+import { csrfProtection } from './middleware/csrf'
+app.use('/api/', csrfProtection)
 
 // Logging
 app.use((req, res, next) => {
@@ -157,6 +176,7 @@ app.use('/api/templates', templatesRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/accounts', multiAccountRoutes)
 app.use('/api/notifications', notificationsRoutes)
+app.use('/api/channel', channelRoutes)
 app.use('/api/batch', batchRoutes)
 app.use('/api/optimization', optimizationRoutes)
 app.use('/api/legal', legalRoutes)

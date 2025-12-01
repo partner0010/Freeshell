@@ -59,13 +59,14 @@ function formatSRTTime(seconds: number): string {
 }
 
 /**
- * 텍스트를 자막 세그먼트로 분할
+ * 텍스트를 자막 세그먼트로 분할 (최적화 버전)
  */
 export function splitTextIntoSubtitles(
   text: string,
   maxCharsPerLine: number = 40,
   maxLines: number = 2,
-  duration: number = 60
+  duration: number = 60,
+  language: string = 'ko'
 ): SubtitleSegment[] {
   const sentences = text.split(/[.!?]\s+/).filter(s => s.trim().length > 0)
   const segments: SubtitleSegment[] = []
@@ -74,8 +75,22 @@ export function splitTextIntoSubtitles(
   let currentStart = 0
   let segmentIndex = 0
 
-  // 각 문장의 예상 시간 계산 (평균 읽기 속도: 150자/분)
-  const charsPerSecond = 150 / 60 // 약 2.5자/초
+  // 언어별 읽기 속도 조정
+  const readingSpeeds: Record<string, number> = {
+    ko: 150 / 60, // 한국어: 약 2.5자/초
+    en: 200 / 60, // 영어: 약 3.3자/초
+    ja: 140 / 60, // 일본어: 약 2.3자/초
+    zh: 160 / 60, // 중국어: 약 2.7자/초
+    es: 180 / 60, // 스페인어: 약 3.0자/초
+    fr: 170 / 60, // 프랑스어: 약 2.8자/초
+    de: 165 / 60, // 독일어: 약 2.75자/초
+    pt: 175 / 60, // 포르투갈어: 약 2.9자/초
+    ru: 155 / 60, // 러시아어: 약 2.6자/초
+    ar: 145 / 60  // 아랍어: 약 2.4자/초
+  }
+  
+  // 각 문장의 예상 시간 계산 (언어별 읽기 속도)
+  const charsPerSecond = readingSpeeds[language] || readingSpeeds.ko
 
   sentences.forEach((sentence, index) => {
     const sentenceWithPunctuation = sentence + (index < sentences.length - 1 ? '.' : '')
@@ -114,7 +129,72 @@ export function splitTextIntoSubtitles(
     })
   }
 
-  return segments
+  // 타이밍 최적화 (너무 짧거나 긴 세그먼트 조정)
+  return optimizeSubtitleTiming(segments, duration)
+}
+
+/**
+ * 자막 타이밍 최적화
+ */
+function optimizeSubtitleTiming(segments: SubtitleSegment[], duration: number): SubtitleSegment[] {
+  const minDuration = 1.0 // 최소 1초
+  const maxDuration = 7.0 // 최대 7초
+  
+  return segments.map(segment => {
+    let segmentDuration = segment.end - segment.start
+    
+    // 너무 짧으면 최소 시간으로 조정
+    if (segmentDuration < minDuration) {
+      segment.end = segment.start + minDuration
+    }
+    
+    // 너무 길면 최대 시간으로 조정
+    if (segmentDuration > maxDuration) {
+      segment.end = segment.start + maxDuration
+    }
+    
+    // 전체 길이를 초과하지 않도록
+    if (segment.end > duration) {
+      segment.end = duration
+    }
+    
+    return segment
+  })
+}
+
+/**
+ * 다국어 자막 생성
+ */
+export async function generateMultilingualSubtitles(
+  text: string,
+  targetLanguages: string[],
+  duration: number = 60
+): Promise<Record<string, SubtitleSegment[]>> {
+  const subtitles: Record<string, SubtitleSegment[]> = {}
+  
+  // 각 언어로 번역 및 자막 생성
+  for (const language of targetLanguages) {
+    try {
+      // 번역 (실제로는 번역 서비스 사용)
+      const { translateText } = await import('./translation/translator')
+      const translatedText = await translateText(text, language, 'ko')
+      
+      // 자막 생성
+      subtitles[language] = splitTextIntoSubtitles(
+        translatedText,
+        40,
+        2,
+        duration,
+        language
+      )
+    } catch (error) {
+      logger.warn(`언어 ${language} 자막 생성 실패:`, error)
+      // 실패 시 원본 텍스트 사용
+      subtitles[language] = splitTextIntoSubtitles(text, 40, 2, duration, language)
+    }
+  }
+  
+  return subtitles
 }
 
 /**

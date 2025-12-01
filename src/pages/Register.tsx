@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { UserPlus, Mail, Lock, User } from 'lucide-react'
 import axios from 'axios'
+import { sanitizeInput, validateEmail, validatePassword, sanitizeErrorMessage } from '../utils/security'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -18,23 +19,34 @@ export default function Register() {
     e.preventDefault()
     setError('')
 
+    // 입력 검증
+    if (!validateEmail(email)) {
+      setError('유효한 이메일 주소를 입력해주세요')
+      return
+    }
+
+    const passwordValidation = validatePassword(password)
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.errors.join(', '))
+      return
+    }
+
     if (password !== confirmPassword) {
       setError('비밀번호가 일치하지 않습니다')
       return
     }
 
-    if (password.length < 8) {
-      setError('비밀번호는 최소 8자 이상이어야 합니다')
-      return
-    }
+    // 입력 Sanitization
+    const sanitizedEmail = sanitizeInput(email)
+    const sanitizedUsername = sanitizeInput(username)
 
     setLoading(true)
 
     try {
       const response = await axios.post('/api/auth/register', {
-        email,
-        username,
-        password
+        email: sanitizedEmail,
+        username: sanitizedUsername,
+        password // 비밀번호는 서버에서 해시 처리
       })
 
       if (response.data.success) {
@@ -45,7 +57,7 @@ export default function Register() {
         setError(response.data.error || '회원가입에 실패했습니다')
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || '회원가입 중 오류가 발생했습니다')
+      setError(sanitizeErrorMessage(err))
     } finally {
       setLoading(false)
     }

@@ -65,17 +65,14 @@ export async function generateContent(
     const trends = await trendCollector.collectAllTrends('ko')
     logger.info(`트렌드 ${trends.length}개 수집 완료`)
 
-    // 2. 5가지 버전 생성
-    const contents: GeneratedContent[] = []
-    for (let version = 1; version <= 5; version++) {
-      try {
-        const content = await generateContentVersion(formData, version, trends)
-        contents.push(content)
-      } catch (error: any) {
-        logger.error(`버전 ${version} 생성 실패:`, error)
-        // 실패해도 계속 진행
-      }
-    }
+    // 2. 5가지 버전 생성 (병렬 처리로 속도 향상 - 최대 5배 빠름)
+    const { performanceOptimizer } = await import('./performance/performanceOptimizer')
+    
+    const versionTasks = Array.from({ length: 5 }, (_, i) => 
+      () => generateContentVersion(formData, i + 1, trends)
+    )
+    
+    const contents = await performanceOptimizer.parallelExecute(versionTasks, 5)
 
     if (contents.length === 0) {
       throw new Error('모든 버전 생성 실패')

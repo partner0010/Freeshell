@@ -3,6 +3,7 @@ import { autoSetup } from '../utils/autoSetup'
 import { performHealthCheck } from '../utils/healthCheck'
 import { diagnoseSystem } from '../services/selfDiagnosis'
 import { logger } from '../utils/logger'
+import { getCSRFToken } from '../middleware/csrf'
 
 const router = Router()
 
@@ -40,6 +41,12 @@ router.get('/', async (req: Request, res: Response) => {
     })
   }
 })
+
+/**
+ * GET /api/health/csrf
+ * CSRF 토큰 발급
+ */
+router.get('/csrf', getCSRFToken)
 
 export default router
 
