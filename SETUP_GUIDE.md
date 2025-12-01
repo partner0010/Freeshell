@@ -1,151 +1,120 @@
-# 프로젝트 확인 방법 가이드
+# 🚀 Freeshell 프로젝트 설정 가이드
 
-## 🚀 빠른 시작
+## ✅ 완료된 작업
+1. ✅ Git 저장소 초기화
+2. ✅ GitHub 원격 저장소 연결
+3. ✅ 첫 커밋 및 푸시
+4. ✅ .env 파일 생성
 
-### 1단계: 의존성 설치
+## 📋 다음 단계
 
-터미널(또는 PowerShell)을 열고 프로젝트 폴더로 이동한 후 다음 명령어를 실행하세요:
+### 1. PowerShell 실행 정책 설정 (필요한 경우)
 
-```bash
-npm install
-```
+PowerShell을 **관리자 권한**으로 실행하고 다음 명령어를 입력하세요:
 
-이 명령어는 프로젝트에 필요한 모든 패키지를 설치합니다 (약 1-2분 소요).
-
-### 2단계: 개발 서버 실행
-
-의존성 설치가 완료되면 다음 명령어로 개발 서버를 시작하세요:
-
-```bash
-npm run dev
-```
-
-서버가 시작되면 다음과 같은 메시지가 표시됩니다:
-```
-  VITE v5.0.8  ready in 500 ms
-
-  ➜  Local:   http://localhost:3000/
-  ➜  Network: use --host to expose
-```
-
-### 3단계: 브라우저에서 확인
-
-브라우저를 열고 다음 주소로 접속하세요:
-- **http://localhost:3000**
-
-자동으로 브라우저가 열리지 않으면 위 주소를 직접 입력하세요.
-
-## 📱 확인할 수 있는 기능들
-
-### ✅ 현재 작동하는 기능
-1. **홈 페이지** - 프로젝트 소개 및 기능 안내
-2. **콘텐츠 생성 페이지** - 폼 작성 및 입력
-3. **미리보기 페이지** - 생성된 콘텐츠 확인 (시뮬레이션 데이터)
-4. **설정 페이지** - 플랫폼 연동 관리
-
-### ⚠️ 아직 구현 중인 기능
-- 실제 AI 콘텐츠 생성 (현재는 시뮬레이션 데이터 표시)
-- 실제 플랫폼 업로드 (백엔드 API 필요)
-
-## 🔧 문제 해결
-
-### ⚠️ PowerShell 실행 정책 오류 (가장 흔한 문제)
-
-PowerShell에서 `npm` 명령어 실행 시 다음과 같은 오류가 발생할 수 있습니다:
-```
-npm : 이 시스템에서 스크립트를 실행할 수 없으므로 ... npm.ps1을 로드할 수 없습니다.
-```
-
-**✅ 해결 방법 1: npm.cmd 직접 사용 (가장 간단, 권장!)**
-현재 PowerShell에서 그대로 다음과 같이 입력하세요:
-```powershell
-npm.cmd install
-```
-설치 완료 후:
-```powershell
-npm.cmd run dev
-```
-
-**해결 방법 2: CMD 사용**
-PowerShell 대신 **명령 프롬프트(CMD)**를 사용하세요:
-1. Windows 키 + R
-2. `cmd` 입력 후 Enter
-3. 프로젝트 폴더로 이동: `cd "C:\Users\partn\OneDrive\바탕 화면\Cursor\TinTop"`
-4. `npm install` 실행
-5. `npm run dev` 실행
-
-**해결 방법 3: PowerShell 실행 정책 변경 (영구적 해결)**
-관리자 권한으로 PowerShell을 열고 다음 명령어를 실행하세요:
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
-그 후 `Y`를 입력하여 확인하세요.
 
-### 포트가 이미 사용 중인 경우
-다른 포트를 사용하려면 `vite.config.ts` 파일을 수정하세요:
-```typescript
-server: {
-  port: 3001, // 원하는 포트 번호로 변경
-}
+또는 **일시적으로** 정책을 우회하려면:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\backend\scripts\setup-local.ps1
 ```
 
-### 패키지 설치 오류
-다음 명령어로 캐시를 지우고 다시 설치하세요:
-```bash
-npm cache clean --force
+### 2. 백엔드 설정
+
+#### 방법 A: PowerShell 스크립트 사용 (권장)
+```powershell
+cd backend
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-local.ps1
+```
+
+#### 방법 B: 수동 설정
+```powershell
+cd backend
+
+# Prisma 클라이언트 생성
+npx prisma generate
+
+# 데이터베이스 마이그레이션
+npx prisma migrate dev --name init
+
+# 또는 CMD 사용
+cmd /c "npx prisma generate"
+cmd /c "npx prisma migrate dev --name init"
+```
+
+### 3. 환경 변수 설정
+
+`backend/.env` 파일을 열어서 다음 항목들을 설정하세요:
+
+**필수 항목:**
+- `OPENAI_API_KEY` 또는 `CLAUDE_API_KEY` (최소 하나는 필요)
+  - OpenAI: https://platform.openai.com/api-keys
+  - Claude: https://console.anthropic.com/
+
+**선택 항목 (기능 사용 시):**
+- `YOUTUBE_CLIENT_ID` / `YOUTUBE_CLIENT_SECRET` (YouTube 업로드)
+- `JWT_SECRET` (프로덕션에서는 반드시 변경!)
+
+### 4. 백엔드 서버 실행
+
+```powershell
+cd backend
+npm run dev
+```
+
+또는 CMD 사용:
+```cmd
+cd backend
+npm.cmd run dev
+```
+
+서버가 `http://localhost:3001`에서 실행됩니다.
+
+### 5. 프론트엔드 설정 (선택)
+
+```powershell
+# 루트 디렉토리에서
 npm install
+npm run dev
 ```
 
-### Node.js 버전 확인
-Node.js 18 이상이 필요합니다:
-```bash
-node --version
-```
+프론트엔드가 `http://localhost:3000`에서 실행됩니다.
 
-## 📂 프로젝트 구조
+## 🔍 문제 해결
 
-```
-TinTop/
-├── src/
-│   ├── pages/          # 페이지 컴포넌트
-│   ├── components/     # 재사용 컴포넌트
-│   ├── store/          # 상태 관리
-│   ├── services/       # API 서비스
-│   └── types/          # TypeScript 타입
-├── public/             # 정적 파일
-└── package.json        # 프로젝트 설정
-```
+### PowerShell 실행 정책 오류
+- **해결 1**: 관리자 권한으로 PowerShell 실행 후 `Set-ExecutionPolicy RemoteSigned`
+- **해결 2**: CMD 사용 (`cmd /c "명령어"`)
+- **해결 3**: 각 명령어를 개별적으로 실행
 
-## 🎨 테스트 시나리오
+### npm 명령어 오류
+- `npm.cmd` 사용 (예: `npm.cmd run dev`)
+- 또는 CMD에서 실행
 
-1. **홈 페이지 확인**
-   - 메인 화면의 디자인 확인
-   - 기능 소개 카드 확인
+### 데이터베이스 오류
+- `backend/data` 폴더가 생성되었는지 확인
+- `.env` 파일의 `DATABASE_URL` 확인
 
-2. **콘텐츠 생성 테스트**
-   - "콘텐츠 생성 시작하기" 버튼 클릭
-   - 주제 입력
-   - 콘텐츠 유형 선택
-   - 시간 조절
-   - 콘텐츠 형식 선택
-   - 텍스트 입력
-   - "AI로 콘텐츠 생성하기" 버튼 클릭
+## 📚 추가 리소스
 
-3. **미리보기 확인**
-   - 생성된 5가지 버전 확인
-   - 각 버전의 썸네일 및 설명 확인
-   - 버전 선택 및 상세 정보 확인
+- 백엔드 README: `backend/README.md`
+- CI/CD 설정: `.github/workflows/ci-cd.yml`
+- Prisma 스키마: `backend/prisma/schema.prisma`
 
-4. **설정 페이지**
-   - 플랫폼 추가 버튼 클릭
-   - 플랫폼 선택 및 정보 입력
+## 🎯 빠른 시작 체크리스트
 
-## 💡 다음 단계
+- [ ] PowerShell 실행 정책 설정 (또는 CMD 사용)
+- [ ] `backend/.env` 파일에 API 키 설정
+- [ ] Prisma 클라이언트 생성 (`npx prisma generate`)
+- [ ] 데이터베이스 마이그레이션 (`npx prisma migrate dev`)
+- [ ] 백엔드 서버 실행 (`npm run dev`)
+- [ ] 브라우저에서 `http://localhost:3001/api/health` 확인
 
-실제 AI 기능을 사용하려면:
-1. 백엔드 API 서버 구축
-2. OpenAI 또는 Claude API 키 설정
-3. YouTube Data API 연동
+## 💡 팁
 
-자세한 내용은 `backend/README.md`를 참고하세요.
+1. **API 키 없이 테스트**: 일부 기능은 API 키 없이도 작동합니다 (예: Health Check)
+2. **데이터베이스**: SQLite를 사용하므로 별도 설치 불필요
+3. **개발 모드**: `npm run dev`는 자동 재시작 기능이 있습니다
 

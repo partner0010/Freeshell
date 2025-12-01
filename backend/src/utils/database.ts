@@ -1,26 +1,26 @@
 import { PrismaClient } from '@prisma/client'
 import { logger } from './logger'
 
-let prisma: PrismaClient
+let prismaInstance: PrismaClient | null = null
 
 /**
  * 데이터베이스 연결
  */
 export function getPrismaClient(): PrismaClient {
-  if (!prisma) {
-    prisma = new PrismaClient({
+  if (!prismaInstance) {
+    prismaInstance = new PrismaClient({
       log: process.env.NODE_ENV === 'development' 
         ? ['query', 'error', 'warn'] 
         : ['error']
     })
 
     // 연결 이벤트
-    prisma.$on('error' as never, (e: any) => {
+    prismaInstance.$on('error' as never, (e: any) => {
       logger.error('Prisma 오류:', e)
     })
   }
 
-  return prisma
+  return prismaInstance
 }
 
 /**

@@ -49,7 +49,6 @@ export class AutoOptimizer {
     }
 
     // 실제 통계 분석
-    const prisma = getPrismaClient()
     const analyticsA = await prisma.analytics.findMany({
       where: { contentId: test.contentId },
       orderBy: { date: 'desc' },
