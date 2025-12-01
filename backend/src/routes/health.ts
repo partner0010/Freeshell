@@ -4,6 +4,8 @@ import { performHealthCheck } from '../utils/healthCheck'
 import { diagnoseSystem } from '../services/selfDiagnosis'
 import { logger } from '../utils/logger'
 import { getCSRFToken } from '../middleware/csrf'
+import { register } from '../services/monitoring/metrics'
+import { errorTracker } from '../services/monitoring/errorTracker'
 
 const router = Router()
 
@@ -74,6 +76,48 @@ router.get('/', async (req: Request, res: Response) => {
  * CSRF 토큰 발급
  */
 router.get('/csrf', getCSRFToken)
+
+/**
+ * GET /api/health/metrics
+ * 메트릭 정보 조회
+ */
+router.get('/metrics', async (req, res) => {
+  try {
+    const metrics = await register.getMetricsAsJSON()
+    res.json({
+      success: true,
+      metrics
+    })
+  } catch (error: any) {
+    logger.error('메트릭 조회 실패:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message
+    })
+  }
+})
+
+/**
+ * GET /api/health/errors
+ * 에러 통계 조회
+ */
+router.get('/errors', async (req, res) => {
+  try {
+    const days = parseInt(req.query.days as string) || 7
+    const stats = await errorTracker.getErrorStats(days)
+    
+    res.json({
+      success: true,
+      stats
+    })
+  } catch (error: any) {
+    logger.error('에러 통계 조회 실패:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message
+    })
+  }
+})
 
 export default router
 

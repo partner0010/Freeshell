@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { logger } from '../utils/logger'
+import { errorTracker } from '../services/monitoring/errorTracker'
 
 export interface AppError extends Error {
   statusCode?: number
@@ -14,6 +15,18 @@ export function errorHandler(
 ) {
   const statusCode = err.statusCode || 500
   const message = err.message || 'Internal Server Error'
+
+  // 에러 추적
+  errorTracker.trackError(err, {
+    path: req.path,
+    method: req.method,
+    userId: (req as any).user?.id,
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+    statusCode
+  }).catch(trackError => {
+    logger.warn('에러 추적 실패:', trackError)
+  })
 
   logger.error('Error:', {
     message: err.message,

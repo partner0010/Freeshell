@@ -17,6 +17,7 @@ import { jobQueue } from './services/queue/jobQueue'
 import { videoGenerationQueue, videoUploadQueue } from './services/queue/videoQueue'
 import { initRedis } from './utils/cache'
 import { performanceMiddleware } from './services/performance/performanceOptimizer'
+import { register } from './services/monitoring/metrics'
 
 // Routes
 import authRoutes from './routes/auth'
@@ -178,6 +179,22 @@ if (process.env.NODE_ENV !== 'production') {
     logger.warn('Swagger UI 설정 실패:', error)
   }
 }
+
+// 메트릭 수집 미들웨어
+import { metricsMiddleware } from './middleware/metrics'
+app.use(metricsMiddleware)
+
+// 메트릭 엔드포인트 (Prometheus)
+import { getMetrics, register } from './services/monitoring/metrics'
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType)
+    const metrics = await getMetrics()
+    res.end(metrics)
+  } catch (error) {
+    res.status(500).end()
+  }
+})
 
 // Routes
 app.use('/api/health', healthRoutes)
