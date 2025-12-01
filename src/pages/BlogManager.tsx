@@ -32,8 +32,15 @@ export default function BlogManager() {
   }, [])
 
   const fetchPosts = async () => {
-    // TODO: 실제 API 연동
-    setPosts([])
+    try {
+      const response = await axios.get('/api/blog/posts')
+      if (response.data.success) {
+        setPosts(response.data.data || [])
+      }
+    } catch (error: any) {
+      console.error('블로그 포스트 조회 실패:', error)
+      setPosts([])
+    }
   }
 
   const handleGenerate = async () => {

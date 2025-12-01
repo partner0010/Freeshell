@@ -39,17 +39,17 @@ export async function generateSpeech(
       : text
 
     // 음성 선택 (옵션에 따라)
-    const selectedVoice = options.voice || this.selectVoiceByOptions(options)
+    const selectedVoice = options.voice || selectVoiceByOptions(options)
     
     // 텍스트에 감정/톤 적용 (프롬프트 조정)
-    const enhancedText = this.enhanceTextWithEmotion(truncatedText, options)
+    const enhancedText = enhanceTextWithEmotion(truncatedText, options)
 
     // 음성 생성
     const response = await openai.audio.speech.create({
       model: 'tts-1-hd', // 고품질 사용
       voice: selectedVoice,
       input: enhancedText,
-      speed: this.calculateOptimalSpeed(options)
+      speed: calculateOptimalSpeed(options)
     })
 
     // 오디오 파일 저장
@@ -67,24 +67,24 @@ export async function generateSpeech(
     logger.error('음성 생성 실패:', error)
     throw new Error(`음성 생성 실패: ${error.message}`)
   }
-}
+  }
 
-  /**
-   * 옵션에 따라 음성 선택
-   */
-  private selectVoiceByOptions(options: AudioGenerationOptions): 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' {
+/**
+ * 옵션에 따라 음성 선택
+ */
+function selectVoiceByOptions(options: AudioGenerationOptions): 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' {
     if (options.gender === 'male') {
       return options.tone === 'dramatic' ? 'onyx' : 'echo'
     } else if (options.gender === 'female') {
       return options.tone === 'professional' ? 'nova' : 'shimmer'
     }
     return 'nova' // 기본값
-  }
+}
 
-  /**
-   * 감정/톤에 따라 텍스트 향상
-   */
-  private enhanceTextWithEmotion(text: string, options: AudioGenerationOptions): string {
+/**
+ * 감정/톤에 따라 텍스트 향상
+ */
+function enhanceTextWithEmotion(text: string, options: AudioGenerationOptions): string {
     if (!options.emotion && !options.tone) return text
 
     // 감정/톤에 따른 프롬프트 추가 (실제로는 더 정교한 처리 필요)
@@ -98,12 +98,12 @@ export async function generateSpeech(
 
     const tonePrompt = options.tone ? emotionPrompts[options.tone] : ''
     return tonePrompt ? `${tonePrompt} ${text}` : text
-  }
+}
 
-  /**
-   * 최적 속도 계산
-   */
-  private calculateOptimalSpeed(options: AudioGenerationOptions): number {
+/**
+ * 최적 속도 계산
+ */
+function calculateOptimalSpeed(options: AudioGenerationOptions): number {
     if (options.speed) return Math.max(0.25, Math.min(4.0, options.speed))
     
     // 톤에 따른 기본 속도

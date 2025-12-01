@@ -67,8 +67,18 @@ export default function Preview() {
   }, [formData, navigate, setGeneratedContents])
 
   const handleUpload = async (contentId: string) => {
-    // TODO: 실제 업로드 API 호출
-    alert(`${contentId} 업로드 시작!`)
+    try {
+      const { uploadContent } = await import('../services/api')
+      // 기본 플랫폼 설정 (나중에 사용자가 선택할 수 있도록 개선 가능)
+      const platformConfigs = [
+        { platform: 'youtube', enabled: true }
+      ]
+      await uploadContent(contentId, platformConfigs)
+      alert('업로드가 시작되었습니다!')
+    } catch (error: any) {
+      logger.error('업로드 실패:', error)
+      alert(error.response?.data?.error || error.message || '업로드 중 오류가 발생했습니다')
+    }
   }
 
   if (isGenerating) {

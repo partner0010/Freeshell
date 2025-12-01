@@ -74,7 +74,7 @@ api.interceptors.response.use(
 )
 
 // AI 콘텐츠 생성
-export const generateContent = async (formData: ContentForm): Promise<GeneratedContent[]> => {
+export const generateContent = async (formData: ContentForm): Promise<{ success: boolean; data: GeneratedContent[] }> => {
   const formDataToSend = new FormData()
   formDataToSend.append('topic', formData.topic)
   formDataToSend.append('contentType', formData.contentType)

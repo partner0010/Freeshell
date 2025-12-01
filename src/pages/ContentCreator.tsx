@@ -106,7 +106,7 @@ const CONTENT_FORMATS: { value: ContentFormat; label: string; icon: any }[] = [
 
 export default function ContentCreator() {
   const navigate = useNavigate()
-  const { setFormData } = useContentStore()
+  const { setFormData, setGeneratedContents } = useContentStore()
   
   const [topic, setTopic] = useState('')
   const [contentType, setContentType] = useState<ContentType>('today-issue')
@@ -116,6 +116,7 @@ export default function ContentCreator() {
   const [text, setText] = useState('')
   const [images, setImages] = useState<File[]>([])
   const [videos, setVideos] = useState<File[]>([])
+  const [loading, setLoading] = useState(false)
 
   const handleFormatToggle = (format: ContentFormat) => {
     setSelectedFormats((prev) =>
@@ -187,9 +188,19 @@ export default function ContentCreator() {
 
     setFormData(formData)
     
-    // TODO: AI 콘텐츠 생성 API 호출
-    // 여기서는 시뮬레이션으로 진행
-    navigate('/preview')
+    // AI 콘텐츠 생성 API 호출
+    try {
+      setLoading(true)
+      const { generateContent } = await import('../services/api')
+      const contents = await generateContent(formData)
+      setGeneratedContents(contents.data || contents)
+      navigate('/preview')
+    } catch (error: any) {
+      console.error('콘텐츠 생성 실패:', error)
+      alert(error.response?.data?.error || error.message || '콘텐츠 생성 중 오류가 발생했습니다')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -379,10 +390,20 @@ export default function ContentCreator() {
           </button>
           <button
             type="submit"
-            className="btn-primary flex items-center space-x-2"
+            disabled={loading}
+            className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Sparkles className="w-5 h-5" />
-            <span>AI로 콘텐츠 생성하기</span>
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                <span>생성 중...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-5 h-5" />
+                <span>AI로 콘텐츠 생성하기</span>
+              </>
+            )}
           </button>
         </div>
       </form>
