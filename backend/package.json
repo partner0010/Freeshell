@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc && npm run prisma:generate",
+    "build": "tsc && npm run prisma:generate && npm run obfuscate",
+    "obfuscate": "node scripts/obfuscate.js",
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
     "test": "jest",

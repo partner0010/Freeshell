@@ -66,10 +66,6 @@ export default function AutoCreator() {
         ebookPlatforms: ['gumroad'],
         blogPlatforms: ['wordpress'],
         blogLanguages: ['ko', 'en']
-      }, {
-        headers: {
-          'X-API-Key': import.meta.env.VITE_API_KEY || ''
-        }
       })
 
       if (response.data.success) {

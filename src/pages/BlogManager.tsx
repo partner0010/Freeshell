@@ -49,10 +49,6 @@ export default function BlogManager() {
         contentType,
         language,
         wordCount
-      }, {
-        headers: {
-          'X-API-Key': import.meta.env.VITE_API_KEY || ''
-        }
       })
 
       if (response.data.success) {
@@ -78,10 +74,6 @@ export default function BlogManager() {
       const response = await axios.post('/api/blog/translate', {
         blogPost: generatedPost,
         targetLanguage
-      }, {
-        headers: {
-          'X-API-Key': import.meta.env.VITE_API_KEY || ''
-        }
       })
 
       if (response.data.success) {
@@ -128,10 +120,6 @@ export default function BlogManager() {
         blogPost: generatedPost,
         platform,
         credentials
-      }, {
-        headers: {
-          'X-API-Key': import.meta.env.VITE_API_KEY || ''
-        }
       })
 
       if (response.data.success) {

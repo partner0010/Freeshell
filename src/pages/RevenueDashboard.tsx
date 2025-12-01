@@ -32,10 +32,7 @@ export default function RevenueDashboard() {
       
       const response = await axios.get('/api/revenue', {
         params: {
-          startDate: startDate?.toISOString(),
-          headers: {
-            'X-API-Key': import.meta.env.VITE_API_KEY || ''
-          }
+          startDate: startDate?.toISOString()
         }
       })
 

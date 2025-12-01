@@ -22,12 +22,25 @@ export function errorHandler(
     method: req.method
   })
 
-  res.status(statusCode).json({
+  // 프로덕션에서 스택 트레이스 및 상세 정보 숨김
+  const errorResponse: any = {
     success: false,
     error: {
-      message,
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      message: process.env.NODE_ENV === 'production' 
+        ? '내부 서버 오류가 발생했습니다' 
+        : message
     }
-  })
+  }
+  
+  // 개발 환경에서만 스택 트레이스 포함
+  if (process.env.NODE_ENV === 'development') {
+    errorResponse.error.stack = err.stack
+    errorResponse.error.details = {
+      path: req.path,
+      method: req.method
+    }
+  }
+  
+  res.status(statusCode).json(errorResponse)
 }
 

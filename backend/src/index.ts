@@ -10,6 +10,7 @@ import { connectDatabase } from './utils/database'
 import { AutoPatchScheduler } from './services/security/autoPatch'
 import { sanitizeLogs } from './middleware/privacy'
 import { intrusionDetection, logRequest } from './middleware/security'
+import { preventSourceExposure, removeDebugHeaders, hideStackTrace } from './middleware/sourceProtection'
 import { scheduler } from './services/scheduling/scheduler'
 import { advancedSecurity } from './services/security/advancedSecurity'
 import { jobQueue } from './services/queue/jobQueue'
@@ -130,7 +131,11 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 // 개인정보 보호 로깅
 app.use(sanitizeLogs)
 
-// 보안 미들웨어 (가장 먼저 실행)
+// 소스 보호 미들웨어 (가장 먼저 실행)
+app.use(preventSourceExposure) // 소스 파일 접근 차단
+app.use(removeDebugHeaders) // 디버깅 헤더 제거
+
+// 보안 미들웨어
 app.use(logRequest) // 요청 로그 기록
 app.use(intrusionDetection) // 침입 탐지
 

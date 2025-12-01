@@ -34,10 +34,6 @@ export default function EbookCreator() {
         contentType,
         language,
         chapterCount
-      }, {
-        headers: {
-          'X-API-Key': import.meta.env.VITE_API_KEY || ''
-        }
       })
 
       if (response.data.success) {
@@ -68,10 +64,6 @@ export default function EbookCreator() {
         platform,
         price: parseFloat(price),
         accessToken
-      }, {
-        headers: {
-          'X-API-Key': import.meta.env.VITE_API_KEY || ''
-        }
       })
 
       if (response.data.success) {

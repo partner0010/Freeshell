@@ -31,7 +31,10 @@ api.interceptors.request.use(
           config.headers['Authorization'] = `Bearer ${token}`
         }
       } catch (error) {
-        console.error('토큰 조회 실패:', error)
+        // 프로덕션에서는 에러 로그 제거
+        if (import.meta.env.DEV) {
+          console.error('토큰 조회 실패:', error)
+        }
       }
     }
 
