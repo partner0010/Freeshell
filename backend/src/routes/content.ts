@@ -35,8 +35,71 @@ const upload = multer({
 })
 
 /**
- * POST /api/content/generate
- * AI 콘텐츠 생성
+ * @swagger
+ * /api/content/generate:
+ *   post:
+ *     summary: AI 콘텐츠 생성
+ *     tags: [콘텐츠]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKey: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - topic
+ *               - contentType
+ *               - contentTime
+ *             properties:
+ *               topic:
+ *                 type: string
+ *                 example: 오늘의 이슈
+ *               contentType:
+ *                 type: string
+ *                 example: today-issue
+ *               contentTime:
+ *                 type: number
+ *                 example: 60
+ *               contentFormat:
+ *                 type: string
+ *                 example: '["text", "real-image-static"]'
+ *               text:
+ *                 type: string
+ *                 example: 콘텐츠 내용...
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *               videos:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *     responses:
+ *       200:
+ *         description: 콘텐츠 생성 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Content'
+ *       400:
+ *         description: 잘못된 요청
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/generate', 
   validateApiKey, // API 키 검증

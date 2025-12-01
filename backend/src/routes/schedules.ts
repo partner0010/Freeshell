@@ -8,8 +8,34 @@ import { authenticateToken, AuthRequest } from '../middleware/auth'
 const router = Router()
 
 /**
- * GET /api/schedules
- * 스케줄 목록 조회
+ * @swagger
+ * /api/schedules:
+ *   get:
+ *     summary: 스케줄 목록 조회
+ *     tags: [스케줄]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 스케줄 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 schedules:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
@@ -45,8 +71,75 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
 })
 
 /**
- * POST /api/schedules
- * 스케줄 생성
+ * @swagger
+ * /api/schedules:
+ *   post:
+ *     summary: 스케줄 생성
+ *     tags: [스케줄]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - contentType
+ *               - frequency
+ *               - platforms
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: 매일 오후 3시 콘텐츠 생성
+ *               description:
+ *                 type: string
+ *                 example: 설명
+ *               contentType:
+ *                 type: string
+ *                 example: today-issue
+ *               topic:
+ *                 type: string
+ *                 example: 오늘의 이슈
+ *               frequency:
+ *                 type: string
+ *                 enum: [daily, weekly, monthly, custom]
+ *                 example: daily
+ *               cronExpression:
+ *                 type: string
+ *                 example: 0 15 * * *
+ *               platforms:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["youtube", "tiktok"]
+ *               contentCount:
+ *                 type: number
+ *                 example: 1
+ *               autoUpload:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: 스케줄 생성 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 scheduleId:
+ *                   type: string
+ *                   example: uuid
+ *       400:
+ *         description: 잘못된 요청
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {

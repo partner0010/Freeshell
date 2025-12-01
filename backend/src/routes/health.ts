@@ -7,6 +7,33 @@ import { getCSRFToken } from '../middleware/csrf'
 
 const router = Router()
 
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: 서버 상태 확인
+ *     tags: [건강]
+ *     responses:
+ *       200:
+ *         description: 서버 상태 정보
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: healthy
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 server:
+ *                   type: object
+ *                 health:
+ *                   type: object
+ *                 diagnosis:
+ *                   type: object
+ */
 router.get('/', async (req: Request, res: Response) => {
   try {
     const serverInfo = await autoSetup()

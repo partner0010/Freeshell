@@ -8,8 +8,56 @@ import { validateApiKey } from '../middleware/auth'
 const router = Router()
 
 /**
- * POST /api/auth/register
- * 회원가입
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: 회원가입
+ *     tags: [인증]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - username
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               username:
+ *                 type: string
+ *                 example: username
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 8
+ *                 example: password123
+ *     responses:
+ *       200:
+ *         description: 회원가입 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 token:
+ *                   type: string
+ *                   example: jwt_token_here
+ *       400:
+ *         description: 잘못된 요청
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/register', async (req: Request, res: Response) => {
   try {
@@ -85,8 +133,51 @@ router.post('/register', async (req: Request, res: Response) => {
 })
 
 /**
- * POST /api/auth/login
- * 로그인
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: 로그인
+ *     tags: [인증]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: password123
+ *     responses:
+ *       200:
+ *         description: 로그인 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 token:
+ *                   type: string
+ *                   example: jwt_token_here
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/login', async (req: Request, res: Response) => {
   try {
@@ -145,8 +236,33 @@ router.post('/login', async (req: Request, res: Response) => {
 })
 
 /**
- * GET /api/auth/me
- * 현재 사용자 정보 조회
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: 현재 사용자 정보 조회
+ *     tags: [인증]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKey: []
+ *     responses:
+ *       200:
+ *         description: 사용자 정보 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/me', validateApiKey, async (req: Request, res: Response) => {
   try {

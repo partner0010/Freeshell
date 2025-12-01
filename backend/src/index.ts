@@ -162,6 +162,23 @@ app.use((req, res, next) => {
   next()
 })
 
+// Swagger UI 설정 (개발 환경에서만)
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    const swaggerUi = require('swagger-ui-express')
+    const { swaggerSpec } = require('./config/swagger')
+    
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: '올인원 콘텐츠 AI API 문서'
+    }))
+    
+    logger.info('📚 Swagger UI: http://localhost:' + PORT + '/api-docs')
+  } catch (error) {
+    logger.warn('Swagger UI 설정 실패:', error)
+  }
+}
+
 // Routes
 app.use('/api/health', healthRoutes)
 app.use('/api/content', contentRoutes)
