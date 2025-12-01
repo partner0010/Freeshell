@@ -1,6 +1,7 @@
 import { getPrismaClient } from '../../utils/database'
 import { logger } from '../../utils/logger'
 import { analytics } from '../analytics/realTimeAnalytics'
+import { TrendCollector } from '../trends/collector'
 
 /**
  * 스마트 스케줄링 (AI 기반 최적 시간 선택)
@@ -107,17 +108,228 @@ export class SmartScheduler {
    * 예측 기반 자동화 (트렌드 예측)
    */
   async predictTrendingTopics(days: number = 7): Promise<string[]> {
-    // TODO: 트렌드 수집기와 연동
-    // 현재는 기본 주제 반환
-    const topics = [
-      'AI 기술의 최신 동향',
-      '일상 생활 팁',
-      '건강 관리 방법',
-      '투자 및 재테크',
-      '여행 추천'
-    ]
+    const topics: string[] = []
 
-    logger.info(`트렌딩 주제 예측: ${topics.length}개`)
+    // 1. Google Trends API 연동 (API 키가 있는 경우)
+    const googleTrendsApiKey = process.env.GOOGLE_TRENDS_API_KEY
+    if (googleTrendsApiKey) {
+      try {
+        const trendsTopics = await this.getGoogleTrends(googleTrendsApiKey, days)
+        topics.push(...trendsTopics)
+      } catch (error: any) {
+        logger.warn('Google Trends API 호출 실패:', error.message)
+      }
+    }
+
+    // 2. NewsAPI를 이용한 트렌드 수집
+    const newsApiKey = process.env.NEWS_API_KEY
+    if (newsApiKey) {
+      try {
+        const newsTopics = await this.getNewsTrends(newsApiKey, days)
+        topics.push(...newsTopics)
+      } catch (error: any) {
+        logger.warn('NewsAPI 호출 실패:', error.message)
+      }
+    }
+
+    // 3. 트렌드 수집기 활용
+    try {
+      const trendCollector = new TrendCollector()
+      const allTrends = await trendCollector.collectAllTrends('ko')
+      const trendTitles = allTrends.slice(0, 10).map(trend => trend.title)
+      topics.push(...trendTitles)
+    } catch (error: any) {
+      logger.warn('트렌드 수집기 호출 실패:', error.message)
+    }
+
+    // 4. RSS 피드 기반 트렌드 수집
+    try {
+      const rssTopics = await this.getRSSTrends(days)
+      topics.push(...rssTopics)
+    } catch (error: any) {
+      logger.warn('RSS 트렌드 수집 실패:', error.message)
+    }
+
+    // 5. 내부 데이터베이스 기반 트렌드 분석
+    try {
+      const dbTopics = await this.getDatabaseTrends(days)
+      topics.push(...dbTopics)
+    } catch (error: any) {
+      logger.warn('데이터베이스 트렌드 분석 실패:', error.message)
+    }
+
+    // 중복 제거 및 정렬
+    const uniqueTopics = Array.from(new Set(topics))
+    
+    // 기본 주제가 없으면 기본값 반환
+    if (uniqueTopics.length === 0) {
+      return [
+        'AI 기술의 최신 동향',
+        '일상 생활 팁',
+        '건강 관리 방법',
+        '투자 및 재테크',
+        '여행 추천'
+      ]
+    }
+
+    logger.info(`트렌딩 주제 예측: ${uniqueTopics.length}개`)
+    return uniqueTopics.slice(0, 10) // 최대 10개 반환
+  }
+
+  /**
+   * Google Trends API를 이용한 트렌드 수집
+   */
+  private async getGoogleTrends(apiKey: string, days: number): Promise<string[]> {
+    const topics: string[] = []
+    
+    try {
+      // Google Trends API는 공식 API가 없으므로, Google Trends 데이터를 스크래핑하거나
+      // pytrends 같은 라이브러리를 사용해야 합니다.
+      // 여기서는 간단한 구현으로 대체합니다.
+      
+      // 대안: Google Custom Search를 이용한 트렌드 키워드 검색
+      const axios = (await import('axios')).default
+      const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
+        params: {
+          key: apiKey,
+          cx: process.env.GOOGLE_SEARCH_ENGINE_ID || '',
+          q: 'trending topics',
+          num: 5
+        }
+      })
+
+      if (response.data.items) {
+        response.data.items.forEach((item: any) => {
+          // 제목에서 키워드 추출
+          const title = item.title || ''
+          if (title.length > 5) {
+            topics.push(title)
+          }
+        })
+      }
+    } catch (error: any) {
+      logger.error('Google Trends 수집 오류:', error)
+    }
+
+    return topics
+  }
+
+  /**
+   * NewsAPI를 이용한 트렌드 수집
+   */
+  private async getNewsTrends(apiKey: string, days: number): Promise<string[]> {
+    const topics: string[] = []
+    
+    try {
+      const axios = (await import('axios')).default
+      const response = await axios.get('https://newsapi.org/v2/top-headlines', {
+        params: {
+          apiKey,
+          country: 'kr', // 한국 뉴스
+          pageSize: 10,
+          sortBy: 'popularity'
+        }
+      })
+
+      if (response.data.articles) {
+        response.data.articles.forEach((article: any) => {
+          if (article.title) {
+            topics.push(article.title)
+          }
+        })
+      }
+    } catch (error: any) {
+      logger.error('NewsAPI 트렌드 수집 오류:', error)
+    }
+
+    return topics
+  }
+
+  /**
+   * RSS 피드 기반 트렌드 수집
+   */
+  private async getRSSTrends(days: number): Promise<string[]> {
+    const topics: string[] = []
+    
+    try {
+      const RSSParser = (await import('rss-parser')).default
+      const parser = new RSSParser()
+      
+      // 주요 RSS 피드 목록
+      const rssFeeds = [
+        'https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko',
+        'https://rss.cnn.com/rss/edition.rss',
+        'https://feeds.bbci.co.uk/news/rss.xml'
+      ]
+
+      for (const feed of rssFeeds) {
+        try {
+          const feedData = await parser.parseURL(feed)
+          if (feedData.items) {
+            feedData.items.slice(0, 5).forEach((item: any) => {
+              if (item.title) {
+                topics.push(item.title)
+              }
+            })
+          }
+        } catch (error) {
+          // 개별 피드 실패는 무시
+          continue
+        }
+      }
+    } catch (error: any) {
+      logger.error('RSS 트렌드 수집 오류:', error)
+    }
+
+    return topics
+  }
+
+  /**
+   * 데이터베이스 기반 트렌드 분석
+   */
+  private async getDatabaseTrends(days: number): Promise<string[]> {
+    const topics: string[] = []
+    
+    try {
+      const prisma = getPrismaClient()
+      const dateThreshold = new Date()
+      dateThreshold.setDate(dateThreshold.getDate() - days)
+
+      // 최근 인기 콘텐츠 주제 분석
+      const popularContents = await prisma.content.findMany({
+        where: {
+          createdAt: {
+            gte: dateThreshold
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 20,
+        select: {
+          topic: true
+        }
+      })
+
+      // 주제 빈도수 계산
+      const topicCounts: Record<string, number> = {}
+      popularContents.forEach(content => {
+        if (content.topic) {
+          topicCounts[content.topic] = (topicCounts[content.topic] || 0) + 1
+        }
+      })
+
+      // 빈도수 높은 순으로 정렬
+      const sortedTopics = Object.entries(topicCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([topic]) => topic)
+
+      topics.push(...sortedTopics)
+    } catch (error: any) {
+      logger.error('데이터베이스 트렌드 분석 오류:', error)
+    }
+
     return topics
   }
 

@@ -109,16 +109,52 @@ export class TrendCollector {
    */
   async collectBlogTrends(): Promise<TrendData[]> {
     try {
-      // Medium, Dev.to, 기타 블로그 플랫폼
       const trends: TrendData[] = []
+
+      // RSS 파서 사용
+      const RSSParser = (await import('rss-parser')).default
+      const parser = new RSSParser()
 
       // Medium 트렌드 (RSS 피드)
       try {
-        const mediumResponse = await axios.get('https://medium.com/feed/tag/trending')
-        // RSS 파싱 필요
-        // 실제 구현은 rss-parser 라이브러리 사용
+        const mediumFeed = await parser.parseURL('https://medium.com/feed/tag/trending')
+        if (mediumFeed.items) {
+          mediumFeed.items.slice(0, 10).forEach((item: any) => {
+            trends.push({
+              source: 'medium',
+              title: item.title || '',
+              content: item.contentSnippet || item.content || '',
+              category: 'blog',
+              keywords: this.extractKeywords(item.title || ''),
+              sentiment: this.analyzeSentiment(item.title || ''),
+              popularity: 0,
+              timestamp: item.pubDate ? new Date(item.pubDate) : new Date()
+            })
+          })
+        }
       } catch (error) {
         logger.warn('Medium 트렌드 수집 실패:', error)
+      }
+
+      // Google News RSS
+      try {
+        const googleNewsFeed = await parser.parseURL('https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko')
+        if (googleNewsFeed.items) {
+          googleNewsFeed.items.slice(0, 10).forEach((item: any) => {
+            trends.push({
+              source: 'google-news',
+              title: item.title || '',
+              content: item.contentSnippet || item.content || '',
+              category: 'news',
+              keywords: this.extractKeywords(item.title || ''),
+              sentiment: this.analyzeSentiment(item.title || ''),
+              popularity: 0,
+              timestamp: item.pubDate ? new Date(item.pubDate) : new Date()
+            })
+          })
+        }
+      } catch (error) {
+        logger.warn('Google News RSS 수집 실패:', error)
       }
 
       return trends
