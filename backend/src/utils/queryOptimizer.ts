@@ -144,7 +144,7 @@ export async function optimizedTransaction<T>(
   const startTime = Date.now()
 
   try {
-    const results = await prisma.$transaction(operations, {
+    const results = await prisma.$transaction(operations as any, {
       maxWait: 5000, // 최대 대기 시간
       timeout: 10000 // 타임아웃
     })
@@ -155,7 +155,7 @@ export async function optimizedTransaction<T>(
       duration
     )
 
-    return results
+    return results as T[]
   } catch (error) {
     logger.error('트랜잭션 실패:', error)
     throw error

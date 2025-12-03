@@ -359,18 +359,37 @@ export class SmartScheduler {
     const version = content.versions[0]
     const optimalTime = await this.calculateOptimalTime('youtube')
     
-    // AI 기반 제안 (간단한 구현)
+    // 태그 자동 추출 (키워드 최적화 서비스 사용)
+    const { extractKeywords } = require('../keywordOptimizer')
+    let tags: string[] = []
+    
+    try {
+      const keywordAnalysis = await extractKeywords(content.topic, version.description || content.text)
+      // 주요 키워드와 보조 키워드를 태그로 사용
+      tags = [
+        ...keywordAnalysis.primaryKeywords,
+        ...keywordAnalysis.secondaryKeywords.slice(0, 3) // 보조 키워드는 최대 3개
+      ].slice(0, 10) // 최대 10개 태그
+      
+      // 제목과 설명에서 추가 키워드 추출
+      const titleWords = version.title
+        .split(/\s+/)
+        .filter(word => word.length > 2 && word.length < 15)
+        .slice(0, 3)
+      
+      tags = [...new Set([...tags, ...titleWords])].slice(0, 10) // 중복 제거 후 최대 10개
+    } catch (error) {
+      logger.warn('태그 추출 실패, 기본 태그 사용:', error)
+      // 기본 태그: 주제에서 추출
+      tags = content.topic.split(/\s+/).filter(word => word.length > 1).slice(0, 5)
+    }
+    
+    // AI 기반 제안 (suggestions는 string[]이므로 버전 정보 사용)
     return {
-      title: suggestions.length > 0 && suggestions[0].title 
-        ? suggestions[0].title 
-        : version.title,
-      description: suggestions.length > 0 && suggestions[0].description
-        ? suggestions[0].description
-        : version.description,
+      title: version.title,
+      description: version.description,
       uploadTime: optimalTime,
-      tags: suggestions.length > 0 && suggestions[0].tags
-        ? suggestions[0].tags
-        : []
+      tags
     }
   }
 }

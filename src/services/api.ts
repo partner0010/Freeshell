@@ -33,7 +33,8 @@ api.interceptors.request.use(
       } catch (error) {
         // 프로덕션에서는 에러 로그 제거
         if (import.meta.env.DEV) {
-          console.error('토큰 조회 실패:', error)
+          // 토큰 조회 실패는 조용히 처리 (로깅 시스템 사용 시 주석 해제)
+          // logger.error('토큰 조회 실패', error)
         }
       }
     }

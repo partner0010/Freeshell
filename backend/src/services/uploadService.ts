@@ -4,6 +4,7 @@ import { logger } from '../utils/logger'
 import { getPrismaClient } from '../utils/database'
 import { decrypt, encrypt } from '../utils/encryption'
 import fs from 'fs/promises'
+import fsSync from 'fs'
 import path from 'path'
 
 interface UploadResult {
@@ -43,7 +44,7 @@ export async function uploadToPlatforms(
 /**
  * 단일 플랫폼에 업로드
  */
-async function uploadToPlatform(
+export async function uploadToPlatform(
   contentId: string,
   platform: PlatformConfig
 ): Promise<UploadResult> {
@@ -175,7 +176,7 @@ async function uploadToYouTube(
       part: ['snippet', 'status'],
       requestBody: videoMetadata,
       media: {
-        body: fs.createReadStream(videoPath)
+        body: fsSync.createReadStream(videoPath)
       }
     })
 

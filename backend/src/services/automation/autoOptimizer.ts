@@ -128,28 +128,31 @@ export class AutoOptimizer {
     const changes: string[] = []
 
     // 제목 최적화 (키워드 추가)
-    if (suggestions.length > 0 && suggestions[0].title) {
-      await prisma.contentVersion.update({
-        where: { id: version.id },
-        data: { title: suggestions[0].title }
-      })
-      changes.push('제목 최적화')
-    }
+    if (suggestions.length > 0 && typeof suggestions[0] === 'object' && 'title' in suggestions[0]) {
+      const suggestion = suggestions[0] as { title?: string; description?: string; tags?: string[] }
+      if (suggestion.title) {
+        await prisma.contentVersion.update({
+          where: { id: version.id },
+          data: { title: suggestion.title }
+        })
+        changes.push('제목 최적화')
+      }
 
-    // 설명 최적화
-    if (suggestions.length > 0 && suggestions[0].description) {
-      await prisma.contentVersion.update({
-        where: { id: version.id },
-        data: { description: suggestions[0].description }
-      })
-      changes.push('설명 최적화')
+      // 설명 최적화
+      if (suggestion.description) {
+        await prisma.contentVersion.update({
+          where: { id: version.id },
+          data: { description: suggestion.description }
+        })
+        changes.push('설명 최적화')
+      }
     }
 
     logger.info(`콘텐츠 자동 최적화 완료: ${contentId}`, { changes })
 
     return {
       optimized: true,
-      changes: suggestions,
+      changes,
       expectedImprovement: 15 // 예상 개선율 (%)
     }
   }

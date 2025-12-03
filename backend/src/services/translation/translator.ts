@@ -78,8 +78,8 @@ export async function translateText(
     const googleApiKey = process.env.GOOGLE_TRANSLATE_API_KEY
     if (googleApiKey) {
       try {
-        const { Translate } = await import('@google-cloud/translate').then(m => m.default || m)
-        const translate = new Translate({ key: googleApiKey })
+        const { v2 } = await import('@google-cloud/translate')
+        const translate = new v2.Translate({ key: googleApiKey })
         const [translated] = await translate.translate(text, targetLanguage)
         logger.info('번역 완료 (Google Translate)')
         return translated as string

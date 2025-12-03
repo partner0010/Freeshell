@@ -28,11 +28,12 @@ export default function Preview() {
       try {
         // 실제 API 호출
         const { generateContent } = await import('../services/api')
-        const generatedContents = await generateContent(formData)
+        const response = await generateContent(formData)
+        const generatedContents = response.data
         
         setGeneratedContents(generatedContents)
         // 첫 번째 버전을 히스토리에 추가
-        if (generatedContents[0]) {
+        if (generatedContents && generatedContents[0]) {
           addContent(generatedContents[0])
         }
         setIsGenerating(false)
@@ -40,7 +41,7 @@ export default function Preview() {
         logger.error('콘텐츠 생성 실패:', error)
         // API 실패 시 시뮬레이션 데이터 사용
         setTimeout(() => {
-        const mockContents: GeneratedContent[] = Array.from({ length: 5 }, (_, i) => ({
+          const mockContents: GeneratedContent[] = Array.from({ length: 5 }, (_, i) => ({
           id: `content-${Date.now()}-${i + 1}`,
           version: i + 1,
           title: `${formData.topic} - 버전 ${i + 1}`,
@@ -54,17 +55,18 @@ export default function Preview() {
           status: 'generated' as const,
         }))
         
-        setGeneratedContents(mockContents)
-        // 첫 번째 버전을 히스토리에 추가
-        if (mockContents[0]) {
-          addContent(mockContents[0])
-        }
-        setIsGenerating(false)
-      }, 2000)
+          setGeneratedContents(mockContents)
+          // 첫 번째 버전을 히스토리에 추가
+          if (mockContents[0]) {
+            addContent(mockContents[0])
+          }
+          setIsGenerating(false)
+        }, 2000)
+      }
     }
 
     generateContents()
-  }, [formData, navigate, setGeneratedContents])
+  }, [formData, navigate, setGeneratedContents, addContent])
 
   const handleUpload = async (contentId: string) => {
     try {

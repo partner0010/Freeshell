@@ -97,7 +97,6 @@ export class AdvancedSecuritySystem {
     }
 
     // 추가 보안 조치
-    const prisma = getPrismaClient()
     
     // 세션 무효화 (JWT 토큰 블랙리스트에 추가)
     if (threat.userId) {

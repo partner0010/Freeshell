@@ -1,244 +1,302 @@
-# 🚀 프로덕션 배포 가이드
+# 🚀 배포 가이드 - freeshell.co.kr
 
-## 📋 배포 전 체크리스트
+**소요 시간**: 약 15분  
+**난이도**: 쉬움 ⭐⭐☆☆☆
 
-### 필수 작업
-- [x] 코드 오류 수정 완료
-- [x] 보안 테스트 완료
-- [x] 데이터베이스 마이그레이션 완료
-- [ ] 환경 변수 설정 (프로덕션)
-- [ ] HTTPS 인증서 설정
-- [ ] 도메인 설정
-- [ ] 모니터링 설정
+---
 
-## 🌐 배포 플랫폼 옵션
+## 📋 **준비 완료!**
 
-### 1. Railway (권장 - 간단함)
-**장점:**
-- GitHub 연동 자동 배포
-- 무료 티어 제공
-- 환경 변수 관리 쉬움
+### ✅ 생성된 파일
+1. ✅ `vercel.json` - Vercel 설정
+2. ✅ `backend/railway.json` - Railway 설정
+3. ✅ `backend/.env.production` - 프로덕션 환경 변수
 
-**배포 방법:**
-1. Railway.app 가입
-2. GitHub 저장소 연결
-3. 환경 변수 설정
-4. 자동 배포 완료
+---
 
-### 2. AWS Lightsail
-**장점:**
-- 저렴한 가격 ($5/월)
-- 완전한 서버 제어
-- 확장 가능
+## 🎯 **배포 순서**
 
-**배포 방법:**
-- `AWS_LIGHTSAIL_SETUP.md` 참고
-
-### 3. Vercel (프론트엔드) + Railway (백엔드)
-**장점:**
-- 프론트엔드 최적화
-- CDN 자동 제공
-- 빠른 배포
-
-### 4. Docker + 자체 서버
-**장점:**
-- 완전한 제어
-- 커스터마이징 가능
-
-**배포 방법:**
-```bash
-# Docker Compose 사용
-cd backend
-docker-compose up -d
+### 1단계: Railway 회원가입 (백엔드)
+```
+1. https://railway.app 접속
+2. "Start a New Project" 클릭
+3. GitHub로 로그인
 ```
 
-## 🔧 프로덕션 환경 변수 설정
+### 2단계: Railway 프로젝트 생성
+```
+1. "Deploy from GitHub repo" 선택
+2. 또는 "Empty Project" → "Deploy from CLI"
+```
 
-### 백엔드 (.env)
+### 3단계: Railway CLI 설치 및 배포
+```powershell
+# CLI 설치
+npm install -g @railway/cli
 
-```env
-# 서버 설정
-PORT=3001
+# 로그인
+railway login
+
+# 프로젝트 초기화
+cd "C:\Users\partn\OneDrive\바탕 화면\Cursor\Freeshell\backend"
+railway init
+
+# 배포
+railway up
+
+# 도메인 설정
+railway domain
+```
+
+### 4단계: Railway 환경 변수 설정
+```
+Railway 대시보드에서:
+
+1. Variables 탭 클릭
+2. 다음 변수 추가:
+
 NODE_ENV=production
-FRONTEND_URL=https://yourdomain.com
-
-# 데이터베이스
-DATABASE_URL="file:./data/database.db"
-# 또는 PostgreSQL (프로덕션 권장)
-# DATABASE_URL="postgresql://user:password@host:5432/dbname"
-
-# AI API Keys (필수)
-OPENAI_API_KEY=your_actual_openai_key
-# 또는
-CLAUDE_API_KEY=your_actual_claude_key
-
-# JWT Secret (반드시 변경!)
-JWT_SECRET=<강력한_랜덤_키_64자_이상>
-
-# YouTube API (선택)
-YOUTUBE_CLIENT_ID=your_youtube_client_id
-YOUTUBE_CLIENT_SECRET=your_youtube_client_secret
-YOUTUBE_REDIRECT_URI=https://yourdomain.com/api/platform/youtube/callback
-
-# Redis (선택, 캐싱용)
-REDIS_URL=redis://localhost:6379
-
-# 로깅
-LOG_LEVEL=info
+PORT=3001
+FRONTEND_URL=https://freeshell.co.kr
+JWT_SECRET=YOUR_STRONG_RANDOM_STRING_HERE
+OPENAI_API_KEY=YOUR_OPENAI_KEY
 ```
 
-### 프론트엔드 (.env)
+### 5단계: PostgreSQL 추가 (Railway)
+```
+1. Railway 대시보드에서 "New" 클릭
+2. "Database" → "PostgreSQL" 선택
+3. DATABASE_URL 자동 생성됨
+```
 
+### 6단계: Vercel 회원가입 (프론트엔드)
+```
+1. https://vercel.com 접속
+2. GitHub로 로그인
+```
+
+### 7단계: Vercel CLI 설치 및 배포
+```powershell
+# CLI 설치
+npm install -g vercel
+
+# 로그인
+vercel login
+
+# 프로젝트로 이동
+cd "C:\Users\partn\OneDrive\바탕 화면\Cursor\Freeshell"
+
+# 배포
+vercel --prod
+
+# 질문에 답변:
+# - Set up and deploy? Y
+# - Which scope? (본인 계정 선택)
+# - Link to existing project? N
+# - Project name? freeshell
+# - Directory? ./
+# - Override settings? N
+```
+
+### 8단계: 환경 변수 설정 (Vercel)
+```
+Vercel 대시보드에서:
+
+1. 프로젝트 선택
+2. Settings → Environment Variables
+3. 추가:
+
+VITE_API_URL=https://api.freeshell.co.kr
+```
+
+### 9단계: 도메인 연결
+```
+# Railway (백엔드)
+1. Railway 대시보드 → Settings → Domains
+2. Custom Domain: api.freeshell.co.kr
+3. CNAME 레코드 복사
+
+# Vercel (프론트엔드)
+1. Vercel 대시보드 → Settings → Domains
+2. Add Domain: freeshell.co.kr, www.freeshell.co.kr
+3. DNS 레코드 안내 받음
+```
+
+### 10단계: Cloudflare DNS 설정
+```
+Cloudflare 대시보드에서:
+
+1. DNS 관리 이동
+2. 레코드 추가:
+
+Type: CNAME
+Name: @
+Target: (Vercel에서 받은 주소)
+
+Type: CNAME
+Name: www
+Target: (Vercel에서 받은 주소)
+
+Type: CNAME
+Name: api
+Target: (Railway에서 받은 주소)
+```
+
+---
+
+## 🎯 **간단 명령어 요약**
+
+### 백엔드 배포 (Railway)
+```powershell
+npm install -g @railway/cli
+railway login
+cd backend
+railway init
+railway up
+```
+
+### 프론트엔드 배포 (Vercel)
+```powershell
+npm install -g vercel
+vercel login
+vercel --prod
+```
+
+---
+
+## 🔑 **필요한 환경 변수**
+
+### Railway (백엔드)
 ```env
-VITE_API_BASE_URL=https://api.yourdomain.com/api
-VITE_API_KEY=
+NODE_ENV=production
+PORT=3001
+FRONTEND_URL=https://freeshell.co.kr
+DATABASE_URL=(자동 생성)
+JWT_SECRET=(생성 필요)
+OPENAI_API_KEY=(본인 키)
+ANTHROPIC_API_KEY=(본인 키)
 ```
 
-## 🔐 보안 강화 (프로덕션)
-
-### 1. JWT Secret 생성
-```bash
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+### Vercel (프론트엔드)
+```env
+VITE_API_URL=https://api.freeshell.co.kr
 ```
 
-### 2. HTTPS 설정
-- Let's Encrypt 무료 인증서 사용
-- 또는 클라우드 플랫폼의 자동 HTTPS 사용
+---
 
-### 3. 환경 변수 보안
-- 절대 GitHub에 커밋하지 않기
-- 환경 변수 관리 서비스 사용 (AWS Secrets Manager, Azure Key Vault 등)
+## 🔐 **JWT Secret 생성**
 
-### 4. 데이터베이스 백업
-```bash
-# SQLite 백업
-cp backend/data/database.db backend/data/database.db.backup
-
-# 또는 PostgreSQL 백업
-pg_dump database_name > backup.sql
+```powershell
+# PowerShell에서 실행
+-join ((65..90) + (97..122) + (48..57) | Get-Random -Count 64 | ForEach-Object {[char]$_})
 ```
 
-## 📦 배포 단계
+복사해서 Railway 환경 변수에 붙여넣기
 
-### Railway 배포 (권장)
+---
 
-1. **Railway 가입 및 프로젝트 생성**
-   - https://railway.app 접속
-   - GitHub 계정으로 로그인
-   - "New Project" → "Deploy from GitHub repo"
+## ✅ **배포 확인**
 
-2. **환경 변수 설정**
-   - Settings → Variables
-   - 모든 환경 변수 추가
-
-3. **데이터베이스 설정**
-   - "New" → "Database" → "PostgreSQL" (권장)
-   - 또는 SQLite 사용 (간단하지만 확장성 낮음)
-
-4. **자동 배포**
-   - GitHub에 푸시하면 자동 배포
-
-### 수동 배포 (VPS/서버)
-
-1. **서버 준비**
-   ```bash
-   # Node.js 설치
-   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-   sudo apt-get install -y nodejs
-   
-   # PM2 설치
-   npm install -g pm2
-   ```
-
-2. **코드 배포**
-   ```bash
-   git clone https://github.com/partner0010/Freeshell.git
-   cd Freeshell/backend
-   npm install --production
-   ```
-
-3. **환경 변수 설정**
-   ```bash
-   cp .env.example .env
-   nano .env  # 환경 변수 편집
-   ```
-
-4. **데이터베이스 마이그레이션**
-   ```bash
-   npx prisma generate
-   npx prisma migrate deploy
-   ```
-
-5. **서버 실행**
-   ```bash
-   npm run build
-   pm2 start dist/index.js --name freeshell
-   pm2 save
-   pm2 startup  # 자동 시작 설정
-   ```
-
-## 🔄 CI/CD 파이프라인
-
-GitHub Actions가 자동으로:
-1. 코드 푸시 시 테스트 실행
-2. 빌드 수행
-3. main 브랜치에 푸시 시 자동 배포
-
-### GitHub Secrets 설정 필요
-
-Repository → Settings → Secrets and variables → Actions
-
-필요한 Secrets:
-- `SERVER_HOST`: 서버 IP 주소
-- `SERVER_USER`: SSH 사용자명
-- `SERVER_SSH_KEY`: SSH 개인 키
-
-## 📊 모니터링
-
-### 1. 로그 모니터링
-```bash
-# PM2 로그 확인
-pm2 logs freeshell
-
-# 실시간 모니터링
-pm2 monit
+### 1. 백엔드 확인
+```
+https://api.freeshell.co.kr/api/health
 ```
 
-### 2. 헬스 체크
-```bash
-curl https://api.yourdomain.com/api/health
+### 2. 프론트엔드 확인
+```
+https://freeshell.co.kr
 ```
 
-### 3. 성능 모니터링
-- PM2 모니터링
-- 또는 외부 서비스 (Datadog, New Relic 등)
+### 3. 로그인 테스트
+```
+아이디: admin
+비밀번호: Admin123!@#
+```
 
-## 🐛 문제 해결
+---
 
-### 서버가 시작되지 않음
-1. 로그 확인: `pm2 logs`
-2. 환경 변수 확인
-3. 포트 충돌 확인: `netstat -tulpn | grep 3001`
+## 🐛 **문제 해결**
 
-### 데이터베이스 오류
-1. 마이그레이션 재실행: `npx prisma migrate deploy`
-2. Prisma 클라이언트 재생성: `npx prisma generate`
+### Railway 배포 실패 시
+```powershell
+# 로그 확인
+railway logs
 
-### 메모리 부족
-1. PM2 메모리 제한 설정
-2. Node.js 옵션 조정
+# 재배포
+railway up --detach
+```
 
-## 📚 참고 문서
+### Vercel 배포 실패 시
+```powershell
+# 로그 확인
+vercel logs
 
-- `SECURITY_CHECKLIST.md` - 보안 체크리스트
-- `PENETRATION_TEST_REPORT.md` - 보안 테스트 리포트
-- `FINAL_STATUS.md` - 프로젝트 상태
+# 재배포
+vercel --prod --force
+```
 
-## 🎯 배포 완료 후
+### 도메인 연결 안 될 시
+```
+1. DNS 전파 확인 (최대 24시간)
+2. Cloudflare Proxy 상태 확인 (주황색 구름)
+3. SSL/TLS 설정: Full
+```
 
-1. ✅ HTTPS 확인
-2. ✅ Health Check 확인
-3. ✅ 기능 테스트
-4. ✅ 모니터링 설정
-5. ✅ 백업 설정
+---
 
+## 💰 **예상 비용**
+
+### Railway
+- 무료 플랜: $5 크레딧/월
+- Hobby 플랜: $5/월 (추가 크레딧)
+- **예상**: 무료로 충분
+
+### Vercel
+- Hobby 플랜: 무료
+- **예상**: $0/월
+
+### 총 비용
+**월 $0** (무료 플랜으로 충분)
+
+---
+
+## 🎉 **배포 완료 후**
+
+### 접속 URL
+```
+https://freeshell.co.kr
+```
+
+### API 문서
+```
+https://api.freeshell.co.kr/api-docs
+```
+
+### 관리자 로그인
+```
+아이디: admin
+비밀번호: Admin123!@#
+```
+
+---
+
+## 📊 **배포 체크리스트**
+
+- [ ] Railway CLI 설치
+- [ ] Railway 로그인
+- [ ] 백엔드 배포
+- [ ] PostgreSQL 추가
+- [ ] Railway 환경 변수 설정
+- [ ] Vercel CLI 설치
+- [ ] Vercel 로그인
+- [ ] 프론트엔드 배포
+- [ ] Vercel 환경 변수 설정
+- [ ] Cloudflare DNS 설정
+- [ ] 배포 확인
+- [ ] 로그인 테스트
+
+---
+
+**준비 완료! 이제 명령어를 실행하세요!** 🚀
+
+**질문이 있으면 언제든 물어보세요!** 💪

@@ -30,7 +30,9 @@ export function initRedis(): Redis | null {
     })
 
     redisClient.on('error', (error) => {
-      logger.warn('Redis 연결 실패 (캐싱 없이 계속 진행):', error.message)
+      // Redis 에러는 한 번만 로그 (반복 방지)
+      if (!redisClient) return
+      logger.warn('⚠️ Redis 미연결 - 메모리 캐시 사용 (정상 작동)')
       redisClient = null
     })
 

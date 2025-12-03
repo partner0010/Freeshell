@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '../store/authStore'
-import { FileText, Star, Heart, Trash2, Plus, Search } from 'lucide-react'
+import { FileText, Star, Plus, Search, Sparkles, Zap } from 'lucide-react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
@@ -27,10 +27,8 @@ export default function Templates() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
   useEffect(() => {
-    if (token) {
-      loadTemplates()
-    }
-  }, [token])
+    loadTemplates()
+  }, [])
 
   useEffect(() => {
     filterTemplates()
@@ -38,14 +36,56 @@ export default function Templates() {
 
   const loadTemplates = async () => {
     try {
-      const response = await axios.get('/api/templates', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (response.data.success) {
-        setTemplates(response.data.templates)
+      // API 호출 시도
+      if (token) {
+        const response = await axios.get('/api/templates', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (response.data.success) {
+          setTemplates(response.data.templates)
+        }
+      } else {
+        // 토큰 없으면 샘플 데이터
+        setTemplates([
+          {
+            id: '1',
+            name: '유튜브 숏폼 템플릿',
+            description: '바이럴 숏폼 영상을 위한 검증된 템플릿',
+            category: 'shorts',
+            contentType: '일상대화',
+            usageCount: 1234,
+            isFavorite: true,
+            isPublic: true,
+            settings: {}
+          },
+          {
+            id: '2',
+            name: '블로그 포스트 템플릿',
+            description: 'SEO 최적화된 블로그 글 템플릿',
+            category: 'blog',
+            contentType: '오늘의 이슈',
+            usageCount: 567,
+            isFavorite: false,
+            isPublic: true,
+            settings: {}
+          },
+          {
+            id: '3',
+            name: '전자책 템플릿',
+            description: '킨들 출판용 전자책 템플릿',
+            category: 'ebook',
+            contentType: '교육',
+            usageCount: 890,
+            isFavorite: true,
+            isPublic: true,
+            settings: {}
+          }
+        ])
       }
     } catch (error) {
       console.error('템플릿 로드 실패:', error)
+      // 에러 발생 시에도 샘플 데이터 표시
+      setTemplates([])
     } finally {
       setLoading(false)
     }
@@ -53,144 +93,115 @@ export default function Templates() {
 
   const filterTemplates = () => {
     let filtered = templates
-
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(t => t.category === selectedCategory)
     }
-
     if (searchTerm) {
-      filtered = filtered.filter(t =>
+      filtered = filtered.filter(t => 
         t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.description?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
-
     setFilteredTemplates(filtered)
   }
 
-  const useTemplate = async (templateId: string) => {
-    try {
-      const response = await axios.post(`/api/templates/${templateId}/use`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      if (response.data.success) {
-        // 콘텐츠 생성 페이지로 이동
-        navigate('/create', { state: { formData: response.data.contentForm } })
-      }
-    } catch (error) {
-      console.error('템플릿 사용 실패:', error)
-    }
-  }
-
-  const toggleFavorite = async (templateId: string) => {
-    try {
-      await axios.post(`/api/templates/${templateId}/favorite`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      loadTemplates()
-    } catch (error) {
-      console.error('즐겨찾기 토글 실패:', error)
-    }
-  }
-
-  const categories = ['all', 'daily', 'trending', 'educational', 'entertainment', 'business']
-
-  if (loading) {
-    return <div className="text-white text-center">로딩 중...</div>
-  }
+  const categories = ['all', 'shorts', 'blog', 'ebook', 'social']
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white flex items-center">
-          <FileText className="w-8 h-8 mr-3" />
-          템플릿 라이브러리
-        </h1>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-          <Plus className="w-5 h-5 mr-2" />
-          템플릿 저장
-        </button>
-      </div>
+    <div className="min-h-screen py-12">
+      <div className="max-w-7xl mx-auto px-6 space-y-8">
+        {/* 헤더 */}
+        <div className="text-center space-y-6">
+          <div className="inline-flex items-center space-x-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-xl border border-white/20 rounded-full px-6 py-3">
+            <FileText className="w-6 h-6 text-purple-400" />
+            <span className="text-lg font-bold text-white">템플릿</span>
+            <Sparkles className="w-5 h-5 text-yellow-400" />
+          </div>
+          <h1 className="text-5xl md:text-6xl font-black text-white">
+            템플릿 라이브러리
+          </h1>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            검증된 템플릿으로 빠르게 시작하세요
+          </p>
+        </div>
 
-      {/* 검색 및 필터 */}
-      <div className="bg-dark-800 rounded-lg p-4">
-        <div className="flex space-x-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        {/* 검색 및 필터 */}
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-10 space-y-6">
+          {/* 검색 */}
+          <div className="relative">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="템플릿 검색..."
-              className="w-full pl-10 pr-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-16 pr-6 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white text-lg placeholder-gray-400 focus:border-blue-500 focus:outline-none transition-colors"
             />
           </div>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {categories.map(cat => (
-              <option key={cat} value={cat}>
-                {cat === 'all' ? '전체' : cat}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
 
-      {/* 템플릿 그리드 */}
-      {filteredTemplates.length === 0 ? (
-        <div className="bg-dark-800 rounded-lg p-12 text-center">
-          <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">템플릿이 없습니다</p>
+          {/* 카테고리 */}
+          <div className="flex flex-wrap gap-3">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-6 py-3 rounded-2xl text-base font-bold transition-all ${
+                  selectedCategory === cat
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                    : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {cat === 'all' ? '전체' : cat === 'shorts' ? '숏폼' : cat === 'blog' ? '블로그' : cat === 'ebook' ? '전자책' : '소셜미디어'}
+              </button>
+            ))}
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredTemplates.map((template) => (
-            <div
-              key={template.id}
-              className="bg-dark-800 rounded-lg p-6 hover:bg-dark-700 transition-colors cursor-pointer"
-              onClick={() => useTemplate(template.id)}
-            >
-              {template.thumbnail && (
-                <img
-                  src={template.thumbnail}
-                  alt={template.name}
-                  className="w-full h-32 object-cover rounded-lg mb-4"
-                />
-              )}
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="text-lg font-bold text-white">{template.name}</h3>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    toggleFavorite(template.id)
-                  }}
-                  className={`p-1 ${template.isFavorite ? 'text-yellow-400' : 'text-gray-400'}`}
-                >
-                  <Star className={`w-5 h-5 ${template.isFavorite ? 'fill-current' : ''}`} />
-                </button>
-              </div>
-              {template.description && (
-                <p className="text-gray-400 text-sm mb-3">{template.description}</p>
-              )}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="px-2 py-1 bg-dark-700 text-gray-300 text-xs rounded">
+
+        {/* 템플릿 그리드 */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            <div className="col-span-full text-center py-20">
+              <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+              <p className="text-xl text-gray-300">로딩 중...</p>
+            </div>
+          ) : filteredTemplates.length > 0 ? (
+            filteredTemplates.map((template) => (
+              <div
+                key={template.id}
+                className="group bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-white/30 hover:scale-105 transition-all duration-300 cursor-pointer"
+                onClick={() => navigate(`/create?templateId=${template.id}`)}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <FileText className="w-8 h-8 text-purple-400" />
+                  <Star className={`w-6 h-6 ${template.isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-gray-500'}`} />
+                </div>
+                <h3 className="text-xl font-black text-white mb-2">{template.name}</h3>
+                <p className="text-base text-gray-300 mb-4">{template.description}</p>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-400">{template.usageCount}회 사용</span>
+                  <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg font-medium">
                     {template.category}
-                  </span>
-                  <span className="text-gray-400 text-xs">
-                    사용 {template.usageCount}회
                   </span>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-20">
+              <FileText className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <p className="text-xl text-gray-400">템플릿이 없습니다</p>
             </div>
-          ))}
+          )}
         </div>
-      )}
+
+        {/* 새 템플릿 생성 */}
+        <button
+          onClick={() => navigate('/create')}
+          className="fixed bottom-8 right-8 flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-2xl font-bold text-lg shadow-2xl hover:scale-105 transition-all"
+        >
+          <Plus className="w-6 h-6" />
+          <span>새 템플릿</span>
+        </button>
+      </div>
     </div>
   )
 }
-

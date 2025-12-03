@@ -67,17 +67,19 @@ export class ErrorTracker {
       const prisma = getPrismaClient()
       await prisma.securityLog.create({
         data: {
-          type: 'error',
-          severity: errorInfo.statusCode && errorInfo.statusCode >= 500 ? 'high' : 'medium',
-          message: errorInfo.message,
+          ip: errorInfo.ip || 'unknown',
+          method: errorInfo.method || 'UNKNOWN',
+          path: errorInfo.path || '/',
+          threatLevel: errorInfo.statusCode && errorInfo.statusCode >= 500 ? 'high' : 'medium',
           details: JSON.stringify({
+            type: 'error',
+            message: errorInfo.message,
             stack: errorInfo.stack,
             code: errorInfo.code,
-            path: errorInfo.path,
-            method: errorInfo.method,
             userId: errorInfo.userId,
-            ip: errorInfo.ip
+            statusCode: errorInfo.statusCode
           }),
+          userAgent: errorInfo.userAgent || null,
           timestamp: errorInfo.timestamp
         }
       })
@@ -103,7 +105,9 @@ export class ErrorTracker {
 
       const errors = await prisma.securityLog.findMany({
         where: {
-          type: 'error',
+          details: {
+            contains: '"type":"error"'
+          },
           timestamp: {
             gte: dateThreshold
           }
@@ -119,8 +123,8 @@ export class ErrorTracker {
 
       errors.forEach(error => {
         const details = JSON.parse(error.details || '{}')
-        const errorType = error.severity || 'unknown'
-        const path = details.path || 'unknown'
+        const errorType = error.threatLevel || 'unknown'
+        const path = error.path || 'unknown'
 
         byType[errorType] = (byType[errorType] || 0) + 1
         byPath[path] = (byPath[path] || 0) + 1
@@ -129,7 +133,7 @@ export class ErrorTracker {
       const recent: ErrorInfo[] = errors.slice(0, 10).map(error => {
         const details = JSON.parse(error.details || '{}')
         return {
-          message: error.message,
+          message: details.message || 'Unknown error',
           stack: details.stack,
           code: details.code,
           statusCode: details.statusCode,

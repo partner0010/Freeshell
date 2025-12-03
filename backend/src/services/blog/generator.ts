@@ -1,7 +1,7 @@
 import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 import { logger } from '../../utils/logger'
-import { ContentType } from '../../../types'
+import { ContentType } from '../../types'
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -54,7 +54,7 @@ export async function generateBlogPost(
         max_tokens: 2000
       })
     } else if (anthropic) {
-      aiResponse = await anthropic.messages.create({
+      aiResponse = await (anthropic as any).messages.create({
         model: 'claude-3-opus-20240229',
         max_tokens: 2000,
         messages: [{

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { FileText, Plus, Sparkles, Globe, Send, Loader } from 'lucide-react'
 
 interface BlogPost {
   id: string
@@ -25,6 +26,14 @@ export default function BlogManager() {
     { code: 'ja', name: '日本語' },
     { code: 'zh', name: '中文' },
     { code: 'es', name: 'Español' },
+  ]
+
+  const contentTypes = [
+    '일상대화',
+    '오늘의 이슈',
+    '기술 리뷰',
+    '여행 가이드',
+    '건강 팁',
   ]
 
   useEffect(() => {
@@ -60,247 +69,175 @@ export default function BlogManager() {
 
       if (response.data.success) {
         setGeneratedPost(response.data.data)
-        alert('블로그 포스트 생성 완료!')
+        await fetchPosts()
       }
-    } catch (error: any) {
-      console.error('블로그 포스트 생성 실패:', error)
-      alert(error.response?.data?.error || '블로그 포스트 생성 중 오류가 발생했습니다')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleTranslate = async (targetLanguage: string) => {
-    if (!generatedPost) {
-      alert('먼저 블로그 포스트를 생성해주세요')
-      return
-    }
-
-    try {
-      setLoading(true)
-      const response = await axios.post('/api/blog/translate', {
-        blogPost: generatedPost,
-        targetLanguage
-      })
-
-      if (response.data.success) {
-        setGeneratedPost(response.data.data)
-        alert('번역 완료!')
-      }
-    } catch (error: any) {
-      console.error('번역 실패:', error)
-      alert(error.response?.data?.error || '번역 중 오류가 발생했습니다')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handlePublish = async (platform: string) => {
-    if (!generatedPost) {
-      alert('먼저 블로그 포스트를 생성해주세요')
-      return
-    }
-
-    try {
-      setLoading(true)
-      let credentials: any = {}
-
-      if (platform === 'wordpress') {
-        credentials = {
-          siteUrl: prompt('WordPress 사이트 URL:'),
-          username: prompt('사용자명:'),
-          password: prompt('비밀번호:')
-        }
-      } else if (platform === 'medium') {
-        credentials = {
-          accessToken: prompt('Medium Access Token:'),
-          userId: prompt('User ID:')
-        }
-      } else if (platform === 'blogger') {
-        credentials = {
-          blogId: prompt('Blog ID:'),
-          accessToken: prompt('Access Token:')
-        }
-      }
-
-      const response = await axios.post('/api/blog/publish', {
-        blogPost: generatedPost,
-        platform,
-        credentials
-      })
-
-      if (response.data.success) {
-        alert(`${platform}에 게시 완료!`)
-        fetchPosts()
-      }
-    } catch (error: any) {
-      console.error('블로그 게시 실패:', error)
-      alert(error.response?.data?.error || '블로그 게시 중 오류가 발생했습니다')
+    } catch (error) {
+      console.error('블로그 생성 실패:', error)
+      alert('블로그 생성 중 오류가 발생했습니다')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold">블로그 자동화</h1>
+    <div className="min-h-screen py-12">
+      <div className="max-w-7xl mx-auto px-6 space-y-8">
+        {/* 헤더 */}
+        <div className="text-center space-y-6">
+          <div className="inline-flex items-center space-x-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-xl border border-white/20 rounded-full px-6 py-3">
+            <FileText className="w-6 h-6 text-green-400" />
+            <span className="text-lg font-bold text-white">블로그 자동화</span>
+            <Sparkles className="w-5 h-5 text-yellow-400" />
+          </div>
+          <h1 className="text-5xl md:text-6xl font-black text-white">
+            블로그 포스트 생성
+          </h1>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            SEO 최적화된 블로그 포스트를 자동으로 생성하세요
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 생성 폼 */}
-        <div className="bg-white p-6 rounded-lg shadow space-y-4">
-          <h2 className="text-xl font-bold">새 블로그 포스트 생성</h2>
-
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-10 space-y-6">
+          {/* 주제 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-lg font-bold text-white mb-4">
               주제 *
             </label>
             <input
               type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              placeholder="예: AI로 시작하는 부업 가이드"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="블로그 포스트 주제를 입력하세요"
+              className="w-full px-6 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white text-lg placeholder-gray-400 focus:border-blue-500 focus:outline-none transition-colors"
+              disabled={loading}
             />
           </div>
 
+          {/* 콘텐츠 유형 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              콘텐츠 유형
+            <label className="block text-lg font-bold text-white mb-4">
+              카테고리
             </label>
             <select
               value={contentType}
               onChange={(e) => setContentType(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg"
+              className="w-full px-6 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white text-lg focus:border-blue-500 focus:outline-none appearance-none cursor-pointer transition-colors"
+              disabled={loading}
             >
-              <option value="일상대화">일상대화</option>
-              <option value="오늘의 이슈">오늘의 이슈</option>
-              <option value="영화 이야기">영화 이야기</option>
-              <option value="드라마 이야기">드라마 이야기</option>
+              {contentTypes.map(type => (
+                <option key={type} value={type} className="bg-gray-900 text-white py-2">
+                  {type}
+                </option>
+              ))}
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                언어
-              </label>
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg"
-              >
-                {languages.map(lang => (
-                  <option key={lang.code} value={lang.code}>{lang.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                단어 수
-              </label>
-              <input
-                type="number"
-                value={wordCount}
-                onChange={(e) => setWordCount(parseInt(e.target.value) || 1000)}
-                min="500"
-                max="5000"
-                className="w-full px-4 py-2 border rounded-lg"
-              />
+          {/* 언어 선택 */}
+          <div>
+            <label className="block text-lg font-bold text-white mb-4 flex items-center">
+              <Globe className="w-6 h-6 mr-2 text-blue-400" />
+              언어
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
+                  className={`px-6 py-4 border-2 rounded-2xl text-base font-bold transition-all ${
+                    language === lang.code
+                      ? 'bg-blue-500/20 border-blue-500 text-white'
+                      : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/30 hover:text-white'
+                  }`}
+                  disabled={loading}
+                >
+                  {lang.name}
+                </button>
+              ))}
             </div>
           </div>
 
+          {/* 글자 수 */}
+          <div>
+            <label className="block text-lg font-bold text-white mb-4">
+              글자 수: <span className="text-blue-400">{wordCount.toLocaleString()}자</span>
+            </label>
+            <input
+              type="range"
+              min="500"
+              max="5000"
+              step="100"
+              value={wordCount}
+              onChange={(e) => setWordCount(Number(e.target.value))}
+              className="w-full h-3 bg-white/10 rounded-full appearance-none cursor-pointer"
+              disabled={loading}
+              style={{
+                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(wordCount / 5000) * 100}%, rgba(255,255,255,0.1) ${(wordCount / 5000) * 100}%, rgba(255,255,255,0.1) 100%)`
+              }}
+            />
+            <div className="flex justify-between text-sm text-gray-400 mt-3">
+              <span>500자</span>
+              <span>3,000자</span>
+              <span>5,000자</span>
+            </div>
+          </div>
+
+          {/* 생성 버튼 */}
           <button
             onClick={handleGenerate}
             disabled={loading || !topic.trim()}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
+            className="w-full py-5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-2xl font-black text-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-2xl"
           >
-            {loading ? '생성 중...' : '블로그 포스트 생성'}
+            {loading ? (
+              <div className="flex items-center justify-center space-x-3">
+                <Loader className="w-6 h-6 animate-spin" />
+                <span>생성 중...</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center space-x-3">
+                <Send className="w-6 h-6" />
+                <span>블로그 포스트 생성</span>
+              </div>
+            )}
           </button>
         </div>
 
         {/* 생성된 포스트 */}
         {generatedPost && (
-          <div className="bg-white p-6 rounded-lg shadow space-y-4">
-            <h2 className="text-xl font-bold">생성된 포스트</h2>
-            
-            <div className="space-y-2">
-              <div>
-                <span className="font-medium">제목:</span> {generatedPost.title}
-              </div>
-              <div>
-                <span className="font-medium">요약:</span> {generatedPost.excerpt}
-              </div>
-              <div>
-                <span className="font-medium">태그:</span> {generatedPost.tags?.join(', ')}
-              </div>
-            </div>
-
-            <div className="border-t pt-4 space-y-2">
-              <div className="text-sm font-medium">다국어 번역:</div>
-              <div className="flex flex-wrap gap-2">
-                {languages.filter(l => l.code !== generatedPost.language).map(lang => (
-                  <button
-                    key={lang.code}
-                    onClick={() => handleTranslate(lang.code)}
-                    disabled={loading}
-                    className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm disabled:bg-gray-100"
-                  >
-                    {lang.name}로 번역
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t pt-4 space-y-2">
-              <div className="text-sm font-medium">게시 플랫폼:</div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => handlePublish('wordpress')}
-                  disabled={loading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
-                >
-                  WordPress
-                </button>
-                <button
-                  onClick={() => handlePublish('medium')}
-                  disabled={loading}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
-                >
-                  Medium
-                </button>
-                <button
-                  onClick={() => handlePublish('blogger')}
-                  disabled={loading}
-                  className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:bg-gray-400"
-                >
-                  Blogger
-                </button>
+          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-xl border border-green-500/30 rounded-3xl p-10 animate-fade-in">
+            <h2 className="text-3xl font-black text-white mb-6">{generatedPost.title}</h2>
+            <div className="prose prose-invert max-w-none">
+              <div className="text-base text-gray-300 leading-relaxed whitespace-pre-wrap">
+                {generatedPost.content}
               </div>
             </div>
           </div>
         )}
-      </div>
 
-      {/* 게시된 포스트 목록 */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-bold mb-4">게시된 포스트</h2>
-        {posts.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">
-            아직 게시된 포스트가 없습니다
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {posts.map(post => (
-              <div key={post.id} className="border-b pb-2">
-                <div className="font-medium">{post.title}</div>
-                <div className="text-sm text-gray-500">{post.excerpt}</div>
-              </div>
-            ))}
+        {/* 포스트 목록 */}
+        {posts.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-black text-white">최근 포스트</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {posts.map((post) => (
+                <div
+                  key={post.id}
+                  className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-white/30 hover:scale-105 transition-all duration-300 cursor-pointer"
+                >
+                  <h3 className="text-xl font-black text-white mb-2">{post.title}</h3>
+                  <p className="text-base text-gray-300 mb-4 line-clamp-2">{post.excerpt}</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">{new Date(post.createdAt).toLocaleDateString('ko-KR')}</span>
+                    <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg font-medium">
+                      {post.language}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
     </div>
   )
 }
-

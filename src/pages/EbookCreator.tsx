@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useContentStore } from '../store/contentStore'
 import axios from 'axios'
+import { BookOpen, Plus, Sparkles, Globe, Send, Loader, DollarSign } from 'lucide-react'
 
 export default function EbookCreator() {
   const navigate = useNavigate()
@@ -21,6 +21,14 @@ export default function EbookCreator() {
     { code: 'es', name: 'Español' },
   ]
 
+  const contentTypes = [
+    '일상대화',
+    '기술 가이드',
+    '자기계발',
+    '비즈니스',
+    '건강',
+  ]
+
   const handleGenerate = async () => {
     if (!topic.trim()) {
       alert('주제를 입력해주세요')
@@ -38,173 +46,180 @@ export default function EbookCreator() {
 
       if (response.data.success) {
         setGeneratedEbook(response.data.data)
-        alert('E-book 생성 완료!')
+        alert('전자책 생성 완료!')
       }
     } catch (error: any) {
-      console.error('E-book 생성 실패:', error)
-      alert(error.response?.data?.error || 'E-book 생성 중 오류가 발생했습니다')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handlePublish = async (platform: string) => {
-    if (!generatedEbook) {
-      alert('먼저 E-book을 생성해주세요')
-      return
-    }
-
-    try {
-      setLoading(true)
-      const accessToken = prompt(`${platform} Access Token을 입력해주세요:`)
-      if (!accessToken) return
-
-      const response = await axios.post('/api/ebook/publish', {
-        ebookId: generatedEbook.id || 'temp',
-        platform,
-        price: parseFloat(price),
-        accessToken
-      })
-
-      if (response.data.success) {
-        alert(`${platform}에 게시 완료!`)
-        navigate('/revenue')
-      }
-    } catch (error: any) {
-      console.error('E-book 게시 실패:', error)
-      alert(error.response?.data?.error || 'E-book 게시 중 오류가 발생했습니다')
+      console.error('전자책 생성 실패:', error)
+      alert(error.response?.data?.error || '전자책 생성 중 오류가 발생했습니다')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold">E-book 자동 제작</h1>
-
-      <div className="bg-white p-6 rounded-lg shadow space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            주제 *
-          </label>
-          <input
-            type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="예: AI로 시작하는 부업 가이드"
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
+    <div className="min-h-screen py-12">
+      <div className="max-w-7xl mx-auto px-6 space-y-8">
+        {/* 헤더 */}
+        <div className="text-center space-y-6">
+          <div className="inline-flex items-center space-x-3 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-xl border border-white/20 rounded-full px-6 py-3">
+            <BookOpen className="w-6 h-6 text-indigo-400" />
+            <span className="text-lg font-bold text-white">전자책 생성</span>
+            <Sparkles className="w-5 h-5 text-yellow-400" />
+          </div>
+          <h1 className="text-5xl md:text-6xl font-black text-white">
+            전자책 자동 출판
+          </h1>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            Kindle, 리디북스 등에 출판할 전자책을 자동으로 생성하세요
+          </p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            콘텐츠 유형
-          </label>
-          <select
-            value={contentType}
-            onChange={(e) => setContentType(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg"
-          >
-            <option value="일상대화">일상대화</option>
-            <option value="오늘의 이슈">오늘의 이슈</option>
-            <option value="영화 이야기">영화 이야기</option>
-            <option value="드라마 이야기">드라마 이야기</option>
-            <option value="재미">재미</option>
-          </select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+        {/* 생성 폼 */}
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-10 space-y-8">
+          {/* 주제 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              언어
+            <label className="block text-lg font-bold text-white mb-4">
+              주제 *
+            </label>
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="예: AI 시대의 부업 전략"
+              className="w-full px-6 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white text-lg placeholder-gray-400 focus:border-blue-500 focus:outline-none transition-colors"
+              disabled={loading}
+            />
+          </div>
+
+          {/* 카테고리 */}
+          <div>
+            <label className="block text-lg font-bold text-white mb-4">
+              카테고리
             </label>
             <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg"
+              value={contentType}
+              onChange={(e) => setContentType(e.target.value)}
+              className="w-full px-6 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white text-lg focus:border-blue-500 focus:outline-none appearance-none cursor-pointer transition-colors"
+              disabled={loading}
             >
-              {languages.map(lang => (
-                <option key={lang.code} value={lang.code}>{lang.name}</option>
+              {contentTypes.map(type => (
+                <option key={type} value={type} className="bg-gray-900 text-white py-2">
+                  {type}
+                </option>
               ))}
             </select>
           </div>
 
+          {/* 언어 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              챕터 수
+            <label className="block text-lg font-bold text-white mb-4 flex items-center">
+              <Globe className="w-6 h-6 mr-2 text-blue-400" />
+              언어
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
+                  className={`px-6 py-4 border-2 rounded-2xl text-base font-bold transition-all ${
+                    language === lang.code
+                      ? 'bg-blue-500/20 border-blue-500 text-white'
+                      : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/30 hover:text-white'
+                  }`}
+                  disabled={loading}
+                >
+                  {lang.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 챕터 수 */}
+          <div>
+            <label className="block text-lg font-bold text-white mb-4">
+              챕터 수: <span className="text-blue-400">{chapterCount}개</span>
             </label>
             <input
-              type="number"
-              value={chapterCount}
-              onChange={(e) => setChapterCount(parseInt(e.target.value) || 10)}
+              type="range"
               min="5"
-              max="50"
-              className="w-full px-4 py-2 border rounded-lg"
+              max="30"
+              step="1"
+              value={chapterCount}
+              onChange={(e) => setChapterCount(Number(e.target.value))}
+              className="w-full h-3 bg-white/10 rounded-full appearance-none cursor-pointer"
+              disabled={loading}
+              style={{
+                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((chapterCount - 5) / 25) * 100}%, rgba(255,255,255,0.1) ${((chapterCount - 5) / 25) * 100}%, rgba(255,255,255,0.1) 100%)`
+              }}
             />
-          </div>
-        </div>
-
-        <button
-          onClick={handleGenerate}
-          disabled={loading || !topic.trim()}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          {loading ? '생성 중...' : 'E-book 생성'}
-        </button>
-      </div>
-
-      {generatedEbook && (
-        <div className="bg-white p-6 rounded-lg shadow space-y-4">
-          <h2 className="text-2xl font-bold">생성된 E-book</h2>
-          
-          <div className="space-y-2">
-            <div>
-              <span className="font-medium">제목:</span> {generatedEbook.title}
-            </div>
-            <div>
-              <span className="font-medium">작가:</span> {generatedEbook.author}
-            </div>
-            <div>
-              <span className="font-medium">설명:</span> {generatedEbook.description}
-            </div>
-            <div>
-              <span className="font-medium">챕터 수:</span> {generatedEbook.chapters?.length || 0}
+            <div className="flex justify-between text-sm text-gray-400 mt-3">
+              <span>5개</span>
+              <span>15개</span>
+              <span>30개</span>
             </div>
           </div>
 
-          <div className="border-t pt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              판매 가격 (USD)
+          {/* 가격 */}
+          <div>
+            <label className="block text-lg font-bold text-white mb-4 flex items-center">
+              <DollarSign className="w-6 h-6 mr-2 text-green-400" />
+              판매 가격
             </label>
             <input
               type="number"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
+              placeholder="9.99"
               step="0.01"
               min="0"
-              className="w-full px-4 py-2 border rounded-lg mb-4"
+              className="w-full px-6 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white text-lg placeholder-gray-400 focus:border-blue-500 focus:outline-none transition-colors"
+              disabled={loading}
             />
-
-            <div className="flex gap-4">
-              <button
-                onClick={() => handlePublish('gumroad')}
-                disabled={loading}
-                className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
-              >
-                Gumroad에 게시
-              </button>
-              <button
-                onClick={() => handlePublish('etsy')}
-                disabled={loading}
-                className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
-              >
-                Etsy에 게시
-              </button>
-            </div>
           </div>
+
+          {/* 생성 버튼 */}
+          <button
+            onClick={handleGenerate}
+            disabled={loading || !topic.trim()}
+            className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl font-black text-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-2xl"
+          >
+            {loading ? (
+              <div className="flex items-center justify-center space-x-3">
+                <Loader className="w-6 h-6 animate-spin" />
+                <span>전자책 생성 중...</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center space-x-3">
+                <BookOpen className="w-6 h-6" />
+                <span>전자책 생성하기</span>
+              </div>
+            )}
+          </button>
         </div>
-      )}
+
+        {/* 생성 결과 */}
+        {generatedEbook && (
+          <div className="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 backdrop-blur-xl border border-indigo-500/30 rounded-3xl p-10 animate-fade-in">
+            <h2 className="text-3xl font-black text-white mb-6">{generatedEbook.title}</h2>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white/10 rounded-2xl p-6">
+                <div className="text-4xl font-black text-white mb-2">{generatedEbook.chapters?.length || chapterCount}</div>
+                <div className="text-base text-gray-300">챕터</div>
+              </div>
+              <div className="bg-white/10 rounded-2xl p-6">
+                <div className="text-4xl font-black text-green-400 mb-2">${price}</div>
+                <div className="text-base text-gray-300">판매 가격</div>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/revenue')}
+              className="w-full py-4 bg-green-600 hover:bg-green-500 text-white rounded-2xl font-bold text-lg transition-all"
+            >
+              출판 플랫폼으로 배포
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
-

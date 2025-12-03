@@ -59,7 +59,7 @@ export class CopyrightChecker {
     // 기존 콘텐츠와 비교
     const existingContents = await prisma.content.findMany({
       where: {
-        text: { not: null }
+        text: { not: null as any }
       },
       select: {
         id: true,

@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "security-test": "tsx src/security/penetrationTest.ts --security-test",
+    "security-audit": "npm audit && npm run security-test"
+  }
+}
+

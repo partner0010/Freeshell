@@ -216,15 +216,20 @@ export class JobQueue {
 
       const version = content.versions[0]
       const videoPath = await generateVideo({
+        id: content.id,
+        version: version.version,
         title: version.title,
         description: version.description,
-        reasoning: version.reasoning,
+        script: content.text,
         thumbnail: version.thumbnail,
-        videoUrl: version.videoUrl,
+        videoUrl: version.videoUrl || undefined,
+        reasoning: version.reasoning,
         duration: version.duration,
-        contentType: content.contentType,
+        createdAt: version.createdAt.toISOString(),
+        topic: content.topic,
+        contentType: content.contentType as any,
         status: 'generated'
-      }, payload.images, payload.videos, payload.editOptions)
+      } as any, payload.images, payload.videos, payload.editOptions)
 
       // 비디오 경로 업데이트
       await prisma.contentVersion.update({
@@ -246,6 +251,7 @@ export class JobQueue {
   private async handleUpload(payload: any): Promise<any> {
     try {
       const { uploadToPlatform } = await import('../uploadService')
+      // uploadToPlatform은 이미 export되어 있음
       const { getPrismaClient } = await import('../../utils/database')
       
       const prisma = getPrismaClient()
@@ -270,15 +276,14 @@ export class JobQueue {
       }
 
       const result = await uploadToPlatform(payload.contentId, {
-        platform: platformConfig.platform,
-        email: platformConfig.email,
-        username: platformConfig.username,
-        apiKey: platformConfig.apiKey,
-        accessToken: platformConfig.accessToken,
-        refreshToken: platformConfig.refreshToken,
-        tokenExpiry: platformConfig.tokenExpiry,
-        channelId: platformConfig.channelId
-      })
+        platform: platformConfig.platform as 'youtube' | 'tiktok' | 'instagram',
+        credentials: {
+          email: platformConfig.email || undefined,
+          username: platformConfig.username || undefined,
+          apiKey: platformConfig.apiKey || undefined
+        },
+        autoUpload: true
+      } as any)
 
       logger.info(`업로드 완료: ${result.videoId || result.url}`)
       return { success: true, uploadId: result.videoId, url: result.url, platform: payload.platform }

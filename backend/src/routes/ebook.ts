@@ -117,6 +117,7 @@ router.post('/publish', validateApiKey, async (req: Request, res: Response) => {
         
         // 실제 파일 경로 확인
         const filePath = ebook.pdfPath || ebook.epubPath
+        const fs = await import('fs')
         if (!filePath || !fs.existsSync(filePath)) {
           return res.status(400).json({
             success: false,

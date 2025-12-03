@@ -1,6 +1,6 @@
 import { getPrismaClient } from '../../utils/database'
 import { logger } from '../../utils/logger'
-import { ContentForm } from '../../types'
+import { ContentType } from '../../types'
 
 export interface TemplateData {
   name: string
@@ -108,15 +108,14 @@ export class TemplateManager {
   /**
    * 템플릿으로 콘텐츠 생성
    */
-  async generateFromTemplate(templateId: string, overrides?: Partial<ContentForm>): Promise<ContentForm> {
+  async generateFromTemplate(templateId: string, overrides?: Partial<{ topic: string; contentType: ContentType; contentTime: number; text: string }>): Promise<{ topic: string; contentType: ContentType; contentTime: number; text: string }> {
     const template = await this.getTemplate(templateId)
     const settings = template.settings
 
-    const contentForm: ContentForm = {
+    const contentForm = {
       topic: overrides?.topic || settings.topic || '템플릿 기반 주제',
       contentType: overrides?.contentType || (template.contentType as any),
       contentTime: overrides?.contentTime || settings.contentTime || 60,
-      contentFormat: overrides?.contentFormat || settings.contentFormat || ['video', 'text'],
       text: overrides?.text || settings.defaultText || ''
     }
 

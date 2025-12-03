@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Globe, Play, CheckCircle, Loader, TrendingUp, Languages } from 'lucide-react'
+import { Globe, Play, CheckCircle, Loader, TrendingUp, Languages, Sparkles } from 'lucide-react'
 import axios from 'axios'
 import { ContentType } from '../types'
 
@@ -18,7 +18,7 @@ export default function GlobalCreator() {
   const navigate = useNavigate()
   const [topic, setTopic] = useState('')
   const [contentType, setContentType] = useState<ContentType>('일상대화')
-  const [duration, setDuration] = useState(600) // 10분 기본값
+  const [duration, setDuration] = useState(600)
   const [selectedRegions, setSelectedRegions] = useState<string[]>(['Asia', 'North America', 'Europe'])
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
@@ -91,7 +91,6 @@ export default function GlobalCreator() {
       setLoading(true)
       setResult(null)
 
-      // 선택된 지역의 언어 자동 선택 (언어를 수동으로 선택하지 않은 경우)
       const languagesToUse = selectedLanguages.length > 0
         ? selectedLanguages
         : regions
@@ -110,7 +109,6 @@ export default function GlobalCreator() {
       if (response.data.success) {
         setResult(response.data.data)
         
-        // 수익 대시보드로 이동
         setTimeout(() => {
           navigate('/revenue')
         }, 3000)
@@ -150,192 +148,213 @@ export default function GlobalCreator() {
     : totalLanguages * 10
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center space-x-3">
-          <Globe className="w-8 h-8 text-blue-500" />
-          <h1 className="text-4xl font-bold text-white">전세계 수익화</h1>
-        </div>
-        <p className="text-xl text-gray-400">
-          하나의 주제로 전세계 여러 언어로 콘텐츠를 자동 생성하여 수익을 극대화하세요
-        </p>
-      </div>
-
-      {/* 입력 폼 */}
-      <div className="bg-white p-6 rounded-lg shadow space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            주제 * (예: AI로 시작하는 부업 가이드)
-          </label>
-          <input
-            type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="주제를 입력하세요"
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 text-lg"
-            disabled={loading}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            콘텐츠 유형
-          </label>
-          <select
-            value={contentType}
-            onChange={(e) => setContentType(e.target.value as ContentType)}
-            className="w-full px-4 py-2 border rounded-lg"
-            disabled={loading}
-          >
-            {contentTypes.map(type => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            영상 길이: {formatTime(duration)} {duration >= 600 && '(광고 수익 최적화)'}
-          </label>
-          <input
-            type="range"
-            min="15"
-            max="3600"
-            step="15"
-            value={duration}
-            onChange={(e) => setDuration(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-            disabled={loading}
-          />
-          <div className="flex justify-between text-xs text-gray-500 mt-2">
-            <span>15초</span>
-            <span>10분 (600초)</span>
-            <span>1시간 (3600초)</span>
+    <div className="min-h-screen py-12">
+      <div className="max-w-7xl mx-auto px-6 space-y-8">
+        {/* 헤더 */}
+        <div className="text-center space-y-6">
+          <div className="inline-flex items-center space-x-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-xl border border-white/20 rounded-full px-6 py-3">
+            <Globe className="w-6 h-6 text-blue-400" />
+            <span className="text-lg font-bold text-white">전 세계 배포</span>
+            <Sparkles className="w-5 h-5 text-yellow-400" />
+          </div>
+          <h1 className="text-5xl md:text-6xl font-black text-white">
+            전 세계로 배포하세요
+          </h1>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-6">
+            하나의 주제로 여러 언어의 콘텐츠를 자동 생성하여 전 세계에서 수익을 창출하세요
+          </p>
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-6 max-w-4xl mx-auto">
+            <h3 className="text-lg font-bold text-blue-400 mb-3">🌍 전세계 배포란?</h3>
+            <p className="text-base text-gray-300 leading-relaxed">
+              하나의 아이디어로 <span className="text-white font-semibold">100개 이상의 언어</span>로 자동 번역 및 최적화된 콘텐츠를 생성합니다. 
+              각 지역의 문화와 트렌드를 반영하여 <span className="text-white font-semibold">YouTube, TikTok, Instagram</span> 등 
+              전 세계 플랫폼에 동시 배포하고 <span className="text-green-400 font-semibold">글로벌 수익</span>을 창출할 수 있습니다.
+            </p>
           </div>
         </div>
 
-        {/* 지역 선택 */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            <Globe className="w-5 h-5 inline mr-2" />
-            대상 지역 선택
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {regions.map(region => (
-              <label
-                key={region.code}
-                className={`flex items-center space-x-2 p-3 border rounded-lg cursor-pointer transition ${
-                  selectedRegions.includes(region.code)
-                    ? 'bg-blue-50 border-blue-500'
-                    : 'bg-white border-gray-300'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedRegions.includes(region.code)}
-                  onChange={() => handleRegionToggle(region.code)}
-                  className="w-4 h-4 text-blue-600"
-                  disabled={loading}
-                />
-                <span className="text-sm font-medium">{region.name}</span>
-                <span className="text-xs text-gray-500">({region.languages.length}개 언어)</span>
-              </label>
-            ))}
+        {/* 입력 폼 */}
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-10 space-y-8">
+          {/* 주제 입력 */}
+          <div>
+            <label className="block text-lg font-bold text-white mb-4">
+              주제 *
+            </label>
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="예: AI로 시작하는 부업 가이드"
+              className="w-full px-6 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white text-lg placeholder-gray-400 focus:border-blue-500 focus:outline-none transition-colors"
+              disabled={loading}
+            />
           </div>
-        </div>
 
-        {/* 언어 선택 (선택사항) */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            <Languages className="w-5 h-5 inline mr-2" />
-            특정 언어 선택 (선택사항 - 비워두면 선택한 지역의 모든 언어)
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-60 overflow-y-auto p-2 border rounded-lg">
-            {allLanguages.map(lang => (
-              <label
-                key={lang.code}
-                className={`flex items-center space-x-2 p-2 border rounded cursor-pointer transition text-sm ${
-                  selectedLanguages.includes(lang.code)
-                    ? 'bg-blue-50 border-blue-500'
-                    : 'bg-white border-gray-300'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedLanguages.includes(lang.code)}
-                  onChange={() => handleLanguageToggle(lang.code)}
-                  className="w-3 h-3 text-blue-600"
-                  disabled={loading}
-                />
-                <span>{lang.name}</span>
-              </label>
-            ))}
+          {/* 콘텐츠 유형 */}
+          <div>
+            <label className="block text-lg font-bold text-white mb-4">
+              콘텐츠 유형
+            </label>
+            <select
+              value={contentType}
+              onChange={(e) => setContentType(e.target.value as ContentType)}
+              className="w-full px-6 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white text-lg focus:border-blue-500 focus:outline-none appearance-none cursor-pointer transition-colors"
+              disabled={loading}
+            >
+              {contentTypes.map(type => (
+                <option key={type} value={type} className="bg-gray-900 text-white">
+                  {type}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
 
-        {/* 예상 수익 */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-blue-700 font-medium">생성될 언어 수</div>
-              <div className="text-2xl font-bold text-blue-900">{totalLanguages}개 언어</div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-blue-700 font-medium">예상 수익</div>
-              <div className="text-2xl font-bold text-green-600">${estimatedRevenue.toLocaleString()}</div>
+          {/* 영상 길이 */}
+          <div>
+            <label className="block text-lg font-bold text-white mb-4">
+              영상 길이: <span className="text-blue-400">{formatTime(duration)}</span>
+              {duration >= 600 && <span className="text-green-400 ml-2">(광고 수익 최적화)</span>}
+            </label>
+            <input
+              type="range"
+              min="15"
+              max="3600"
+              step="15"
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              className="w-full h-3 bg-white/10 rounded-full appearance-none cursor-pointer accent-blue-500"
+              disabled={loading}
+              style={{
+                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(duration / 3600) * 100}%, rgba(255,255,255,0.1) ${(duration / 3600) * 100}%, rgba(255,255,255,0.1) 100%)`
+              }}
+            />
+            <div className="flex justify-between text-sm text-gray-400 mt-3">
+              <span>15초</span>
+              <span>10분</span>
+              <span>1시간</span>
             </div>
           </div>
-        </div>
 
-        <button
-          onClick={handleGlobalCreate}
-          disabled={loading || !topic.trim()}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg font-bold text-lg hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-        >
-          {loading ? (
-            <>
-              <Loader className="w-6 h-6 animate-spin" />
-              <span>전세계 콘텐츠 생성 중...</span>
-            </>
-          ) : (
-            <>
-              <Play className="w-6 h-6" />
-              <span>전세계 콘텐츠 생성 시작</span>
-            </>
-          )}
-        </button>
-      </div>
+          {/* 지역 선택 */}
+          <div>
+            <label className="block text-lg font-bold text-white mb-4 flex items-center">
+              <Globe className="w-6 h-6 mr-2 text-blue-400" />
+              대상 지역 선택
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {regions.map(region => (
+                <label
+                  key={region.code}
+                  className={`flex items-center space-x-4 p-5 border-2 rounded-2xl cursor-pointer transition-all ${
+                    selectedRegions.includes(region.code)
+                      ? 'bg-blue-500/20 border-blue-500'
+                      : 'bg-white/5 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedRegions.includes(region.code)}
+                    onChange={() => handleRegionToggle(region.code)}
+                    className="w-6 h-6 rounded accent-blue-500"
+                    disabled={loading}
+                  />
+                  <div className="flex-1">
+                    <span className="block text-lg font-bold text-white">{region.name}</span>
+                    <span className="text-sm text-gray-400">{region.languages.length}개 언어</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
 
-      {/* 결과 표시 */}
-      {result && (
-        <div className="bg-white p-6 rounded-lg shadow space-y-4">
-          <h2 className="text-2xl font-bold">생성 완료</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(result).map(([language, contents]) => (
-              <div key={language} className="border rounded-lg p-4">
-                <div className="font-bold text-lg mb-2">{language}</div>
-                <div className="text-sm text-gray-600">{contents.length}개 콘텐츠</div>
-                <div className="text-xs text-green-600 mt-1">${contents.length * 10} 예상</div>
+          {/* 언어 선택 */}
+          <div>
+            <label className="block text-lg font-bold text-white mb-4 flex items-center">
+              <Languages className="w-6 h-6 mr-2 text-purple-400" />
+              특정 언어 선택
+              <span className="ml-2 text-sm text-gray-400 font-normal">(선택사항 - 비워두면 선택한 지역의 모든 언어)</span>
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {allLanguages.map(lang => (
+                <label
+                  key={lang.code}
+                  className={`flex items-center space-x-3 p-4 border-2 rounded-2xl cursor-pointer transition-all ${
+                    selectedLanguages.includes(lang.code)
+                      ? 'bg-purple-500/20 border-purple-500'
+                      : 'bg-white/5 border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedLanguages.includes(lang.code)}
+                    onChange={() => handleLanguageToggle(lang.code)}
+                    className="w-5 h-5 rounded accent-purple-500"
+                    disabled={loading}
+                  />
+                  <span className="text-base font-medium text-white">{lang.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 통계 및 생성 버튼 */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 border-t border-white/10">
+            <div className="flex gap-8">
+              <div className="text-center">
+                <div className="text-4xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  {totalLanguages}
+                </div>
+                <div className="text-sm text-gray-400 font-medium mt-1">언어</div>
               </div>
-            ))}
+              <div className="text-center">
+                <div className="text-4xl font-black text-green-400">
+                  ${estimatedRevenue}
+                </div>
+                <div className="text-sm text-gray-400 font-medium mt-1">예상 수익</div>
+              </div>
+            </div>
+            
+            <button
+              onClick={handleGlobalCreate}
+              disabled={loading || !topic.trim()}
+              className="group relative px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-2xl font-black text-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-2xl hover:scale-105"
+            >
+              {loading ? (
+                <div className="flex items-center space-x-3">
+                  <Loader className="w-6 h-6 animate-spin" />
+                  <span>생성 중...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-3">
+                  <Play className="w-6 h-6" />
+                  <span>전 세계로 배포</span>
+                </div>
+              )}
+            </button>
           </div>
         </div>
-      )}
 
-      {/* 안내 */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-bold text-blue-800 mb-2">전세계 수익화 기능</h3>
-        <ul className="text-sm text-blue-700 space-y-1">
-          <li>✅ 다국어 자동 번역 (25개 이상 언어 지원)</li>
-          <li>✅ 지역별 최적화된 콘텐츠 생성</li>
-          <li>✅ 다국어 음성 생성 (SUPERTONE AI)</li>
-          <li>✅ 다국어 자막 자동 생성</li>
-          <li>✅ 지역별 트렌드 분석</li>
-          <li>✅ 여러 YouTube 채널 자동 업로드</li>
-          <li>✅ 지역별 수익 추적</li>
-        </ul>
+        {/* 결과 */}
+        {result && (
+          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-xl border border-green-500/30 rounded-3xl p-10 animate-fade-in">
+            <div className="flex items-center space-x-3 mb-6">
+              <CheckCircle className="w-8 h-8 text-green-400" />
+              <h2 className="text-3xl font-black text-white">생성 완료!</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {Object.entries(result).map(([lang, contents]) => (
+                <div key={lang} className="bg-white/10 rounded-2xl p-6 text-center">
+                  <div className="text-3xl font-black text-white mb-2">{contents.length}</div>
+                  <div className="text-base text-gray-300 font-medium">{lang}</div>
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-lg text-green-400 font-medium mt-8">
+              수익 대시보드로 이동 중...
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
 }
-

@@ -139,7 +139,7 @@ export async function generateContentInsights(
 
     const insight: ContentInsight = {
       contentId,
-      title: content.title,
+      title: (content as any).title || (content as any).versions?.[0]?.title || 'Untitled',
       performance: {
         views: stats.totalViews,
         likes: stats.totalLikes,

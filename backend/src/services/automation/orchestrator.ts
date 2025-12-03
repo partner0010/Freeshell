@@ -11,13 +11,14 @@ import { trackRevenue } from '../revenue/tracker'
 import { notificationService } from '../notifications/notificationService'
 import { analytics } from '../analytics/realTimeAnalytics'
 import { smartScheduler } from './smartScheduler'
-import { ContentType } from '../../../types'
+import { ContentType } from '../../types'
 
 export interface AutomationConfig {
   // 기본 설정
   topic: string
   contentType: ContentType
   text?: string
+  userId?: string // 사용자 ID (알림 전송용)
   
   // YouTube Shorts 설정
   enableYouTube?: boolean
@@ -104,8 +105,9 @@ export async function automateEverything(
           try {
             const { uploadToPlatforms } = await import('../uploadService')
             await uploadToPlatforms(contents[0].id, config.youtubePlatforms.map(p => ({
-              platform: p,
-              credentials: config.credentials?.youtube
+              platform: p as 'youtube' | 'tiktok' | 'instagram',
+              credentials: config.credentials?.youtube || {},
+              autoUpload: true
             })))
             
             steps[steps.length - 1] = {
@@ -309,12 +311,17 @@ export async function automateEverything(
     logger.info('✅ 원클릭 자동화 완료:', { totalTime, steps: steps.length })
 
     // 알림 전송
-    if (config.credentials?.userId) {
-      await notificationService.notifySuccess(
-        config.credentials.userId,
-        '자동화 완료',
-        `모든 플랫폼에 콘텐츠가 성공적으로 배포되었습니다. 예상 수익: $${revenue.estimated.toFixed(2)}`
-      )
+    if (config.userId) {
+      try {
+        await notificationService.createNotification({
+          userId: config.userId,
+          type: 'success',
+          title: '원클릭 자동화 완료',
+          message: `${steps.length}개 작업이 완료되었습니다. 총 수익: ${revenue.estimated.toLocaleString()}원`
+        })
+      } catch (error) {
+        logger.warn('알림 전송 실패:', error)
+      }
     }
 
     // 통계 기록
@@ -345,12 +352,17 @@ export async function automateEverything(
     logger.error('❌ 원클릭 자동화 실패:', error)
     
     // 실패 알림
-    if (config.credentials?.userId) {
-      await notificationService.notifyError(
-        config.credentials.userId,
-        '자동화 실패',
-        `자동화 중 오류가 발생했습니다: ${error.message}`
-      )
+    if (config.userId) {
+      try {
+        await notificationService.createNotification({
+          userId: config.userId,
+          type: 'error',
+          title: '원클릭 자동화 실패',
+          message: error.message || '자동화 작업 중 오류가 발생했습니다.'
+        })
+      } catch (notifError) {
+        logger.warn('알림 전송 실패:', notifError)
+      }
     }
 
     return {

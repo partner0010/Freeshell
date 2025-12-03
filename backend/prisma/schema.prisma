@@ -14,6 +14,17 @@ model User {
   email     String   @unique
   username  String   @unique
   password  String
+  phone     String?  // 핸드폰 번호
+  role      String   @default("user") // user, admin, moderator
+  isActive  Boolean  @default(true)
+  isApproved Boolean @default(false) // 관리자 승인 필요
+  isEmailVerified Boolean @default(false) // 이메일 인증
+  isPhoneVerified Boolean @default(false) // 핸드폰 인증
+  emailVerificationToken String? // 이메일 인증 토큰
+  phoneVerificationCode String? // 핸드폰 인증 코드
+  verificationExpiry DateTime? // 인증 만료 시간
+  approvedBy String?  // 승인한 관리자 ID
+  approvedAt DateTime? // 승인 일시
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -22,6 +33,9 @@ model User {
   templates     ContentTemplate[]
   accounts      MultiAccount[]
   notifications Notification[]
+  
+  @@index([role])
+  @@index([isActive])
 }
 
 model Content {
@@ -241,6 +255,54 @@ model SecurityLog {
   @@index([ip])
   @@index([threatLevel])
   @@index([timestamp])
+}
+
+model AIConversation {
+  id            String   @id @default(uuid())
+  userId        String?
+  title         String?  // 대화 제목 (첫 메시지 기반)
+  aiServices    String   // 사용된 AI 서비스 (JSON 배열)
+  messageCount  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  messages      AIMessage[]
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model AIMessage {
+  id              String   @id @default(uuid())
+  conversationId  String
+  role            String   // user, assistant, system
+  content         String   // SQLite는 Text 타입 지원 안 함
+  aiService       String?  // 사용된 AI 서비스
+  tokensUsed      Int?
+  responseTime    Int?     // 응답 시간 (ms)
+  rating          Int?     // 평가: 1 (좋아요), -1 (싫어요), null (평가 없음)
+  createdAt       DateTime @default(now())
+  
+  conversation    AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@index([conversationId])
+  @@index([createdAt])
+  @@index([rating])
+}
+
+model AIUsageLimit {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  dailyLimit      Int      @default(100)  // 일일 호출 제한
+  monthlyLimit    Int      @default(3000) // 월간 호출 제한
+  dailyUsed       Int      @default(0)    // 오늘 사용량
+  monthlyUsed     Int      @default(0)    // 이번 달 사용량
+  lastResetDate   DateTime @default(now()) // 마지막 리셋 날짜
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([lastResetDate])
 }
 
 model BlockedIP {
@@ -506,5 +568,60 @@ model LegalReview {
   timestamp   DateTime @default(now())
 
   @@index([contentId])
+}
+
+// 자동 점검 스케줄
+model InspectionSchedule {
+  id          String   @id @default(uuid())
+  userId      String
+  time        String   // HH:mm 형식
+  enabled     Boolean  @default(true)
+  autoFix     Boolean  @default(true)
+  optimize    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reports    InspectionReport[]
+
+  @@index([userId])
+  @@index([enabled])
+}
+
+// 자동 점검 보고서
+model InspectionReport {
+  id                    String   @id @default(uuid())
+  scheduleId            String?
+  score                 Int      // 0-100
+  issuesCount           Int      @default(0)
+  securityIssuesCount   Int      @default(0)
+  performanceIssuesCount Int     @default(0)
+  stabilityIssuesCount  Int      @default(0)
+  legalIssuesCount      Int      @default(0)
+  fixedCount            Int      @default(0)
+  report                String   // JSON
+  fixResults            String?  // JSON
+  createdAt             DateTime @default(now())
+
+  schedule              InspectionSchedule? @relation(fields: [scheduleId], references: [id])
+
+  @@index([scheduleId])
+  @@index([createdAt])
+}
+
+// 오류 로그
+model ErrorLog {
+  id          String   @id @default(uuid())
+  message     String
+  stack       String?
+  severity    String   @default("medium") // low, medium, high, critical
+  resolved    Boolean  @default(false)
+  solution    String?
+  autoFixable Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+
+  @@index([resolved])
+  @@index([severity])
+  @@index([createdAt])
 }
 

@@ -129,9 +129,22 @@ export class PerformanceOptimizer {
     }
 
     return results
+  }
+
+  /**
+   * 중복 제거 후 배치 조회 (개선 버전)
+   */
+  async batchQueryUnique<T>(
+    ids: string[],
+    queryFn: (batch: string[]) => Promise<T[]>,
+    batchSize: number = 100,
+    useCache: boolean = true
+  ): Promise<T[]> {
+    // 중복 제거
+    const uniqueIds = Array.from(new Set(ids))
     const results: T[] = []
 
-    for (let i = 0; i < ids.length; i += batchSize) {
+    for (let i = 0; i < uniqueIds.length; i += batchSize) {
       const batch = ids.slice(i, i + batchSize)
       const batchResults = await queryFn(batch)
       results.push(...batchResults)

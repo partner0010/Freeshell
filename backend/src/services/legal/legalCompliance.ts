@@ -1,4 +1,5 @@
 import { logger } from '../../utils/logger'
+import { getPrismaClient } from '../../utils/database'
 import { copyrightChecker } from './copyrightChecker'
 import { contentFilter } from './contentFilter'
 

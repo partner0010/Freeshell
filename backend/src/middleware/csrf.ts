@@ -17,7 +17,7 @@ const TOKEN_EXPIRY = 30 * 60 * 1000
  */
 export function generateCSRFToken(req: Request): string {
   const token = crypto.randomBytes(32).toString('hex')
-  const sessionId = req.sessionID || req.ip || 'anonymous'
+  const sessionId = (req as any).sessionID || req.ip || 'anonymous'
   
   csrfTokens.set(sessionId, {
     token,
@@ -34,7 +34,7 @@ export function generateCSRFToken(req: Request): string {
  * CSRF 토큰 검증
  */
 export function verifyCSRFToken(req: Request, token: string): boolean {
-  const sessionId = req.sessionID || req.ip || 'anonymous'
+  const sessionId = (req as any).sessionID || req.ip || 'anonymous'
   const stored = csrfTokens.get(sessionId)
   
   if (!stored) {

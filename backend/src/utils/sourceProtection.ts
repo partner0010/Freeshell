@@ -103,7 +103,7 @@ export function blockDebugger(): void {
   if (typeof window === 'undefined') return
 
   // 디버거 문 감지 및 차단
-  const originalDebugger = window.Debugger
+  const originalDebugger = (window as any).Debugger
   Object.defineProperty(window, 'Debugger', {
     get: () => {
       return originalDebugger

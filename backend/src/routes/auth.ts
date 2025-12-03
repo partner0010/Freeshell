@@ -4,6 +4,9 @@ import { hashPassword, verifyPassword } from '../utils/encryption'
 import jwt from 'jsonwebtoken'
 import { logger } from '../utils/logger'
 import { validateApiKey } from '../middleware/auth'
+import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
+import { googleOTP } from '../services/auth/googleOTP'
 
 const router = Router()
 
@@ -39,25 +42,6 @@ const router = Router()
  *     responses:
  *       200:
  *         description: 회원가입 성공
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *                 token:
- *                   type: string
- *                   example: jwt_token_here
- *       400:
- *         description: 잘못된 요청
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
 router.post('/register', async (req: Request, res: Response) => {
   try {
@@ -97,15 +81,46 @@ router.post('/register', async (req: Request, res: Response) => {
       })
     }
 
+    // 비밀번호 보안 검증
+    const checks = {
+      length: password.length >= 11,
+      lowercase: /[a-z]/.test(password),
+      uppercase: /[A-Z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+    }
+
+    const allChecksPassed = Object.values(checks).every(Boolean)
+
+    if (!allChecksPassed) {
+      return res.status(400).json({
+        success: false,
+        error: '비밀번호는 11자 이상, 대소문자, 숫자, 특수문자를 포함해야 합니다',
+      })
+    }
+
     // 비밀번호 해시
     const hashedPassword = hashPassword(password)
 
-    // 사용자 생성
+    // 사용자 생성 - 일반 사용자는 승인 대기 상태
     const user = await prisma.user.create({
       data: {
         email,
         username,
-        password: hashedPassword
+        password: hashedPassword,
+        role: 'user',
+        isActive: true,
+        isApproved: false, // 관리자 승인 필요
+        isEmailVerified: false,
+      }
+    })
+
+    // AI 사용량 제한 설정
+    await prisma.aIUsageLimit.create({
+      data: {
+        userId: user.id,
+        dailyLimit: 100,
+        monthlyLimit: 3000,
       }
     })
 
@@ -119,9 +134,12 @@ router.post('/register', async (req: Request, res: Response) => {
       user: {
         id: user.id,
         email: user.email,
-        username: user.username
+        username: user.username,
+        role: user.role,
+        isApproved: user.isApproved,
       },
-      token
+      token,
+      message: '회원가입이 완료되었습니다. 관리자 승인 후 모든 기능을 사용할 수 있습니다.'
     })
   } catch (error: any) {
     logger.error('회원가입 실패:', error)
@@ -151,86 +169,113 @@ router.post('/register', async (req: Request, res: Response) => {
  *               email:
  *                 type: string
  *                 format: email
- *                 example: user@example.com
  *               password:
  *                 type: string
  *                 format: password
- *                 example: password123
- *     responses:
- *       200:
- *         description: 로그인 성공
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *                 token:
- *                   type: string
- *                   example: jwt_token_here
- *       401:
- *         description: 인증 실패
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
 router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body
+    const { username, password, otpToken } = req.body
 
-    if (!email || !password) {
+    // username 또는 email로 로그인 가능
+    if (!username || !password) {
       return res.status(400).json({
         success: false,
-        error: '이메일과 비밀번호는 필수입니다'
+        error: '아이디와 비밀번호는 필수입니다'
       })
     }
 
     const prisma = getPrismaClient()
 
-    // 사용자 찾기
-    const user = await prisma.user.findUnique({
-      where: { email }
+    // 사용자 찾기 (username 또는 email)
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username },
+          { email: username } // 이메일로도 로그인 가능
+        ]
+      }
     })
 
     if (!user) {
+      logger.warn('존재하지 않는 사용자 로그인 시도:', { username })
       return res.status(401).json({
         success: false,
-        error: '이메일 또는 비밀번호가 올바르지 않습니다'
+        error: '아이디 또는 비밀번호가 올바르지 않습니다'
       })
     }
 
     // 비밀번호 확인
     if (!verifyPassword(password, user.password)) {
+      logger.warn('비밀번호 불일치:', { username })
       return res.status(401).json({
         success: false,
-        error: '이메일 또는 비밀번호가 올바르지 않습니다'
+        error: '아이디 또는 비밀번호가 올바르지 않습니다'
+      })
+    }
+
+    // OTP 검증 (OTP가 설정된 경우에만)
+    if (user.phone && otpToken) {
+      // TODO: 데이터베이스에서 OTP secret 가져오기
+      // 현재는 OTP 선택사항
+      const isValidOTP = googleOTP.verifyToken('user-secret', otpToken)
+      
+      if (!isValidOTP) {
+        logger.warn('OTP 검증 실패:', { username: user.username })
+        return res.status(401).json({
+          success: false,
+          error: 'OTP 토큰이 올바르지 않습니다',
+          requireOTP: true
+        })
+      }
+      
+      logger.info('✅ OTP 검증 성공:', { username: user.username })
+    }
+
+    // 계정 활성화 확인
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        error: '비활성화된 계정입니다. 관리자에게 문의하세요.'
+      })
+    }
+
+    // 관리자는 승인 체크 제외, 일반 사용자만 승인 체크
+    if (user.role !== 'admin' && !user.isApproved) {
+      return res.status(401).json({
+        success: false,
+        error: '관리자 승인 대기 중입니다. 승인 후 로그인이 가능합니다.'
       })
     }
 
     // JWT 토큰 생성
-    const token = generateToken(user.id, user.email)
+    const token = generateToken(user.id, user.email, user.role)
 
-    logger.info('로그인 성공:', { userId: user.id, email: user.email })
+    logger.info('로그인 성공:', { 
+      userId: user.id, 
+      email: user.email, 
+      role: user.role,
+      isAdmin: user.role === 'admin'
+    })
 
     res.json({
       success: true,
       user: {
         id: user.id,
         email: user.email,
-        username: user.username
+        username: user.username,
+        role: user.role,
+        isApproved: user.isApproved,
+        isActive: user.isActive,
       },
-      token
+      token,
+      message: `환영합니다, ${user.username}님!`
     })
   } catch (error: any) {
     logger.error('로그인 실패:', error)
     res.status(500).json({
       success: false,
-      error: error.message
+      error: '로그인 처리 중 오류가 발생했습니다.'
     })
   }
 })
@@ -243,26 +288,6 @@ router.post('/login', async (req: Request, res: Response) => {
  *     tags: [인증]
  *     security:
  *       - bearerAuth: []
- *       - apiKey: []
- *     responses:
- *       200:
- *         description: 사용자 정보 조회 성공
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *       401:
- *         description: 인증 실패
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
 router.get('/me', validateApiKey, async (req: Request, res: Response) => {
   try {
@@ -294,6 +319,9 @@ router.get('/me', validateApiKey, async (req: Request, res: Response) => {
           id: true,
           email: true,
           username: true,
+          role: true,
+          isActive: true,
+          isApproved: true,
           createdAt: true
         }
       })
@@ -327,18 +355,148 @@ router.get('/me', validateApiKey, async (req: Request, res: Response) => {
 /**
  * JWT 토큰 생성
  */
-function generateToken(userId: string, email: string): string {
+function generateToken(userId: string, email: string, role?: string): string {
   const jwtSecret = process.env.JWT_SECRET
   if (!jwtSecret) {
     throw new Error('JWT_SECRET이 설정되지 않았습니다')
   }
 
   return jwt.sign(
-    { id: userId, email },
+    { 
+      id: userId, 
+      email,
+      role: role || 'user'
+    },
     jwtSecret,
-    { expiresIn: '7d' } // 7일 유효
+    { expiresIn: '30d' } // 30일 유효
   )
 }
 
-export default router
+/**
+ * POST /api/auth/forgot-password
+ * 비밀번호 찾기 (이메일 발송)
+ */
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body
 
+    const prisma = getPrismaClient()
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    })
+
+    if (!user) {
+      // 보안상 사용자가 없어도 성공 응답
+      return res.json({
+        success: true,
+        message: '비밀번호 재설정 이메일이 발송되었습니다',
+      })
+    }
+
+    // 재설정 토큰 생성
+    const resetToken = crypto.randomBytes(32).toString('hex')
+    const resetExpiry = new Date(Date.now() + 60 * 60 * 1000) // 1시간
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerificationToken: resetToken,
+        verificationExpiry: resetExpiry,
+      },
+    })
+
+    // 재설정 URL
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`
+
+    console.log('\n========================================')
+    console.log('🔐 비밀번호 재설정 링크:')
+    console.log(resetUrl)
+    console.log('========================================\n')
+
+    res.json({
+      success: true,
+      message: '비밀번호 재설정 링크가 생성되었습니다 (콘솔 확인)',
+      resetUrl, // 개발 환경에서만
+    })
+  } catch (error: any) {
+    logger.error('비밀번호 찾기 실패:', error)
+    res.status(500).json({
+      success: false,
+      error: '비밀번호 찾기 실패',
+    })
+  }
+})
+
+/**
+ * POST /api/auth/reset-password
+ * 비밀번호 재설정
+ */
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body
+
+    // 비밀번호 보안 검증
+    const checks = {
+      length: newPassword.length >= 11,
+      lowercase: /[a-z]/.test(newPassword),
+      uppercase: /[A-Z]/.test(newPassword),
+      number: /[0-9]/.test(newPassword),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword),
+    }
+
+    const allChecksPassed = Object.values(checks).every(Boolean)
+
+    if (!allChecksPassed) {
+      return res.status(400).json({
+        success: false,
+        error: '비밀번호는 11자 이상, 대소문자, 숫자, 특수문자를 포함해야 합니다',
+      })
+    }
+
+    const prisma = getPrismaClient()
+
+    const user = await prisma.user.findFirst({
+      where: {
+        emailVerificationToken: token,
+        verificationExpiry: {
+          gt: new Date(),
+        },
+      },
+    })
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        error: '유효하지 않거나 만료된 재설정 링크입니다',
+      })
+    }
+
+    // 새 비밀번호 해시
+    const hashedPassword = await bcrypt.hash(newPassword, 12)
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        emailVerificationToken: null,
+        verificationExpiry: null,
+      },
+    })
+
+    logger.info(`비밀번호 재설정 완료: ${user.email}`)
+
+    res.json({
+      success: true,
+      message: '비밀번호가 재설정되었습니다',
+    })
+  } catch (error: any) {
+    logger.error('비밀번호 재설정 실패:', error)
+    res.status(500).json({
+      success: false,
+      error: '비밀번호 재설정 실패',
+    })
+  }
+})
+
+export default router

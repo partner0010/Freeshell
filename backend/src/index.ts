@@ -17,7 +17,7 @@ import { jobQueue } from './services/queue/jobQueue'
 import { videoGenerationQueue, videoUploadQueue } from './services/queue/videoQueue'
 import { initRedis } from './utils/cache'
 import { performanceMiddleware } from './services/performance/performanceOptimizer'
-import { register } from './services/monitoring/metrics'
+// register는 나중에 import
 
 // Routes
 import authRoutes from './routes/auth'
@@ -44,8 +44,33 @@ import optimizationRoutes from './routes/optimization'
 import legalRoutes from './routes/legal'
 import multilingualRoutes from './routes/multilingual'
 import recommendationRoutes from './routes/recommendation'
+import aiChatRoutes from './routes/aiChat'
+import shellAIRoutes from './routes/shellAI'
+import adminRoutes from './routes/admin'
+import verificationRoutes from './routes/verification'
+import userProfileRoutes from './routes/userProfile'
+import dashboardRoutes from './routes/dashboard'
+import autoInspectionRoutes from './routes/autoInspection'
+import advancedAIRoutes from './routes/advancedAI'
+import otpRoutes from './routes/otp'
+import { initializeEnv, printEnvSummary } from './utils/envValidator'
+import { wafMiddleware } from './security/waf'
+import { securityHeaders } from './security/headers'
+import { autoInspectionScheduler } from './services/scheduler/autoInspectionScheduler'
 
 dotenv.config()
+
+// 환경 변수 초기화 및 검증
+if (!initializeEnv()) {
+  logger.error('❌ 환경 변수 초기화 실패 - 서버를 시작할 수 없습니다')
+  console.error('\n💡 해결 방법:')
+  console.error('   1. backend/.env 파일을 확인하세요')
+  console.error('   2. 필수 환경 변수를 설정하세요')
+  console.error('   3. npm run reset-db를 실행하여 초기화하세요\n')
+  process.exit(1)
+}
+
+printEnvSummary()
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -63,6 +88,10 @@ autoSetup()
       scheduler.start()
       logger.info('자동 패치 스케줄러 시작됨')
     }
+    
+    // 자동 점검 스케줄러 시작
+    autoInspectionScheduler.start()
+    logger.info('자동 점검 스케줄러 시작됨')
   })
   .catch((error) => {
     logger.error('Auto setup failed:', error)
@@ -81,6 +110,12 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }))
 
+// WAF (Web Application Firewall)
+app.use(wafMiddleware)
+
+// 보안 헤더 강화
+app.use(securityHeaders)
+
 // CORS 설정 강화
 const allowedOrigins = process.env.FRONTEND_URL 
   ? [process.env.FRONTEND_URL]
@@ -88,8 +123,12 @@ const allowedOrigins = process.env.FRONTEND_URL
 
 app.use(cors({
   origin: (origin, callback) => {
-    // origin이 없으면 (같은 도메인 요청) 허용
-    if (!origin || allowedOrigins.includes(origin)) {
+    // origin이 없으면 (같은 도메인 요청, Postman, curl 등) 허용
+    if (!origin) {
+      return callback(null, true)
+    }
+    
+    if (allowedOrigins.includes(origin)) {
       callback(null, true)
     } else {
       logger.warn('차단된 Origin:', origin)
@@ -119,6 +158,25 @@ const contentLimiter = rateLimit({
   message: '콘텐츠 생성 요청 한도를 초과했습니다. 1시간 후 다시 시도해주세요.',
 })
 
+// AI Chat Rate Limiting - 사용량 제한과 별도로 API 레벨 제한
+const aiChatLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1분
+  max: 30, // 최대 30회/분 (사용량 제한과 별도)
+  message: 'AI 대화 요청이 너무 많습니다. 잠시 후 다시 시도하세요.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // 스트리밍 요청은 별도 처리
+    return req.query.stream === 'true'
+  }
+})
+
+const aiChatSearchLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1분
+  max: 60, // 검색은 더 많이 허용
+  message: '검색 요청이 너무 많습니다. 잠시 후 다시 시도하세요.'
+})
+
 app.use('/api/', generalLimiter)
 app.use('/api/content/generate', contentLimiter)
 
@@ -142,17 +200,13 @@ app.use(intrusionDetection) // 침입 탐지
 
 // CSRF 보호 (POST, PUT, DELETE 요청에만 적용)
 import { csrfProtection } from './middleware/csrf'
-// Health 체크는 CSRF 제외
+// Health 체크와 로그인은 CSRF 제외 (프론트엔드에서 CSRF 토큰 획득 전에 접근 필요)
 app.use('/api/', (req, res, next) => {
-  if (req.path === '/health' || req.path === '/health/csrf') {
+  if (req.path === '/health' || req.path === '/health/csrf' || req.path.startsWith('/auth/')) {
     return next()
   }
   return csrfProtection(req, res, next)
 })
-
-// CSRF 보호 (POST, PUT, DELETE 요청에만 적용)
-import { csrfProtection } from './middleware/csrf'
-app.use('/api/', csrfProtection)
 
 // Logging
 app.use((req, res, next) => {
@@ -163,20 +217,22 @@ app.use((req, res, next) => {
   next()
 })
 
-// Swagger UI 설정 (개발 환경에서만)
+// Swagger UI 설정 (개발 환경에서만) - ESM 모드에서는 스킵
 if (process.env.NODE_ENV !== 'production') {
   try {
-    const swaggerUi = require('swagger-ui-express')
-    const { swaggerSpec } = require('./config/swagger')
-    
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-      customCss: '.swagger-ui .topbar { display: none }',
-      customSiteTitle: '올인원 콘텐츠 AI API 문서'
-    }))
-    
-    logger.info('📚 Swagger UI: http://localhost:' + PORT + '/api-docs')
+    // ESM 모드에서는 dynamic import 사용
+    import('swagger-ui-express').then(swaggerUi => {
+      import('./config/swagger.js').then(({ swaggerSpec }) => {
+        app.use('/api-docs', swaggerUi.default.serve, swaggerUi.default.setup(swaggerSpec, {
+          customCss: '.swagger-ui .topbar { display: none }',
+          customSiteTitle: '올인원 콘텐츠 AI API 문서'
+        }))
+        
+        logger.info('📚 Swagger UI: http://localhost:' + PORT + '/api-docs')
+      }).catch(() => logger.warn('Swagger 설정 파일 없음 - 스킵'))
+    }).catch(() => logger.warn('Swagger UI 미설치 - 스킵'))
   } catch (error) {
-    logger.warn('Swagger UI 설정 실패:', error)
+    logger.warn('Swagger UI 설정 실패 - 스킵 (치명적 아님)')
   }
 }
 
@@ -221,6 +277,34 @@ app.use('/api/optimization', optimizationRoutes)
 app.use('/api/legal', legalRoutes)
 app.use('/api/multilingual', multilingualRoutes)
 app.use('/api/recommendation', recommendationRoutes)
+// Shell AI 라우트 (최우선)
+app.use('/api/shell', shellAIRoutes)
+
+// 관리자 라우트
+app.use('/api/admin', adminRoutes)
+
+// 본인 인증 라우트
+app.use('/api/verification', verificationRoutes)
+
+// 사용자 프로필 라우트
+app.use('/api/user', userProfileRoutes)
+
+// 대시보드 라우트
+app.use('/api/dashboard', dashboardRoutes)
+
+// 자동 점검 라우트
+app.use('/api/auto-inspection', autoInspectionRoutes)
+
+// 🚀 고급 AI 라우트 (새로운 14개 AI 모델)
+app.use('/api/advanced-ai', advancedAIRoutes)
+
+// 🔐 Google OTP 라우트
+app.use('/api/otp', otpRoutes)
+
+// AI Chat 라우트에 Rate Limiting 적용
+app.use('/api/ai-chat/search', aiChatSearchLimiter)
+app.use('/api/ai-chat', aiChatLimiter)
+app.use('/api/ai-chat', aiChatRoutes)
 
 // Error handling
 app.use(errorHandler)

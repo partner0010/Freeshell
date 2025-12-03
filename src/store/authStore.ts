@@ -5,6 +5,13 @@ interface User {
   id: string
   email: string
   username: string
+  role?: string
+  phone?: string
+  isActive?: boolean
+  isApproved?: boolean
+  isEmailVerified?: boolean
+  isPhoneVerified?: boolean
+  createdAt?: string
 }
 
 interface AuthStore {
@@ -14,6 +21,7 @@ interface AuthStore {
   setUser: (user: User | null) => void
   setToken: (token: string | null) => void
   logout: () => void
+  register?: (email: string, password: string, username: string) => Promise<void>
 }
 
 // 안전한 토큰 조회

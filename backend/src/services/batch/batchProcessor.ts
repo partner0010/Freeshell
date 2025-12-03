@@ -1,7 +1,7 @@
 import { getPrismaClient } from '../../utils/database'
 import { logger } from '../../utils/logger'
 import { generateContent } from '../contentGenerator'
-import { ContentForm } from '../../types'
+import { ContentType } from '../../types'
 
 export interface BatchJobConfig {
   type: 'generate' | 'upload' | 'publish'
@@ -173,9 +173,9 @@ export class BatchProcessor {
   private async processItem(type: string, item: any): Promise<void> {
     switch (type) {
       case 'generate':
-        const formData: ContentForm = {
+        const formData = {
           topic: item.topic,
-          contentType: item.contentType,
+          contentType: item.contentType as ContentType,
           contentTime: item.contentTime || 60,
           contentFormat: item.contentFormat || ['video', 'text'],
           text: item.text || ''

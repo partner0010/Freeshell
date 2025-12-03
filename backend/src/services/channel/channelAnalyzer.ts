@@ -116,26 +116,35 @@ export class ChannelAnalyzer {
       // 채널 정보 추출
       const channelInfo = await page.evaluate(() => {
         const name = document.querySelector('#channel-name')?.textContent || 
-                     document.querySelector('yt-formatted-string#text')?.textContent || 
+                     // @ts-ignore
+                     document.querySelector('yt-formatted-string#text')?.textContent ||
                      'Unknown'
         
-        const subscriberText = document.querySelector('#subscriber-count')?.textContent || 
-                              document.querySelector('yt-formatted-string[id="subscriber-count"]')?.textContent || 
+        // @ts-ignore
+        const subscriberText = document.querySelector('#subscriber-count')?.textContent ||
+                              // @ts-ignore
+                              document.querySelector('yt-formatted-string[id="subscriber-count"]')?.textContent ||
                               '0'
         const subscribers = parseInt(subscriberText.replace(/[^0-9]/g, '')) || 0
 
-        const description = document.querySelector('#description')?.textContent || 
-                           document.querySelector('yt-formatted-string[id="description"]')?.textContent || 
+        // @ts-ignore
+        const description = document.querySelector('#description')?.textContent ||
+                           // @ts-ignore
+                           document.querySelector('yt-formatted-string[id="description"]')?.textContent ||
                            ''
 
         // 프로필 이미지
-        const profileImg = document.querySelector('#avatar img')?.getAttribute('src') || 
-                          document.querySelector('#channel-header-container img')?.getAttribute('src') || 
+        // @ts-ignore
+        const profileImg = document.querySelector('#avatar img')?.getAttribute('src') ||
+                          // @ts-ignore
+                          document.querySelector('#channel-header-container img')?.getAttribute('src') ||
                           ''
 
         // 배너 이미지
-        const bannerImg = document.querySelector('#banner img')?.getAttribute('src') || 
-                         document.querySelector('#channel-header-container img')?.getAttribute('src') || 
+        // @ts-ignore
+        const bannerImg = document.querySelector('#banner img')?.getAttribute('src') ||
+                         // @ts-ignore
+                         document.querySelector('#channel-header-container img')?.getAttribute('src') ||
                          ''
 
         return {
@@ -212,6 +221,7 @@ export class ChannelAnalyzer {
   private async analyzeRecentVideos(page: any): Promise<any[]> {
     try {
       const videos = await page.evaluate(() => {
+        // @ts-ignore - Puppeteer evaluate 내부에서 document 사용
         const videoElements = Array.from(document.querySelectorAll('ytd-grid-video-renderer, ytd-video-renderer'))
         
         return videoElements.slice(0, 20).map((el: any) => {
@@ -553,8 +563,8 @@ export class ChannelAnalyzer {
     // 비디오 제목에서 키워드 추출
     videos.forEach(video => {
       if (video.title) {
-        const titleWords = video.title.toLowerCase().split(/\s+/).filter(w => w.length > 2)
-        titleWords.forEach(word => keywords.add(word))
+        const titleWords = video.title.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2)
+        titleWords.forEach((word: string) => keywords.add(word))
       }
     })
 

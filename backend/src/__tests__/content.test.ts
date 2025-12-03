@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals'
 import { generateContent } from '../services/contentGenerator'
-import { ContentType } from '../../types'
+import { ContentType } from '../types'
 
 describe('Content Generation', () => {
   beforeAll(() => {

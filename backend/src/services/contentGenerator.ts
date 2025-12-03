@@ -124,7 +124,7 @@ async function generateContentVersion(
         response_format: { type: 'json_object' }
       })
     } else if (anthropic) {
-      aiResponse = await anthropic.messages.create({
+      aiResponse = await (anthropic as any).messages.create({
         model: 'claude-3-opus-20240229',
         max_tokens: 2000,
         messages: [{

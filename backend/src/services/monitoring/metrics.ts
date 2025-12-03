@@ -80,6 +80,25 @@ export const aiApiDuration = new Histogram({
   buckets: [1, 2, 5, 10, 30, 60]
 })
 
+export const aiApiResponseTime = new Histogram({
+  name: 'ai_api_response_time_seconds',
+  help: 'AI API 응답 시간 (초)',
+  labelNames: ['provider'],
+  buckets: [0.1, 0.5, 1, 2, 5, 10, 30]
+})
+
+export const aiApiTokens = new Counter({
+  name: 'ai_api_tokens_total',
+  help: 'AI API 사용 토큰 수',
+  labelNames: ['provider', 'type'] // type: 'input' | 'output'
+})
+
+export const aiApiErrors = new Counter({
+  name: 'ai_api_errors_total',
+  help: 'AI API 에러 수',
+  labelNames: ['provider', 'error_type']
+})
+
 export const scheduledJobsExecuted = new Counter({
   name: 'scheduled_jobs_executed_total',
   help: '실행된 스케줄 작업 수',
@@ -111,6 +130,8 @@ register.registerMetric(contentGenerated)
 register.registerMetric(contentUploaded)
 register.registerMetric(aiApiCalls)
 register.registerMetric(aiApiDuration)
+register.registerMetric(aiApiTokens)
+register.registerMetric(aiApiResponseTime)
 register.registerMetric(scheduledJobsExecuted)
 register.registerMetric(queueSize)
 register.registerMetric(queueProcessingDuration)

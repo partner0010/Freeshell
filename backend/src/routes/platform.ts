@@ -4,6 +4,7 @@ import { logger } from '../utils/logger'
 import { getPrismaClient } from '../utils/database'
 import { encrypt, decrypt } from '../utils/encryption'
 import { google } from 'googleapis'
+import { AuthRequest } from '../middleware/auth'
 
 const router = Router()
 
@@ -110,7 +111,7 @@ router.get('/youtube/callback', async (req: Request, res: Response) => {
     await prisma.platformConfig.upsert({
       where: {
         userId_platform: {
-          userId: null, // 나중에 사용자 인증 추가 시 수정
+          userId: (req as AuthRequest).user?.id || '', // 사용자 ID 사용
           platform: 'youtube'
         }
       },

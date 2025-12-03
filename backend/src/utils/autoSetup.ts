@@ -92,7 +92,7 @@ export async function autoSetup(): Promise<ServerInfo> {
         logger.info('✅ Redis 연결 확인')
       }
     } catch (error) {
-      logger.warn('⚠️ Redis 연결 실패 (캐싱 없이 계속 진행)')
+      // Redis 경고는 캐시 초기화에서 이미 표시됨
     }
 
     // 필요한 디렉토리 생성
