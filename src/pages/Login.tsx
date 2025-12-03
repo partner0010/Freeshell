@@ -10,9 +10,7 @@ export default function Login() {
   const { setUser, setToken } = useAuthStore()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [otpToken, setOtpToken] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [requireOTP, setRequireOTP] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -36,13 +34,6 @@ export default function Login() {
       return
     }
 
-    // OTP가 필요한데 입력 안 했으면
-    if (requireOTP && !otpToken) {
-      setError('OTP 토큰을 입력해주세요')
-      setLoading(false)
-      return
-    }
-
     // 입력 Sanitization
     const sanitizedUsername = sanitizeInput(username)
 
@@ -51,8 +42,7 @@ export default function Login() {
       
       const response = await api.post('/api/auth/login', {
         username: sanitizedUsername,
-        password, // 비밀번호는 서버에서 검증
-        otpToken: otpToken || undefined // OTP 토큰 (선택사항)
+        password // 비밀번호는 서버에서 검증
       })
 
       console.log('📥 로그인 응답:', response.data)
@@ -84,25 +74,13 @@ export default function Login() {
           }
         }, 500)
       } else {
-        // OTP 필요 시
-        if (response.data.requireOTP) {
-          setRequireOTP(true)
-          setError('OTP 토큰을 입력해주세요')
-        } else {
-          setError(response.data.error || '로그인에 실패했습니다')
-        }
+        setError(response.data.error || '로그인에 실패했습니다')
       }
     } catch (err: any) {
       console.error('❌ 로그인 오류:', err)
       
-      // OTP 필요 시
-      if (err.response?.data?.requireOTP) {
-        setRequireOTP(true)
-        setError('OTP 토큰을 입력해주세요')
-      } else {
-        const errorMessage = err.response?.data?.error || err.message || '로그인에 실패했습니다'
-        setError(sanitizeErrorMessage(errorMessage))
-      }
+      const errorMessage = err.response?.data?.error || err.message || '로그인에 실패했습니다'
+      setError(sanitizeErrorMessage(errorMessage))
     } finally {
       setLoading(false)
     }
@@ -191,27 +169,6 @@ export default function Login() {
               </div>
             </div>
 
-            {/* OTP 입력 (필요 시에만 표시) */}
-            {requireOTP && (
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  🔐 Google OTP
-                </label>
-                <input
-                  type="text"
-                  value={otpToken}
-                  onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                  maxLength={6}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-center text-2xl tracking-widest placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="000000"
-                  autoComplete="one-time-code"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Google Authenticator 앱에서 6자리 코드를 입력하세요
-                </p>
-              </div>
-            )}
-
             {/* 로그인 버튼 */}
             <button
               type="submit"
@@ -254,12 +211,9 @@ export default function Login() {
         {import.meta.env.DEV && (
           <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 text-sm">
             <p className="text-gray-400 mb-2">🔐 <strong>관리자 테스트 계정</strong></p>
-            <p className="text-gray-500 font-mono mb-2">
+            <p className="text-gray-500 font-mono">
               아이디: admin<br />
               비밀번호: Admin123!@#
-            </p>
-            <p className="text-xs text-gray-600">
-              ※ OTP는 선택사항 (설정 안 했으면 불필요)
             </p>
           </div>
         )}

@@ -298,8 +298,9 @@ app.use('/api/auto-inspection', autoInspectionRoutes)
 // 🚀 고급 AI 라우트 (새로운 14개 AI 모델)
 app.use('/api/advanced-ai', advancedAIRoutes)
 
-// 🔐 Google OTP 라우트
-app.use('/api/otp', otpRoutes)
+// 👑 관리자 승인 라우트
+import adminApprovalRoutes from './routes/adminApproval'
+app.use('/api/admin', adminApprovalRoutes)
 
 // AI Chat 라우트에 Rate Limiting 적용
 app.use('/api/ai-chat/search', aiChatSearchLimiter)

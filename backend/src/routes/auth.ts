@@ -6,7 +6,6 @@ import { logger } from '../utils/logger'
 import { validateApiKey } from '../middleware/auth'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
-import { googleOTP } from '../services/auth/googleOTP'
 
 const router = Router()
 
@@ -175,7 +174,7 @@ router.post('/register', async (req: Request, res: Response) => {
  */
 router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { username, password, otpToken } = req.body
+    const { username, password } = req.body
 
     // username 또는 email로 로그인 가능
     if (!username || !password) {
@@ -214,22 +213,16 @@ router.post('/login', async (req: Request, res: Response) => {
       })
     }
 
-    // OTP 검증 (OTP가 설정된 경우에만)
-    if (user.phone && otpToken) {
-      // TODO: 데이터베이스에서 OTP secret 가져오기
-      // 현재는 OTP 선택사항
-      const isValidOTP = googleOTP.verifyToken('user-secret', otpToken)
-      
-      if (!isValidOTP) {
-        logger.warn('OTP 검증 실패:', { username: user.username })
-        return res.status(401).json({
+    // 관리자가 아닌 경우 승인 상태 확인
+    if (user.role !== 'admin') {
+      // isVerified 필드로 승인 여부 확인
+      if (!user.isVerified) {
+        logger.warn('미승인 사용자 로그인 시도:', { username: user.username })
+        return res.status(403).json({
           success: false,
-          error: 'OTP 토큰이 올바르지 않습니다',
-          requireOTP: true
+          error: '관리자 승인 대기 중입니다. 관리자 승인 후 로그인할 수 있습니다.'
         })
       }
-      
-      logger.info('✅ OTP 검증 성공:', { username: user.username })
     }
 
     // 계정 활성화 확인
