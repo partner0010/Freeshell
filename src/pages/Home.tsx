@@ -106,46 +106,6 @@ export default function Home() {
     { name: 'ElevenLabs', desc: '초현실적 음성', color: 'text-orange-400' }
   ]
 
-  const pricing = [
-    {
-      name: '무료',
-      price: '₩0',
-      period: '영구',
-      features: [
-        '기본 AI 기능',
-        '월 10개 콘텐츠',
-        '720p 화질',
-        '커뮤니티 지원'
-      ]
-    },
-    {
-      name: '프로',
-      price: '₩29,000',
-      period: '/월',
-      features: [
-        '모든 AI 모델',
-        '무제한 콘텐츠',
-        '4K 화질',
-        '우선 지원',
-        '고급 편집 도구',
-        '팀 협업'
-      ],
-      popular: true
-    },
-    {
-      name: '엔터프라이즈',
-      price: '문의',
-      period: '',
-      features: [
-        '전용 서버',
-        '커스텀 AI 모델',
-        'API 접근',
-        '24/7 전담 지원',
-        '무제한 팀원',
-        'SLA 보장'
-      ]
-    }
-  ]
 
   return (
     <div className="min-h-screen">
@@ -289,61 +249,50 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 가격 섹션 */}
+      {/* 시작하기 섹션 (요금제 제거) */}
       <section className="py-32 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-6xl font-black text-white mb-6">
-              모두를 위한 요금제
-            </h2>
-            <p className="text-xl text-gray-400">
-              필요에 맞는 플랜을 선택하세요
-            </p>
-          </div>
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <h2 className="text-5xl md:text-6xl font-black text-white mb-6">
+            지금 바로 시작하세요
+          </h2>
+          <p className="text-xl text-gray-400 mb-12">
+            모든 기능을 무료로 사용해보세요
+          </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {pricing.map((plan, index) => (
-              <div
-                key={index}
-                className={`relative bg-white/5 backdrop-blur-xl border rounded-3xl p-10 transition-all hover:scale-105 ${
-                  plan.popular
-                    ? 'border-purple-500 shadow-2xl shadow-purple-500/50'
-                    : 'border-white/10'
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full">
-                    <span className="text-white font-bold">인기</span>
-                  </div>
-                )}
-
-                <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                <div className="mb-6">
-                  <span className="text-5xl font-black text-white">{plan.price}</span>
-                  <span className="text-gray-400 ml-2">{plan.period}</span>
+          <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-xl border border-purple-500/30 rounded-3xl p-12">
+            <div className="grid md:grid-cols-3 gap-8 mb-12">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Zap className="w-8 h-8 text-white" />
                 </div>
-
-                <ul className="space-y-4 mb-10">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-center text-gray-300">
-                      <Check className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => navigate('/register')}
-                  className={`w-full py-4 rounded-xl font-bold transition-all ${
-                    plan.popular
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700'
-                      : 'bg-white/10 text-white hover:bg-white/20'
-                  }`}
-                >
-                  시작하기
-                </button>
+                <h3 className="text-2xl font-bold text-white mb-2">빠른 시작</h3>
+                <p className="text-gray-300">3분 안에 첫 콘텐츠 생성</p>
               </div>
-            ))}
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">14개 AI 모델</h3>
+                <p className="text-gray-300">최고급 AI 기술 사용</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Video className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">무제한 생성</h3>
+                <p className="text-gray-300">원하는 만큼 만드세요</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => isAuthenticated ? navigate('/create') : navigate('/register')}
+              className="px-12 py-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xl font-bold rounded-2xl shadow-2xl shadow-purple-500/50 transition-all transform hover:scale-105 inline-flex items-center"
+            >
+              {isAuthenticated ? '지금 만들기' : '무료로 시작하기'}
+              <ArrowRight className="ml-3 w-6 h-6" />
+            </button>
           </div>
         </div>
       </section>

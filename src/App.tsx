@@ -26,6 +26,8 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import AdvancedAI from './pages/AdvancedAI'
+import AutoCreation from './pages/AutoCreation'
+import RemoteSupport from './pages/RemoteSupport'
 
 function AppContent() {
   const toast = useToast()

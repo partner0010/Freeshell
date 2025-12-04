@@ -1,47 +1,57 @@
+/**
+ * 📈 트렌드 분석 API
+ */
+
 import { Router, Request, Response } from 'express'
-import { TrendCollector } from '../services/trends/collector'
-import { validateApiKey } from '../middleware/auth'
+import { trendAnalyzer } from '../services/trends/trendAnalyzer'
 import { logger } from '../utils/logger'
+import { validateApiKey } from '../middleware/auth'
 
 const router = Router()
-const trendCollector = new TrendCollector()
 
 /**
- * GET /api/trends
- * 실시간 트렌드 조회
+ * GET /api/trends/daily-recommendations
+ * 오늘의 추천 주제
  */
-router.get('/', validateApiKey, async (req: Request, res: Response) => {
+router.get('/daily-recommendations', validateApiKey, async (req: Request, res: Response) => {
   try {
-    const { language, source } = req.query
+    const recommendations = await trendAnalyzer.getDailyRecommendations()
 
-    let trends
-
-    if (source === 'news') {
-      trends = await trendCollector.collectNewsTrends(language as string || 'ko')
-    } else if (source === 'social') {
-      trends = await trendCollector.collectSocialTrends()
-    } else if (source === 'blog') {
-      trends = await trendCollector.collectBlogTrends()
-    } else {
-      trends = await trendCollector.collectAllTrends(language as string || 'ko')
-    }
+    logger.info('📈 오늘의 추천 전송')
 
     res.json({
       success: true,
-      data: {
-        trends,
-        count: trends.length,
-        timestamp: new Date()
-      }
+      ...recommendations
     })
   } catch (error: any) {
-    logger.error('트렌드 조회 실패:', error)
+    logger.error('추천 생성 실패:', error)
     res.status(500).json({
       success: false,
-      error: error.message || '트렌드 조회 중 오류가 발생했습니다'
+      error: '추천을 생성할 수 없습니다'
+    })
+  }
+})
+
+/**
+ * GET /api/trends/random
+ * 랜덤 추천
+ */
+router.get('/random', validateApiKey, async (req: Request, res: Response) => {
+  try {
+    const count = parseInt(req.query.count as string) || 5
+    const recommendations = await trendAnalyzer.getRandomRecommendations(count)
+
+    res.json({
+      success: true,
+      recommendations
+    })
+  } catch (error: any) {
+    logger.error('랜덤 추천 실패:', error)
+    res.status(500).json({
+      success: false,
+      error: '추천 생성 실패'
     })
   }
 })
 
 export default router
-

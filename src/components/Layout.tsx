@@ -1,12 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
 import { 
   Home, Plus, Settings, Video, BookOpen, FileText, TrendingUp, 
-  Zap, User, Calendar, FileText as TemplateIcon, Globe, MessageSquare, Cpu
+  Zap, User, Calendar, FileText as TemplateIcon, Globe, MessageSquare, Cpu, Sparkles
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { useState } from 'react'
 import AIChatWindow from './AIChatWindow'
-import AdBanner from './AdBanner'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -19,7 +18,9 @@ export default function Layout({ children }: LayoutProps) {
 
   const navItems = [
     { path: '/', icon: Home, label: '홈', publicAccess: true },
-    { path: '/advanced-ai', icon: Cpu, label: '🚀 AI 스튜디오', highlight: true, new: true },
+    { path: '/auto-creation', icon: Sparkles, label: '🎬 자동 창작', highlight: true, new: true },
+    { path: '/remote-support', icon: Cpu, label: '🔧 원격 지원', highlight: true, new: true },
+    { path: '/advanced-ai', icon: Cpu, label: '🚀 AI 스튜디오', highlight: true },
     { path: '/auto', icon: Zap, label: '마법처럼', highlight: true },
     { path: '/global', icon: Globe, label: '글로벌 진출', highlight: true },
     { path: '/create', icon: Plus, label: '창작하기' },
@@ -135,17 +136,7 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main Content */}
       <main className="relative z-10">
-        {/* 광고 배너 */}
-        <div className="max-w-7xl mx-auto px-6 pt-6">
-          <AdBanner position="top" />
-        </div>
-        
         {children}
-        
-        {/* 하단 광고 */}
-        <div className="max-w-7xl mx-auto px-6 pb-6">
-          <AdBanner position="bottom" />
-        </div>
       </main>
 
       {/* Mobile Navigation - 현대적으로 */}

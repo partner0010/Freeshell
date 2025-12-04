@@ -302,6 +302,16 @@ app.use('/api/advanced-ai', advancedAIRoutes)
 import adminApprovalRoutes from './routes/adminApproval'
 app.use('/api/admin', adminApprovalRoutes)
 
+// 📈 트렌드 분석 라우트
+import trendsRoutes from './routes/trends'
+app.use('/api/trends', trendsRoutes)
+
+// 🎬 자동 창작 라우트
+import autoCreationRoutes from './routes/autoCreation'
+app.use('/api/ai', autoCreationRoutes)
+app.use('/api/schedule', autoCreationRoutes)
+app.use('/api/social', autoCreationRoutes)
+
 // AI Chat 라우트에 Rate Limiting 적용
 app.use('/api/ai-chat/search', aiChatSearchLimiter)
 app.use('/api/ai-chat', aiChatLimiter)
@@ -310,11 +320,28 @@ app.use('/api/ai-chat', aiChatRoutes)
 // Error handling
 app.use(errorHandler)
 
+// Socket.IO 서버 생성
+import { createServer } from 'http'
+import { Server as SocketIOServer } from 'socket.io'
+import { remoteSupportService } from './services/remote/remoteSupport'
+
+const httpServer = createServer(app)
+const io = new SocketIOServer(httpServer, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true
+  }
+})
+
+// 원격 지원 서비스 초기화
+remoteSupportService.initialize(io)
+
 // Start server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   logger.info(`🚀 Server running on port ${PORT}`)
   logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`)
   logger.info(`🌐 API available at http://localhost:${PORT}/api`)
+  logger.info(`🔧 Socket.IO 원격 지원 활성화`)
 })
 
 export default app
