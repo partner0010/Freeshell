@@ -7,7 +7,6 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "npx prisma generate && tsc",
-    "obfuscate": "node scripts/obfuscate.js",
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
     "test": "jest",
