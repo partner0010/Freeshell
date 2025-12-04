@@ -222,26 +222,31 @@ router.post('/login', async (req: Request, res: Response) => {
       })
     }
 
-    // Google OTP 검증
-    if (!user.phone) {
-      logger.warn('OTP Secret 없음:', { username: user.username })
-      return res.status(403).json({
-        success: false,
-        error: 'OTP가 등록되지 않았습니다. 관리자에게 문의하세요.'
-      })
+    // Google OTP 검증 (관리자는 예외)
+    if (user.role !== 'admin') {
+      if (!user.phone) {
+        logger.warn('OTP Secret 없음:', { username: user.username })
+        return res.status(403).json({
+          success: false,
+          error: 'OTP가 등록되지 않았습니다. 회원가입을 다시 진행하세요.'
+        })
+      }
+
+      const isValidOTP = googleOTP.verifyToken(user.phone, otpToken)
+
+      if (!isValidOTP) {
+        logger.warn('OTP 검증 실패:', { username: user.username })
+        return res.status(401).json({
+          success: false,
+          error: 'Google OTP 코드가 올바르지 않습니다'
+        })
+      }
+
+      logger.info('✅ OTP 검증 성공:', { username: user.username })
+    } else {
+      // 관리자는 OTP 선택사항
+      logger.info('👑 관리자 로그인 (OTP 스킵)')
     }
-
-    const isValidOTP = googleOTP.verifyToken(user.phone, otpToken) // phone 필드에 임시 저장
-
-    if (!isValidOTP) {
-      logger.warn('OTP 검증 실패:', { username: user.username })
-      return res.status(401).json({
-        success: false,
-        error: 'Google OTP 코드가 올바르지 않습니다'
-      })
-    }
-
-    logger.info('✅ OTP 검증 성공:', { username: user.username })
 
     // 관리자가 아닌 경우 승인 상태 확인
     if (user.role !== 'admin') {

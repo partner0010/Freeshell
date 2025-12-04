@@ -35,11 +35,8 @@ export default function Login() {
       return
     }
 
-    if (!otpToken || otpToken.length !== 6) {
-      setError('6자리 OTP 코드를 입력하세요')
-      setLoading(false)
-      return
-    }
+    // OTP는 관리자는 선택사항 (일반 사용자는 필수)
+    // 서버에서 검증
 
     // 입력 Sanitization
     const sanitizedUsername = sanitizeInput(username)
@@ -152,29 +149,15 @@ export default function Login() {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 비밀번호
               </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  className="w-full px-4 py-3 pr-12 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                  aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="••••••••"
+              />
             </div>
 
             {/* Google OTP */}
@@ -186,14 +169,14 @@ export default function Login() {
                 type="text"
                 value={otpToken}
                 onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                required
                 maxLength={6}
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-center text-2xl tracking-widest font-mono"
                 placeholder="000000"
                 autoComplete="one-time-code"
               />
               <p className="mt-1 text-xs text-gray-500 text-center">
-                Google Authenticator 앱에서 6자리 코드를 입력하세요
+                Google Authenticator 앱에서 6자리 코드 입력<br />
+                <span className="text-blue-400">※ 관리자는 생략 가능</span>
               </p>
             </div>
 
@@ -241,7 +224,8 @@ export default function Login() {
             <p className="text-gray-400 mb-2">🔐 <strong>관리자 테스트 계정</strong></p>
             <p className="text-gray-500 font-mono">
               아이디: admin<br />
-              비밀번호: Admin123!@#
+              비밀번호: Admin123!@#<br />
+              <span className="text-blue-400">OTP: 생략 가능</span>
             </p>
           </div>
         )}
