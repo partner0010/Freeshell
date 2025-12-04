@@ -312,6 +312,10 @@ app.use('/api/ai', autoCreationRoutes)
 app.use('/api/schedule', autoCreationRoutes)
 app.use('/api/social', autoCreationRoutes)
 
+// 🆓 무료 AI Hub 라우트
+import freeAIRoutes from './routes/freeAI'
+app.use('/api/free-ai', freeAIRoutes)
+
 // AI Chat 라우트에 Rate Limiting 적용
 app.use('/api/ai-chat/search', aiChatSearchLimiter)
 app.use('/api/ai-chat', aiChatLimiter)
