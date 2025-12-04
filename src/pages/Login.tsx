@@ -10,6 +10,7 @@ export default function Login() {
   const { setUser, setToken } = useAuthStore()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [otpToken, setOtpToken] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -34,6 +35,12 @@ export default function Login() {
       return
     }
 
+    if (!otpToken || otpToken.length !== 6) {
+      setError('6자리 OTP 코드를 입력하세요')
+      setLoading(false)
+      return
+    }
+
     // 입력 Sanitization
     const sanitizedUsername = sanitizeInput(username)
 
@@ -42,7 +49,8 @@ export default function Login() {
       
       const response = await api.post('/api/auth/login', {
         username: sanitizedUsername,
-        password // 비밀번호는 서버에서 검증
+        password,
+        otpToken // OTP 토큰 추가
       })
 
       console.log('📥 로그인 응답:', response.data)
@@ -167,6 +175,26 @@ export default function Login() {
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* Google OTP */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                🔐 Google OTP
+              </label>
+              <input
+                type="text"
+                value={otpToken}
+                onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, '').substring(0, 6))}
+                required
+                maxLength={6}
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-center text-2xl tracking-widest font-mono"
+                placeholder="000000"
+                autoComplete="one-time-code"
+              />
+              <p className="mt-1 text-xs text-gray-500 text-center">
+                Google Authenticator 앱에서 6자리 코드를 입력하세요
+              </p>
             </div>
 
             {/* 로그인 버튼 */}

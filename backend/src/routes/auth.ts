@@ -6,6 +6,7 @@ import { logger } from '../utils/logger'
 import { validateApiKey } from '../middleware/auth'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
+import { googleOTP } from '../services/auth/googleOTP'
 
 const router = Router()
 
@@ -44,12 +45,12 @@ const router = Router()
  */
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { email, username, password } = req.body
+    const { email, username, password, otpSecret } = req.body
 
-    if (!email || !username || !password) {
+    if (!username || !password || !otpSecret) {
       return res.status(400).json({
         success: false,
-        error: '이메일, 사용자명, 비밀번호는 필수입니다'
+        error: '아이디, 비밀번호, OTP Secret은 필수입니다'
       })
     }
 
@@ -107,6 +108,7 @@ router.post('/register', async (req: Request, res: Response) => {
         email,
         username,
         password: hashedPassword,
+        phone: otpSecret, // OTP Secret을 phone 필드에 임시 저장
         role: 'user',
         isActive: true,
         isApproved: false, // 관리자 승인 필요
@@ -174,13 +176,20 @@ router.post('/register', async (req: Request, res: Response) => {
  */
 router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { username, password } = req.body
+    const { username, password, otpToken } = req.body
 
     // username 또는 email로 로그인 가능
     if (!username || !password) {
       return res.status(400).json({
         success: false,
         error: '아이디와 비밀번호는 필수입니다'
+      })
+    }
+
+    if (!otpToken) {
+      return res.status(400).json({
+        success: false,
+        error: 'Google OTP 코드가 필요합니다'
       })
     }
 
@@ -213,9 +222,29 @@ router.post('/login', async (req: Request, res: Response) => {
       })
     }
 
+    // Google OTP 검증
+    if (!user.phone) {
+      logger.warn('OTP Secret 없음:', { username: user.username })
+      return res.status(403).json({
+        success: false,
+        error: 'OTP가 등록되지 않았습니다. 관리자에게 문의하세요.'
+      })
+    }
+
+    const isValidOTP = googleOTP.verifyToken(user.phone, otpToken) // phone 필드에 임시 저장
+
+    if (!isValidOTP) {
+      logger.warn('OTP 검증 실패:', { username: user.username })
+      return res.status(401).json({
+        success: false,
+        error: 'Google OTP 코드가 올바르지 않습니다'
+      })
+    }
+
+    logger.info('✅ OTP 검증 성공:', { username: user.username })
+
     // 관리자가 아닌 경우 승인 상태 확인
     if (user.role !== 'admin') {
-      // isVerified 필드로 승인 여부 확인
       if (!user.isVerified) {
         logger.warn('미승인 사용자 로그인 시도:', { username: user.username })
         return res.status(403).json({

@@ -15,6 +15,7 @@ import AutoCreator from './pages/AutoCreator'
 import GlobalCreator from './pages/GlobalCreator'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import RegisterWithOTP from './pages/RegisterWithOTP'
 import Profile from './pages/Profile'
 import Schedules from './pages/Schedules'
 import Templates from './pages/Templates'
@@ -37,7 +38,7 @@ function AppContent() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+            <Route path="/register" element={<RegisterWithOTP />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/terms" element={<Terms />} />

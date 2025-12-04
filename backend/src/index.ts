@@ -316,6 +316,10 @@ app.use('/api/social', autoCreationRoutes)
 import freeAIRoutes from './routes/freeAI'
 app.use('/api/free-ai', freeAIRoutes)
 
+// 🔐 Google OTP 라우트
+import otpRoutes from './routes/otp'
+app.use('/api/otp', otpRoutes)
+
 // AI Chat 라우트에 Rate Limiting 적용
 app.use('/api/ai-chat/search', aiChatSearchLimiter)
 app.use('/api/ai-chat', aiChatLimiter)
