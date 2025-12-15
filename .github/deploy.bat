@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul
-cd /d "%~dp0\.."
+cd /d "%~dp0"
 
 echo ========================================
-echo 누락된 의존성 추가 및 푸시
+echo 배포
 echo ========================================
 echo.
 
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo [3/4] 변경사항 커밋...
-git commit -m "fix: @dnd-kit 패키지 의존성 추가"
+git commit -m "chore: 불필요한 파일 정리 및 배포"
 
 echo.
 echo [4/4] GitHub에 푸시...
