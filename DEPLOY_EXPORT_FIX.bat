@@ -3,7 +3,7 @@ chcp 65001 >nul
 cd /d "%~dp0"
 
 echo ========================================
-echo 들여쓰기 수정 배포
+echo export 수정 배포
 echo ========================================
 echo.
 
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo [3/4] 변경사항 커밋...
-git commit -m "fix: AdvancedBlockRenderer 들여쓰기 수정"
+git commit -m "fix: AccordionBlock export 추가"
 
 echo.
 echo [4/4] GitHub에 푸시...
