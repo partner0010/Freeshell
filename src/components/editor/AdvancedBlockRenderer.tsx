@@ -286,6 +286,7 @@ export function ProcessBlock({ content }: { content: ProcessBlockContent }) {
 // 아코디언 블록
 export function AccordionBlock({ content }: { content: AccordionBlockContent }): JSX.Element {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+
   return (
     <div className="max-w-3xl mx-auto">
       <h2 className="text-3xl font-display font-bold text-center text-gray-900 mb-8">
