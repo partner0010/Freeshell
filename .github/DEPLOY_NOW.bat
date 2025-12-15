@@ -3,7 +3,7 @@ chcp 65001 >nul
 cd /d "%~dp0"
 
 echo ========================================
-echo 마지막 시도
+echo 배포 시도
 echo ========================================
 echo.
 
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo [3/4] 변경사항 커밋...
-git commit -m "fix: WebsiteAuditor categories 타입 명시"
+git commit -m "fix: JSX 오류 수정 시도"
 
 echo.
 echo [4/4] GitHub에 푸시...
@@ -25,7 +25,6 @@ git push origin main
 echo.
 echo ========================================
 echo 완료!
-echo 이번에는 반드시 성공합니다!
 echo ========================================
 pause
 
