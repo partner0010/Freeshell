@@ -30,7 +30,7 @@ import {
   type Recommendation,
 } from '@/lib/audit/comprehensive-auditor';
 
-export function WebsiteAuditor() {
+export function WebsiteAuditor(): JSX.Element {
   const [url, setUrl] = useState('');
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditResult, setAuditResult] = useState<WebsiteAuditResult | null>(null);

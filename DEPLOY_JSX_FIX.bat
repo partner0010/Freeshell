@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo [3/4] 변경사항 커밋...
-git commit -m "fix: JSX 구문 오류 수정 (빈 줄 제거)"
+git commit -m "fix: 함수 반환 타입 명시로 JSX 오류 수정"
 
 echo.
 echo [4/4] GitHub에 푸시...
