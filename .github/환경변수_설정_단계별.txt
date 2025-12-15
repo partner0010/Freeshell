@@ -1,0 +1,112 @@
+========================================
+  ⚙️ Vercel 환경 변수 설정 (5개)
+========================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📍 위치 찾기:
+
+Vercel 프로젝트 설정 페이지에서:
+- 왼쪽 메뉴 또는 중앙에 "Environment Variables" 섹션이 있습니다
+- 또는 "Settings" → "Environment Variables" 탭
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 환경 변수 5개 설정하기:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+변수 1: GOOGLE_CLIENT_ID
+
+1. "Add New" 또는 "Add" 버튼 클릭
+2. Key (또는 Name) 입력: GOOGLE_CLIENT_ID
+3. Value 입력: Google에서 복사한 클라이언트 ID
+   (예: 123456789-abcdefghijklmnop.apps.googleusercontent.com)
+4. Environment 선택:
+   ✅ Production
+   ✅ Preview  
+   ✅ Development
+   (모두 체크)
+5. "Save" 또는 "Add" 클릭
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+변수 2: GOOGLE_CLIENT_SECRET
+
+1. "Add New" 또는 "Add" 버튼 클릭
+2. Key (또는 Name) 입력: GOOGLE_CLIENT_SECRET
+3. Value 입력: Google에서 복사한 보안 비밀번호
+   (예: GOCSPX-abcdefghijklmnopqrstuvwxyz)
+4. Environment 선택:
+   ✅ Production
+   ✅ Preview
+   ✅ Development
+   (모두 체크)
+5. "Save" 또는 "Add" 클릭
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+변수 3: NEXTAUTH_SECRET
+
+1. "Add New" 또는 "Add" 버튼 클릭
+2. Key (또는 Name) 입력: NEXTAUTH_SECRET
+3. Value 입력: 로컬 .env 파일에 있는 값
+   (프로젝트 폴더의 .env 파일을 메모장으로 열어서 확인)
+   예: 5OtQ2J2wZOGR7hlY+GTT9AybwFVbHu8vkn1TFNPTOTU=
+4. Environment 선택:
+   ✅ Production
+   ✅ Preview
+   ✅ Development
+   (모두 체크)
+5. "Save" 또는 "Add" 클릭
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+변수 4: NEXTAUTH_URL
+
+1. "Add New" 또는 "Add" 버튼 클릭
+2. Key (또는 Name) 입력: NEXTAUTH_URL
+3. Value 입력: https://freeshell.co.kr
+   (정확히 이렇게 입력, http가 아니라 https!)
+4. Environment 선택:
+   ✅ Production만 체크
+   (Preview, Development는 체크 해제)
+5. "Save" 또는 "Add" 클릭
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+변수 5: NEXT_PUBLIC_DOMAIN
+
+1. "Add New" 또는 "Add" 버튼 클릭
+2. Key (또는 Name) 입력: NEXT_PUBLIC_DOMAIN
+3. Value 입력: freeshell.co.kr
+   (https:// 없이 도메인만)
+4. Environment 선택:
+   ✅ Production
+   ✅ Preview
+   ✅ Development
+   (모두 체크)
+5. "Save" 또는 "Add" 클릭
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 완료 확인:
+
+5개 변수가 모두 추가되었는지 확인:
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+- NEXTAUTH_SECRET
+- NEXTAUTH_URL
+- NEXT_PUBLIC_DOMAIN
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 중요 사항:
+
+- 각 변수 추가 후 반드시 "Save" 클릭!
+- Value에 공백이나 따옴표가 들어가면 안 됩니다
+- NEXTAUTH_URL은 Production만 체크!
+- 나머지는 모두 체크!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

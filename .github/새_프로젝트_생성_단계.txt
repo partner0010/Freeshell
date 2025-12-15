@@ -1,0 +1,124 @@
+========================================
+  📦 Vercel 새 프로젝트 생성 단계
+========================================
+
+✅ 기존 프로젝트 삭제 완료!
+
+이제 새 프로젝트를 만들겠습니다.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📦 1단계: 새 프로젝트 시작
+
+브라우저가 열렸습니다!
+(https://vercel.com/new)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📦 2단계: GitHub 저장소 선택
+
+1. GitHub 저장소 목록이 나타남
+2. "freeshell" 저장소 찾기
+3. "Import" 버튼 클릭
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📦 3단계: 프로젝트 설정
+
+다음 설정들이 나타나는데, 모두 기본값 그대로 두면 됩니다:
+
+- Project Name: freeshell (기본값)
+- Framework Preset: Next.js (자동 감지)
+- Root Directory: ./ (기본값)
+- Build Command: npm run build (기본값)
+- Output Directory: .next (기본값)
+- Install Command: npm install (기본값)
+
+⚠️  여기서 "Deploy" 버튼을 누르지 마세요!
+먼저 환경 변수를 설정해야 합니다!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚙️ 4단계: 환경 변수 설정 (중요!)
+
+프로젝트 설정 페이지에서:
+
+1. "Environment Variables" 섹션 찾기
+2. 다음 5개 변수를 하나씩 추가:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+변수 1: GOOGLE_CLIENT_ID
+- Name: GOOGLE_CLIENT_ID
+- Value: Google Cloud Console에서 복사한 클라이언트 ID
+- Environment: ✅ Production, ✅ Preview, ✅ Development 모두 체크
+- "Save" 클릭
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+변수 2: GOOGLE_CLIENT_SECRET
+- Name: GOOGLE_CLIENT_SECRET
+- Value: Google Cloud Console에서 복사한 클라이언트 보안 비밀번호
+- Environment: ✅ Production, ✅ Preview, ✅ Development 모두 체크
+- "Save" 클릭
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+변수 3: NEXTAUTH_SECRET
+- Name: NEXTAUTH_SECRET
+- Value: 로컬 .env 파일에 있는 값
+  (예: 5OtQ2J2wZOGR7hlY+GTT9AybwFVbHu8vkn1TFNPTOTU=)
+- Environment: ✅ Production, ✅ Preview, ✅ Development 모두 체크
+- "Save" 클릭
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+변수 4: NEXTAUTH_URL
+- Name: NEXTAUTH_URL
+- Value: https://freeshell.co.kr
+- Environment: ✅ Production만 체크 (Preview, Development는 해제)
+- "Save" 클릭
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+변수 5: NEXT_PUBLIC_DOMAIN
+- Name: NEXT_PUBLIC_DOMAIN
+- Value: freeshell.co.kr
+- Environment: ✅ Production, ✅ Preview, ✅ Development 모두 체크
+- "Save" 클릭
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 5단계: 배포 실행
+
+1. 모든 환경 변수 설정 완료 후
+2. "Deploy" 버튼 클릭
+3. 배포 진행 상황 확인 (2-3분 소요)
+4. 배포 완료되면 URL 확인
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 6단계: 도메인 연결
+
+배포 완료 후:
+
+1. 프로젝트 페이지에서 "Settings" 클릭
+2. "Domains" 탭 클릭
+3. freeshell.co.kr 입력
+4. "Add" 클릭
+5. DNS 설정 안내 확인
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 완료!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 팁:
+
+- 환경 변수는 정확히 입력해야 합니다
+- 각 변수 추가 후 "Save"를 클릭해야 저장됩니다
+- Google OAuth 정보가 없다면 먼저 설정해야 합니다
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

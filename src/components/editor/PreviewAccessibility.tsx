@@ -286,11 +286,15 @@ export function PreviewAccessibility() {
                   {issue.element && (
                     <button
                       onClick={() => {
-                        issue.element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        issue.element?.style.outline = '3px solid red';
-                        setTimeout(() => {
-                          issue.element?.style.removeProperty('outline');
-                        }, 2000);
+                        if (issue.element) {
+                          issue.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          issue.element.style.outline = '3px solid red';
+                          setTimeout(() => {
+                            if (issue.element) {
+                              issue.element.style.removeProperty('outline');
+                            }
+                          }, 2000);
+                        }
                       }}
                       className="text-xs text-blue-600 hover:underline mt-2"
                     >

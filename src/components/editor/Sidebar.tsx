@@ -3,16 +3,16 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Blocks, Palette, Sparkles, FileText, Search, Download, FolderOpen, Wand2,
+  Blocks, Palette, Sparkles, FileText, Search, Download as DownloadIcon, FolderOpen, Wand2,
   History, Zap, Accessibility, Code, Share2, Image, MoreHorizontal,
   Users, GitBranch, Bot, Globe, Split, LayoutGrid, ClipboardList,
-  Type, Scroll, Trophy, ImagePlus,   MousePointer2, Bell, Timer, QrCode, Layers,
+  Type, Scroll, Trophy, ImagePlus, MousePointer2, Bell, Timer, QrCode, Layers,
   Mic, Variable, FileSignature, Code2, Shield, Map, Rocket,
-  Scale, Gauge, Bug, Lock, Download, AlertTriangle, Search, Brain,
-  Package, Eye, Globe, Target, TestTube, Activity, Zap, Sparkles, TrendingUp,
-  Fingerprint, Contrast, LayoutDashboard, Download as DownloadIcon, BarChart3, ShoppingBag, Code2, GitCompare, Search,
-  Presentation, MessageCircle, Puzzle, Network, FileText, Settings, Zap, Database, Book, Mail, TestTube, MessageSquare,
-  Clock, HardDrive, Folder, FileBarChart, Tags, Shield, Gauge, ShieldAlert, Flag, Key, Monitor, CheckCircle, Activity, TestTube2
+  Scale, Gauge, Bug, Lock, AlertTriangle, Brain,
+  Package, Eye, Target, TestTube, Activity, TrendingUp,
+  Fingerprint, Contrast, LayoutDashboard, BarChart3, ShoppingBag, GitCompare,
+  Presentation, MessageCircle, Puzzle, Network, Settings, Database, Book, Mail, MessageSquare,
+  Clock, HardDrive, Folder, FileBarChart, Tags, ShieldAlert, Flag, Key, Monitor, CheckCircle, TestTube2
 } from 'lucide-react';
 import { useEditorStore } from '@/store/editor-store';
 import { BlockPalette } from './BlockPalette';

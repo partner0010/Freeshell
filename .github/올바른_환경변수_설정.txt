@@ -1,0 +1,57 @@
+========================================
+  ✅ 올바른 환경 변수 설정 방법
+========================================
+
+맞습니다! Environment는 공통 설정입니다!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📍 Environment 설정 (공통):
+
+페이지 상단의 "Environments" 섹션에서:
+- "All Environments" 드롭다운 클릭
+- Production, Preview, Development 모두 체크
+- 이 설정이 모든 변수에 공통으로 적용됩니다
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 환경 변수 5개 모두 동일하게 설정:
+
+1. GOOGLE_CLIENT_ID
+   - Value: [Google Cloud Console에서 복사한 클라이언트 ID]
+   - Environment: 공통 설정 사용
+
+2. GOOGLE_CLIENT_SECRET
+   - Value: [Google Cloud Console에서 복사한 보안 비밀번호]
+   - Environment: 공통 설정 사용
+
+3. NEXTAUTH_SECRET
+   - Value: [로컬 .env 파일에 있는 값 또는 새로 생성한 값]
+   - Environment: 공통 설정 사용
+
+4. NEXTAUTH_URL
+   - Value: https://freeshell.co.kr
+   - Environment: 공통 설정 사용
+
+5. NEXT_PUBLIC_DOMAIN
+   - Value: freeshell.co.kr
+   - Environment: 공통 설정 사용
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 완료 후:
+
+1. 맨 아래 "Save" 버튼 클릭
+2. 저장 완료 확인
+3. 배포 준비 완료!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 참고:
+
+- Environment는 상단에서 한 번만 설정하면 됩니다
+- 모든 변수가 같은 환경에서 사용됩니다
+- NEXTAUTH_URL도 공통 설정을 사용해도 됩니다
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
