@@ -286,7 +286,7 @@ export function ProcessBlock({ content }: { content: ProcessBlockContent }) {
 // 아코디언 블록
 export function AccordionBlock({ content }: { content: AccordionBlockContent }): JSX.Element {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-
+  
   return (
     <div className="max-w-3xl mx-auto">
       <h2 className="text-3xl font-display font-bold text-center text-gray-900 mb-8">
@@ -299,36 +299,36 @@ export function AccordionBlock({ content }: { content: AccordionBlockContent }):
             : item as AccordionItem;
           return (
             <motion.div
-            key={i}
-            className="bg-white rounded-xl overflow-hidden shadow-card"
-          >
-            <button
-              onClick={() => setOpenIndex(openIndex === i ? null : i)}
-              className="w-full px-6 py-4 flex items-center justify-between text-left"
+              key={i}
+              className="bg-white rounded-xl overflow-hidden shadow-card"
             >
-              <span className="font-medium text-gray-900">{accordionItem.title}</span>
-              <motion.div
-                animate={{ rotate: openIndex === i ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
+              <button
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                className="w-full px-6 py-4 flex items-center justify-between text-left"
               >
-                <Icons.ChevronDown className="text-gray-400" size={20} />
-              </motion.div>
-            </button>
-            <AnimatePresence>
-              {openIndex === i && (
+                <span className="font-medium text-gray-900">{accordionItem.title}</span>
                 <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
+                  animate={{ rotate: openIndex === i ? 180 : 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <div className="px-6 pb-4 text-gray-600">
-                    {accordionItem.content}
-                  </div>
+                  <Icons.ChevronDown className="text-gray-400" size={20} />
                 </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+              </button>
+              <AnimatePresence>
+                {openIndex === i && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="px-6 pb-4 text-gray-600">
+                      {accordionItem.content}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
         ))}
       </div>
     </div>
