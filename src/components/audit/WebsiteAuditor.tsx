@@ -30,6 +30,16 @@ import {
   type Recommendation,
 } from '@/lib/audit/comprehensive-auditor';
 
+const categories = [
+  { id: 'overall', label: '전체', icon: TrendingUp },
+  { id: 'security', label: '보안', icon: Shield },
+  { id: 'performance', label: '성능', icon: Zap },
+  { id: 'seo', label: 'SEO', icon: Search },
+  { id: 'accessibility', label: '접근성', icon: Accessibility },
+  { id: 'codeQuality', label: '코드 품질', icon: Code2 },
+  { id: 'bestPractices', label: '베스트 프랙티스', icon: CheckCircle2 },
+];
+
 export const WebsiteAuditor = () => {
   const [url, setUrl] = useState('');
   const [isAuditing, setIsAuditing] = useState(false);
@@ -95,16 +105,6 @@ export const WebsiteAuditor = () => {
         return 'bg-gray-100 text-gray-700 border-gray-300';
     }
   };
-
-  const categories = [
-    { id: 'overall', label: '전체', icon: TrendingUp },
-    { id: 'security', label: '보안', icon: Shield },
-    { id: 'performance', label: '성능', icon: Zap },
-    { id: 'seo', label: 'SEO', icon: Search },
-    { id: 'accessibility', label: '접근성', icon: Accessibility },
-    { id: 'codeQuality', label: '코드 품질', icon: Code2 },
-    { id: 'bestPractices', label: '베스트 프랙티스', icon: CheckCircle2 },
-  ];
 
   return (
     <div className="h-full flex flex-col bg-white">
