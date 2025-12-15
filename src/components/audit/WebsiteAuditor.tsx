@@ -40,6 +40,27 @@ const categories = [
   { id: 'bestPractices', label: '베스트 프랙티스', icon: CheckCircle2 },
 ];
 
+const getScoreColor = (score: number) => {
+  if (score >= 90) return 'text-green-600 bg-green-50 border-green-200';
+  if (score >= 70) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+  return 'text-red-600 bg-red-50 border-red-200';
+};
+
+const getSeverityColor = (severity: string) => {
+  switch (severity) {
+    case 'critical':
+      return 'bg-red-100 text-red-700 border-red-300';
+    case 'high':
+      return 'bg-orange-100 text-orange-700 border-orange-300';
+    case 'medium':
+      return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+    case 'low':
+      return 'bg-blue-100 text-blue-700 border-blue-300';
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-300';
+  }
+};
+
 export const WebsiteAuditor = () => {
   const [url, setUrl] = useState('');
   const [isAuditing, setIsAuditing] = useState(false);
@@ -83,27 +104,6 @@ export const WebsiteAuditor = () => {
     const simulated = simulateChanges(auditResult, changes);
     setSimulatedResult(simulated);
     setShowSimulation(true);
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600 bg-green-50 border-green-200';
-    if (score >= 70) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-    return 'text-red-600 bg-red-50 border-red-200';
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return 'bg-red-100 text-red-700 border-red-300';
-      case 'high':
-        return 'bg-orange-100 text-orange-700 border-orange-300';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-      case 'low':
-        return 'bg-blue-100 text-blue-700 border-blue-300';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-300';
-    }
   };
 
   return (

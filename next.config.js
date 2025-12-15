@@ -38,7 +38,7 @@ const nextConfig = {
               name: 'vendors',
               priority: 10,
               reuseExistingChunk: true,
-            },
+  },
             common: {
               minChunks: 2,
               priority: 5,
