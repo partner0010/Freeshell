@@ -3,7 +3,7 @@ chcp 65001 >nul
 cd /d "%~dp0"
 
 echo ========================================
-echo 최종 배포
+echo tsconfig.json jsx 설정 변경 배포
 echo ========================================
 echo.
 
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo [3/4] 변경사항 커밋...
-git commit -m "fix: return 문 앞 빈 줄 추가로 JSX 오류 수정"
+git commit -m "fix: tsconfig.json jsx를 react-jsx로 변경"
 
 echo.
 echo [4/4] GitHub에 푸시...
