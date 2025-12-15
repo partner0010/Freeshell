@@ -9,10 +9,10 @@
 ✅ 확인된 환경 변수:
 
 1. NEXTAUTH_URL: https://freeshell.co.kr ✓
-2. GOOGLE_CLIENT_SECRET: GOCSPX-JPEs8vtSgzH4_6N5vJABOUU... ✓
-3. NEXTAUTH_SECRET: zkGCmstzTd05bX8npcEv7/8dBacgCd... ✓
+2. GOOGLE_CLIENT_SECRET: [설정 완료] ✓
+3. NEXTAUTH_SECRET: [설정 완료] ✓
 4. NEXT_PUBLIC_DOMAIN: freeshell.co.kr ✓
-5. GOOGLE_CLIENT_ID: 509430067814-j45fngh5kud1fdequ... ✓
+5. GOOGLE_CLIENT_ID: [설정 완료] ✓
 
 모두 "All Environments"로 설정되어 있습니다! ✓
 
