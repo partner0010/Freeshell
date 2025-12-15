@@ -3,7 +3,7 @@ chcp 65001 >nul
 cd /d "%~dp0"
 
 echo ========================================
-echo export 수정 배포
+echo SWC 비활성화 배포
 echo ========================================
 echo.
 
@@ -16,7 +16,7 @@ git add -A
 
 echo.
 echo [3/4] 변경사항 커밋...
-git commit -m "fix: AccordionBlock export 추가"
+git commit -m "fix: SWC 컴파일러 비활성화로 JSX 오류 해결 시도"
 
 echo.
 echo [4/4] GitHub에 푸시...

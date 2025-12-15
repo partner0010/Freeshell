@@ -59,11 +59,10 @@ const nextConfig = {
   reactStrictMode: true,
 
   // SWC 컴파일러 설정
+  swcMinify: false,
   compiler: {
     reactRemoveProperties: false,
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn'],
-    } : false,
+    removeConsole: false,
   },
 
   // 헤더 최적화
