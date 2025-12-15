@@ -328,7 +328,8 @@ export function AccordionBlock({ content }: { content: AccordionBlockContent }) 
                 )}
               </AnimatePresence>
             </motion.div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

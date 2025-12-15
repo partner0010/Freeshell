@@ -96,7 +96,7 @@ export function WebsiteAuditor() {
     }
   };
 
-  const categories: Array<{ id: string; label: string; icon: any }> = [
+  const categories = [
     { id: 'overall', label: '전체', icon: TrendingUp },
     { id: 'security', label: '보안', icon: Shield },
     { id: 'performance', label: '성능', icon: Zap },
@@ -104,8 +104,8 @@ export function WebsiteAuditor() {
     { id: 'accessibility', label: '접근성', icon: Accessibility },
     { id: 'codeQuality', label: '코드 품질', icon: Code2 },
     { id: 'bestPractices', label: '베스트 프랙티스', icon: CheckCircle2 },
-  ];
-  
+  ] as const;
+
   return (
     <div className="h-full flex flex-col bg-white">
       {/* 헤더 */}
