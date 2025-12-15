@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 성능 최적화 설정
-  swcMinify: true,
-  
   // 이미지 최적화
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -62,9 +59,11 @@ const nextConfig = {
   reactStrictMode: true,
 
   // SWC 컴파일러 설정
-  swcMinify: true,
   compiler: {
     reactRemoveProperties: false,
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
   },
 
   // 헤더 최적화
