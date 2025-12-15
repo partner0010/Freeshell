@@ -70,7 +70,7 @@ export const WebsiteAuditor = () => {
   const [simulatedResult, setSimulatedResult] = useState<WebsiteAuditResult | null>(null);
   const [aiRecommendations, setAiRecommendations] = useState<Recommendation[]>([]);
 
-  const handleAudit = async () => {
+  async function handleAudit() {
     if (!url.trim()) {
       alert('URL을 입력하세요');
       return;
@@ -89,9 +89,9 @@ export const WebsiteAuditor = () => {
     } finally {
       setIsAuditing(false);
     }
-  };
+  }
 
-  const handleSimulate = (recommendation: Recommendation) => {
+  function handleSimulate(recommendation: Recommendation) {
     if (!auditResult) return;
 
     const changes = [
@@ -104,7 +104,8 @@ export const WebsiteAuditor = () => {
     const simulated = simulateChanges(auditResult, changes);
     setSimulatedResult(simulated);
     setShowSimulation(true);
-  };
+  }
+
   return (
     <div className="h-full flex flex-col bg-white">
       {/* 헤더 */}
