@@ -8,7 +8,7 @@ interface TutorialStep {
   id: string;
   title: string;
   description: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ComponentType<any>;
   highlight?: string;
   position?: 'center' | 'left' | 'right';
 }
