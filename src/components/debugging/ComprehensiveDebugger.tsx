@@ -127,7 +127,11 @@ export function ComprehensiveDebugger() {
     setAiFixing(true);
     try {
       const result = await aiFixBug(codeInput, errorInput, 'React 컴포넌트');
-      setFixedCode(result);
+      setFixedCode({
+        code: result.fixedCode,
+        explanation: result.explanation,
+        confidence: result.confidence,
+      });
     } catch (error) {
       alert(`AI 수정 실패: ${error}`);
     } finally {

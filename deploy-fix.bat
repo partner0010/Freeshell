@@ -32,7 +32,8 @@ git commit -m "fix: 빌드 오류 수정
 - security/page.tsx에서 severity 타입 오류 수정
 - SSOPanel.tsx에서 Input multiline prop 오류 수정 (textarea로 변경)
 - BackupRecoveryPanel.tsx에서 duration 속성 오류 수정 (completedAt과 startedAt으로 계산)
-- EnhancedCommandPalette.tsx에서 filteredCommands와 handleExecute 선언 순서 수정"
+- EnhancedCommandPalette.tsx에서 filteredCommands와 handleExecute 선언 순서 수정
+- ComprehensiveDebugger.tsx에서 aiFixBug 반환값 타입 매핑 수정"
 echo.
 
 echo [4/4] 푸시...
