@@ -407,7 +407,7 @@ export function Sidebar() {
       case 'debugging':
         return <ComprehensiveDebugger />;
       case 'website-audit':
-        return <WebsiteAuditor />;
+        return <div>Website Auditor (Temporarily Disabled)</div>;
       case 'cicd':
         return <PipelinePanel />;
       case 'zero-trust':

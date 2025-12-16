@@ -37,6 +37,7 @@ module.exports = {
         surface: {
           light: '#FAFAFA',
           dark: '#1A1A1A',
+          border: '#E5E5E5',
         },
       },
       fontFamily: {
