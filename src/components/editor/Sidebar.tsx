@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Blocks, Palette, Sparkles, FileText, Search, Download as DownloadIcon, FolderOpen, Wand2,
+  Blocks, Palette, Sparkles, FileText, Search, Download, Download as DownloadIcon, FolderOpen, Wand2,
   History, Zap, Accessibility, Code, Share2, Image, MoreHorizontal,
   Users, GitBranch, Bot, Globe, Split, LayoutGrid, ClipboardList,
   Type, Scroll, Trophy, ImagePlus, MousePointer2, Bell, Timer, QrCode, Layers,
@@ -12,7 +12,8 @@ import {
   Package, Eye, Target, TestTube, Activity, TrendingUp,
   Fingerprint, Contrast, LayoutDashboard, BarChart3, ShoppingBag, GitCompare,
   Presentation, MessageCircle, Puzzle, Network, Settings, Database, Book, Mail, MessageSquare,
-  Clock, HardDrive, Folder, FileBarChart, Tags, ShieldAlert, Flag, Key, Monitor, CheckCircle, TestTube2
+  Clock, HardDrive, Folder, FileBarChart, Tags, ShieldAlert, Flag, Key, Monitor, CheckCircle, TestTube2,
+  FileCode, Layout
 } from 'lucide-react';
 import { useEditorStore } from '@/store/editor-store';
 import { BlockPalette } from './BlockPalette';
