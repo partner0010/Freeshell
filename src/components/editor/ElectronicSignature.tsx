@@ -67,7 +67,11 @@ export function ElectronicSignature({ document: initialDocument, onSave, onCompl
     type: 'document' | 'map';
     content: string | File;
     url?: string;
-  } | null>(initialDocument || null);
+  } | null>(initialDocument && initialDocument.content ? {
+    type: initialDocument.type,
+    content: initialDocument.content,
+    url: initialDocument.url,
+  } : null);
 
   // 캔버스 초기화
   useEffect(() => {

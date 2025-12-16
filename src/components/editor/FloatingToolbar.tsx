@@ -22,12 +22,16 @@ import {
 import { useEditorStore } from '@/store/editor-store';
 
 export default function FloatingToolbar() {
-  const { selectedBlockId, blocks, duplicateBlock, deleteBlock, moveBlock } = useEditorStore();
+  const { selectedBlockId, getCurrentPage, duplicateBlock, deleteBlock, moveBlock } = useEditorStore();
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [showMore, setShowMore] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
+  // project에서 현재 페이지의 blocks 추출
+  const currentPage = getCurrentPage();
+  const blocks = currentPage?.blocks || [];
+  
   const selectedBlock = blocks.find(b => b.id === selectedBlockId);
   const blockIndex = blocks.findIndex(b => b.id === selectedBlockId);
 
