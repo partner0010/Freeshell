@@ -114,7 +114,7 @@ export function AnimationPanel() {
         styles: {
           ...selectedBlock.styles,
           animation: config,
-        },
+        } as any,
       });
     }
   };
