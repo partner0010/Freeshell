@@ -131,10 +131,10 @@ export function FileManagerPanel() {
                   id="file-upload"
                   disabled={isUploading}
                 />
-                <label htmlFor="file-upload">
-                  <Button variant="primary" as="span" disabled={isUploading}>
+                <label htmlFor="file-upload" className="cursor-pointer">
+                  <span className="inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 px-4 py-2 text-base">
                     {isUploading ? '업로드 중...' : '파일 선택'}
-                  </Button>
+                  </span>
                 </label>
               </div>
               <div className="flex gap-2">
