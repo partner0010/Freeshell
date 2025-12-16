@@ -206,7 +206,7 @@ export default function DynamicContent() {
             실제 값으로 자동 대체됩니다.
           </p>
           <p className="text-xs text-gray-600 mt-2">
-            예: "© <code className="bg-white px-1 py-0.5 rounded">{'{{year}}'}</code> <code className="bg-white px-1 py-0.5 rounded">{'{{company}}'}</code>" → "© 2024 GRIP"
+            예: &quot;© <code className="bg-white px-1 py-0.5 rounded">{'{{year}}'}</code> <code className="bg-white px-1 py-0.5 rounded">{'{{company}}'}</code>&quot; → &quot;© 2024 GRIP&quot;
           </p>
         </div>
 

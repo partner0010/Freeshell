@@ -195,7 +195,7 @@ export default function VoiceCommands() {
         {transcript && (
           <div className="bg-gray-100 rounded-xl p-4">
             <p className="text-xs text-gray-500 mb-1">인식된 음성:</p>
-            <p className="text-gray-800 font-medium">"{transcript}"</p>
+            <p className="text-gray-800 font-medium">&quot;{transcript}&quot;</p>
           </div>
         )}
 

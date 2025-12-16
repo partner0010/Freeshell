@@ -238,7 +238,7 @@ export default function CommandPalette() {
                 {filteredCommands.length === 0 && (
                   <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                     <Hash size={32} className="mx-auto mb-2 opacity-50" />
-                    <p>"{query}"에 대한 명령어를 찾을 수 없습니다</p>
+                    <p>&quot;{query}&quot;에 대한 명령어를 찾을 수 없습니다</p>
                   </div>
                 )}
               </div>

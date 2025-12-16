@@ -336,7 +336,7 @@ export function EcommercePanel() {
             <h4 className="font-medium text-gray-800 dark:text-white text-sm mb-2">💡 인사이트</h4>
             <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
               <li>• 이번 주 매출이 지난 주 대비 15% 증가했습니다.</li>
-              <li>• 가장 인기 있는 카테고리는 '의류'입니다.</li>
+              <li>• 가장 인기 있는 카테고리는 &apos;의류&apos;입니다.</li>
               <li>• 장바구니 이탈률: 23%</li>
             </ul>
           </div>

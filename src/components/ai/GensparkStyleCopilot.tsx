@@ -204,7 +204,7 @@ export function GensparkStyleCopilot({ onCommand }: GensparkStyleCopilotProps) {
               </Button>
             </div>
             <div className="mt-2 text-xs text-gray-500">
-              💡 예: "웹사이트 만들어줘", "디자인 개선해줘", "비디오 만들어줘"
+              💡 예: &quot;웹사이트 만들어줘&quot;, &quot;디자인 개선해줘&quot;, &quot;비디오 만들어줘&quot;
             </div>
           </div>
         </>
