@@ -43,6 +43,26 @@ export function EnhancedCommandPalette({
     }
   }, [isOpen]);
 
+  const filteredCommands = commands.filter((cmd) => {
+    if (!search) return true;
+    const query = search.toLowerCase();
+    return (
+      cmd.label.toLowerCase().includes(query) ||
+      cmd.keywords.some((kw) => kw.toLowerCase().includes(query)) ||
+      cmd.category.toLowerCase().includes(query)
+    );
+  });
+
+  const handleExecute = (command: CommandItem) => {
+    // 최근 명령어 저장
+    const recent = [command.id, ...recentCommands.filter((id) => id !== command.id)].slice(0, 10);
+    setRecentCommands(recent);
+    localStorage.setItem('command-palette-recent', JSON.stringify(recent));
+
+    command.action();
+    onClose();
+  };
+
   // 키보드 네비게이션
   useEffect(() => {
     if (!isOpen) return;
@@ -64,17 +84,7 @@ export function EnhancedCommandPalette({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, selectedIndex, filteredCommands]);
-
-  const filteredCommands = commands.filter((cmd) => {
-    if (!search) return true;
-    const query = search.toLowerCase();
-    return (
-      cmd.label.toLowerCase().includes(query) ||
-      cmd.keywords.some((kw) => kw.toLowerCase().includes(query)) ||
-      cmd.category.toLowerCase().includes(query)
-    );
-  });
+  }, [isOpen, selectedIndex, filteredCommands, handleExecute]);
 
   const groupedCommands = filteredCommands.reduce((acc, cmd) => {
     if (!acc[cmd.category]) {
@@ -83,16 +93,6 @@ export function EnhancedCommandPalette({
     acc[cmd.category].push(cmd);
     return acc;
   }, {} as Record<string, CommandItem[]>);
-
-  const handleExecute = (command: CommandItem) => {
-    // 최근 명령어 저장
-    const recent = [command.id, ...recentCommands.filter((id) => id !== command.id)].slice(0, 10);
-    setRecentCommands(recent);
-    localStorage.setItem('command-palette-recent', JSON.stringify(recent));
-
-    command.action();
-    onClose();
-  };
 
   if (!isOpen) return null;
 
