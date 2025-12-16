@@ -195,7 +195,11 @@ export function SSOPanel() {
                   <div className="space-y-3">
                     <Input placeholder="Entity ID" />
                     <Input placeholder="SSO URL" />
-                    <Input placeholder="Certificate (PEM)" multiline rows={3} />
+                    <textarea
+                      placeholder="Certificate (PEM)"
+                      rows={3}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                    />
                   </div>
                 )}
                 {(selectedConfig.provider === 'oauth2' || selectedConfig.provider === 'oidc') && (

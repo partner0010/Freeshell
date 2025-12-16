@@ -29,7 +29,8 @@ git commit -m "fix: 빌드 오류 수정
 - 여러 파일에서 따옴표 이스케이프 오류 수정
 - billing/page.tsx에서 planIcons 타입 오류 수정
 - logs/page.tsx와 projects/page.tsx에서 icon 타입 오류 수정
-- security/page.tsx에서 severity 타입 오류 수정"
+- security/page.tsx에서 severity 타입 오류 수정
+- SSOPanel.tsx에서 Input multiline prop 오류 수정 (textarea로 변경)"
 echo.
 
 echo [4/4] 푸시...
