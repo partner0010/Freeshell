@@ -30,7 +30,7 @@ const projectsData = [
   { id: 6, name: '이벤트 페이지', owner: '강서연', template: '이벤트', status: 'archived', views: 2340, blocks: 6, createdAt: '2024-01-15', updatedAt: '2주 전' },
 ];
 
-const statusConfig: Record<string, { color: string; label: string; icon: React.ComponentType<{ size?: number }> }> = {
+const statusConfig: Record<string, { color: string; label: string; icon: React.ComponentType<any> }> = {
   published: { color: 'bg-green-100 text-green-700', label: '게시됨', icon: Globe },
   draft: { color: 'bg-yellow-100 text-yellow-700', label: '초안', icon: Lock },
   archived: { color: 'bg-gray-100 text-gray-700', label: '보관됨', icon: Clock },

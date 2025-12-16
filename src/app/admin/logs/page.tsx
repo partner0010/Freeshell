@@ -32,14 +32,14 @@ const logsData = [
   { id: 8, type: 'info', message: '템플릿 다운로드', user: 'choi@example.com', source: 'template', timestamp: '2024-03-25 14:15:48', ip: '192.168.1.56' },
 ];
 
-const logTypeConfig: Record<string, { color: string; bgColor: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = {
+const logTypeConfig: Record<string, { color: string; bgColor: string; icon: React.ComponentType<any> }> = {
   info: { color: 'text-blue-700', bgColor: 'bg-blue-100', icon: Info },
   warning: { color: 'text-yellow-700', bgColor: 'bg-yellow-100', icon: AlertTriangle },
   error: { color: 'text-red-700', bgColor: 'bg-red-100', icon: AlertCircle },
   success: { color: 'text-green-700', bgColor: 'bg-green-100', icon: CheckCircle },
 };
 
-const sourceIcons: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+const sourceIcons: Record<string, React.ComponentType<any>> = {
   auth: User,
   api: Server,
   database: Database,
