@@ -109,13 +109,20 @@ export function BlogCMSPanel() {
     { id: '4', name: '업데이트', slug: 'updates', count: 15 },
   ]);
   
-  const [newPost, setNewPost] = useState({
+  const [newPost, setNewPost] = useState<{
+    title: string;
+    content: string;
+    excerpt: string;
+    category: string;
+    tags: string;
+    status: 'draft' | 'published' | 'scheduled';
+  }>({
     title: '',
     content: '',
     excerpt: '',
     category: '',
     tags: '',
-    status: 'draft' as const,
+    status: 'draft',
   });
 
   const filteredPosts = posts.filter((post) => {

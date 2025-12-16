@@ -40,7 +40,8 @@ git commit -m "fix: 빌드 오류 수정
 - AdvancedBlockRenderer.tsx에서 ProcessBlockContent steps 옵셔널 체이닝 추가
 - AnimationPanel.tsx에서 BlockStyles animation 속성 타입 오류 수정
 - AutoSave.tsx에서 EditorState blocks, pages, styles 속성 오류 수정 (project에서 추출)
-- BlockRenderer.tsx에서 BlockContent 타입 오류 수정 (타입 단언 추가)"
+- BlockRenderer.tsx에서 BlockContent 타입 오류 수정 (타입 단언 추가)
+- BlogCMSPanel.tsx에서 newPost status 타입 오류 수정 (타입 명시적 지정)"
 echo.
 
 echo [4/4] 푸시...
