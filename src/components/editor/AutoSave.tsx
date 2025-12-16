@@ -12,7 +12,13 @@ export default function AutoSave() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isOnline, setIsOnline] = useState(true);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const { blocks, pages, styles, project } = useEditorStore();
+  const { project, getCurrentPage } = useEditorStore();
+  
+  // project에서 필요한 데이터 추출
+  const currentPage = getCurrentPage();
+  const blocks = currentPage?.blocks || [];
+  const pages = project?.pages || [];
+  const styles = project?.globalStyles || {};
 
   // 온라인 상태 감지
   useEffect(() => {
