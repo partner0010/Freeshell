@@ -28,7 +28,8 @@ git commit -m "fix: 빌드 오류 수정
 - component-optimizer.ts를 .tsx로 변경하여 JSX 파싱 오류 해결
 - 여러 파일에서 따옴표 이스케이프 오류 수정
 - billing/page.tsx에서 planIcons 타입 오류 수정
-- logs/page.tsx와 projects/page.tsx에서 icon 타입 오류 수정"
+- logs/page.tsx와 projects/page.tsx에서 icon 타입 오류 수정
+- security/page.tsx에서 severity 타입 오류 수정"
 echo.
 
 echo [4/4] 푸시...

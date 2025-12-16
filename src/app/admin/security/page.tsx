@@ -80,7 +80,7 @@ export default function SecurityPage() {
           type: 'scan_complete',
           message: `보안 스캔 완료 - 점수: ${result.summary.score}/100`,
           timestamp: Date.now(),
-          severity: result.summary.score >= 80 ? 'info' : result.summary.score >= 50 ? 'warning' : 'error',
+          severity: (result.summary.score >= 80 ? 'info' : result.summary.score >= 50 ? 'warning' : 'error') as 'info' | 'warning' | 'error',
         },
         ...prev,
       ].slice(0, 50));
@@ -107,7 +107,7 @@ export default function SecurityPage() {
           type: 'pentest_complete',
           message: `모의해킹 완료 - 점수: ${result.summary.score}/100`,
           timestamp: Date.now(),
-          severity: result.summary.score >= 80 ? 'info' : result.summary.score >= 50 ? 'warning' : 'error',
+          severity: (result.summary.score >= 80 ? 'info' : result.summary.score >= 50 ? 'warning' : 'error') as 'info' | 'warning' | 'error',
         },
         ...prev,
       ].slice(0, 50));
