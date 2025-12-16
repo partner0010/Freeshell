@@ -36,7 +36,7 @@ git commit -m "fix: 빌드 오류 수정
 - ComprehensiveDebugger.tsx에서 aiFixBug 반환값 타입 매핑 수정
 - uuid 패키지 의존성 제거 및 공통 UUID 유틸리티 함수 추가
 - AdvancedBlockRenderer.tsx에서 platformIcons 타입 오류 수정
-- AdvancedBlockRenderer.tsx에서 NewsletterBlockContent subtitle 속성 오류 수정 (description 사용)"
+- AdvancedBlockRenderer.tsx에서 NewsletterBlockContent subtitle 및 privacyText 속성 오류 수정 (description 사용)"
 echo.
 
 echo [4/4] 푸시...

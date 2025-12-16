@@ -172,7 +172,11 @@ export function NewsletterBlock({ content }: { content: NewsletterBlockContent }
           {content.buttonText}
         </button>
       </div>
-      <p className="text-sm text-white/60 mt-4">{content.privacyText}</p>
+      {content.description && (
+        <p className="text-sm text-white/60 mt-4">
+          {content.description.includes('개인정보') ? content.description : '개인정보 보호 정책에 동의합니다.'}
+        </p>
+      )}
     </div>
   );
 }
