@@ -60,7 +60,7 @@ const getSeverityColor = (severity: string) => {
   }
 };
 
-export const WebsiteAuditor = () => {
+export function WebsiteAuditor() {
   const [url, setUrl] = useState('');
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditResult, setAuditResult] = useState<WebsiteAuditResult | null>(null);
@@ -74,7 +74,6 @@ export const WebsiteAuditor = () => {
       alert('URL을 입력하세요');
       return;
     }
-
     setIsAuditing(true);
     try {
       const result = await auditWebsite(url);
@@ -87,7 +86,6 @@ export const WebsiteAuditor = () => {
       setIsAuditing(false);
     }
   };
-
   const handleSimulate = (recommendation: Recommendation) => {
     if (!auditResult) return;
     const changes = [
@@ -100,7 +98,6 @@ export const WebsiteAuditor = () => {
     setSimulatedResult(simulated);
     setShowSimulation(true);
   };
-
   return (
     <div className="h-full flex flex-col bg-white">
       <div className="p-6 border-b">
@@ -493,4 +490,4 @@ export const WebsiteAuditor = () => {
       )}
     </div>
   );
-};
+}
