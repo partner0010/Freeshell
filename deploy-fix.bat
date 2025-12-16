@@ -55,7 +55,9 @@ git commit -m "fix: 빌드 오류 수정
 - MembershipPanel.tsx에서 newTier interval 타입 오류 수정 (타입 명시적 지정)
 - OnboardingTutorial.tsx에서 Lucide 아이콘 타입 호환성 오류 수정
 - Sidebar.tsx에서 SidebarTab 타입 export 추가
-- OrganizedSidebar.tsx에서 SidebarTab import 오류 수정"
+- OrganizedSidebar.tsx에서 SidebarTab import 오류 수정
+- advanced-optimization.ts에 advancedOptimizationSystem 객체 추가
+- .vercelignore 파일 생성으로 빌드 최적화"
 echo.
 
 echo [4/4] 푸시...

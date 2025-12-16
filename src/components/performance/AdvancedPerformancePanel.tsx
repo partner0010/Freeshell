@@ -11,8 +11,13 @@ export function AdvancedPerformancePanel() {
   const [report, setReport] = useState<OptimizationReport | null>(null);
 
   const handleAnalyze = () => {
-    const newReport = advancedOptimizationSystem.analyzeBundle();
-    setReport(newReport);
+    try {
+      const newReport = advancedOptimizationSystem.analyzeBundle();
+      setReport(newReport);
+    } catch (error) {
+      console.error('번들 분석 실패:', error);
+      alert('번들 분석 중 오류가 발생했습니다.');
+    }
   };
 
   const handleOptimizeImages = () => {
@@ -21,13 +26,18 @@ export function AdvancedPerformancePanel() {
   };
 
   const handlePreload = () => {
-    advancedOptimizationSystem.preloadResources({
-      criticalCSS: true,
-      criticalJS: true,
-      fonts: true,
-      images: [],
-    });
-    alert('리소스 프리로드가 활성화되었습니다.');
+    try {
+      advancedOptimizationSystem.preloadResources({
+        criticalCSS: true,
+        criticalJS: true,
+        fonts: true,
+        images: [],
+      });
+      alert('리소스 프리로드가 활성화되었습니다.');
+    } catch (error) {
+      console.error('프리로드 실패:', error);
+      alert('리소스 프리로드 중 오류가 발생했습니다.');
+    }
   };
 
   return (

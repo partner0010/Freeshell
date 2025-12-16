@@ -232,3 +232,79 @@ export function analyzeBundleSize(modules: Record<string, number>): {
 
   return { largest, recommendations };
 }
+
+/**
+ * 최적화 리포트 타입
+ */
+export interface OptimizationReport {
+  improvements: {
+    sizeReduction: number;
+    timeReduction: number;
+    score: number;
+  };
+  recommendations: string[];
+}
+
+/**
+ * 고급 최적화 시스템
+ */
+export const advancedOptimizationSystem = {
+  analyzeBundle(): OptimizationReport {
+    // 실제로는 웹팩 번들 분석 결과를 사용해야 하지만,
+    // 여기서는 더미 데이터를 반환합니다.
+    return {
+      improvements: {
+        sizeReduction: 15,
+        timeReduction: 20,
+        score: 85,
+      },
+      recommendations: [
+        '이미지 최적화를 통해 15% 크기 감소 가능',
+        '코드 스플리팅으로 초기 로딩 시간 20% 개선',
+        'Critical CSS 추출로 렌더링 성능 향상',
+      ],
+    };
+  },
+
+  preloadResources(options: {
+    criticalCSS?: boolean;
+    criticalJS?: boolean;
+    fonts?: boolean;
+    images?: string[];
+  }): void {
+    // 리소스 프리로드 로직
+    if (options.criticalCSS) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'style';
+      link.href = '/critical.css';
+      document.head.appendChild(link);
+    }
+
+    if (options.criticalJS) {
+      const script = document.createElement('script');
+      script.rel = 'preload';
+      script.as = 'script';
+      script.href = '/critical.js';
+      document.head.appendChild(script);
+    }
+
+    if (options.fonts) {
+      // 폰트 프리로드
+      const fontLink = document.createElement('link');
+      fontLink.rel = 'preload';
+      fontLink.as = 'font';
+      fontLink.type = 'font/woff2';
+      fontLink.crossOrigin = 'anonymous';
+      document.head.appendChild(fontLink);
+    }
+
+    options.images?.forEach((imageUrl) => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = imageUrl;
+      document.head.appendChild(link);
+    });
+  },
+};

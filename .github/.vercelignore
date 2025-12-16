@@ -1,0 +1,48 @@
+# Vercel 빌드에서 제외할 파일/디렉토리
+# Files/directories to exclude from Vercel build
+
+# 개발 파일
+*.log
+*.md
+!README.md
+
+# 테스트 파일
+**/__tests__/**
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# 문서 파일
+docs/
+*.txt
+!package.json
+
+# 임시 파일
+.tmp/
+temp/
+*.tmp
+
+# IDE 설정
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# 빌드 캐시 (Vercel이 자동 관리)
+.next/
+node_modules/
+
+# 배치 파일 (Windows)
+*.bat
+!deploy-fix.bat
+
+# 스크립트 (필요시만 포함)
+scripts/
+!.github/
+
