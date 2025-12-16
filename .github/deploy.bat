@@ -14,7 +14,7 @@ echo.
 
 echo [2/3] 변경사항 커밋...
 git add .
-git commit -m "fix: Button 컴포넌트 타입 오류 수정"
+git commit -m "fix: Button 컴포넌트 motion.button을 motion.div로 변경"
 if errorlevel 1 (
     echo 경고: 커밋할 변경사항이 없거나 오류가 발생했습니다.
 )
