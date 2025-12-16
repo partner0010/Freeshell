@@ -151,7 +151,9 @@ export function BackupRecoveryPanel() {
                       </button>
                     )}
                     <span className="text-xs text-gray-500">
-                      {backup.duration ? `${(backup.duration / 1000).toFixed(1)}s` : '-'}
+                      {backup.completedAt && backup.startedAt
+                        ? `${((backup.completedAt - backup.startedAt) / 1000).toFixed(1)}s`
+                        : '-'}
                     </span>
                   </div>
                 </div>
@@ -182,7 +184,9 @@ export function BackupRecoveryPanel() {
                     </div>
                   </div>
                   <span className="text-xs text-gray-500">
-                    {restore.duration ? `${(restore.duration / 1000).toFixed(1)}s` : '-'}
+                    {restore.completedAt && restore.startedAt
+                      ? `${((restore.completedAt - restore.startedAt) / 1000).toFixed(1)}s`
+                      : '-'}
                   </span>
                 </div>
               ))}

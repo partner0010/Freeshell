@@ -30,7 +30,8 @@ git commit -m "fix: 빌드 오류 수정
 - billing/page.tsx에서 planIcons 타입 오류 수정
 - logs/page.tsx와 projects/page.tsx에서 icon 타입 오류 수정
 - security/page.tsx에서 severity 타입 오류 수정
-- SSOPanel.tsx에서 Input multiline prop 오류 수정 (textarea로 변경)"
+- SSOPanel.tsx에서 Input multiline prop 오류 수정 (textarea로 변경)
+- BackupRecoveryPanel.tsx에서 duration 속성 오류 수정 (completedAt과 startedAt으로 계산)"
 echo.
 
 echo [4/4] 푸시...
