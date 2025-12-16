@@ -9,8 +9,8 @@ export async function lazyLoad<T>(
   fallback?: T
 ): Promise<T> {
   try {
-    const module = await importFn();
-    return module.default;
+    const loadedModule = await importFn();
+    return loadedModule.default;
   } catch (error) {
     console.error('Lazy load failed:', error);
     if (fallback) return fallback;

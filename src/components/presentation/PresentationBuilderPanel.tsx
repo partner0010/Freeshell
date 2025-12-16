@@ -5,6 +5,7 @@ import { Presentation, Plus, Download, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { Badge } from '@/components/ui/Badge';
 import { aiPresentationBuilder, type Presentation as PresentationType } from '@/lib/presentation/ai-presentation-builder';
 import { useToast } from '@/components/ui/Toast';
 

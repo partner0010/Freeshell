@@ -4,7 +4,7 @@ import React from 'react';
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info';
+  variant?: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   rounded?: boolean;
   dot?: boolean;
@@ -26,6 +26,7 @@ export function Badge({
     warning: 'bg-yellow-100 text-yellow-700',
     error: 'bg-red-100 text-red-700',
     info: 'bg-blue-100 text-blue-700',
+    outline: 'bg-transparent border border-gray-300 text-gray-700',
   };
 
   const sizeClasses = {

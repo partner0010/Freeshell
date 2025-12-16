@@ -82,7 +82,7 @@ export class PenetrationTestingSystem {
       },
     ];
 
-    defaultModules.forEach((module) => this.modules.set(module.id, module));
+    defaultModules.forEach((testModule) => this.modules.set(testModule.id, testModule));
   }
 
   // 침투 테스트 실행
@@ -133,8 +133,8 @@ export class PenetrationTestingSystem {
   }
 
   private async runModule(moduleId: string, target: string): Promise<PenTestFinding[]> {
-    const module = this.modules.get(moduleId);
-    if (!module || !module.enabled) return [];
+    const testModule = this.modules.get(moduleId);
+    if (!testModule || !testModule.enabled) return [];
 
     const findings: PenTestFinding[] = [];
 

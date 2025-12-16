@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Dropdown } from '@/components/ui/Dropdown';
+import { Badge } from '@/components/ui/Badge';
 import { apiBuilder, type APICollection, type APIEndpoint, type HttpMethod } from '@/lib/api/api-builder';
 import { useToast } from '@/components/ui/Toast';
 

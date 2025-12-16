@@ -1,0 +1,38 @@
+@echo off
+chcp 65001 >nul
+echo ========================================
+echo JSX 오류 수정사항 배포
+echo ========================================
+echo.
+
+cd /d "%~dp0"
+
+echo [1/4] Git 상태 확인...
+git status
+echo.
+
+echo [2/4] 변경사항 추가...
+git add .
+echo.
+
+echo [3/4] 커밋...
+git commit -m "fix: 빌드 오류 수정
+
+- WebsiteAuditor를 최소 버전으로 교체하여 JSX 오류 해결
+- Sidebar와 SidebarPanelRenderer에서 WebsiteAuditor 임시 비활성화
+- tailwind.config.js에 surface.border, shadow 클래스 추가
+- AIWritingAssistant에 CardHeader, CardTitle, CardContent import 추가
+- SidebarPanelRenderer에 누락된 컴포넌트 import 추가
+- Badge 컴포넌트에 outline variant 추가
+- optimizer.ts와 penetration-testing.ts에서 module 변수명 변경"
+echo.
+
+echo [4/4] 푸시...
+git push origin main
+echo.
+
+echo ========================================
+echo 완료! Vercel에서 자동으로 빌드가 시작됩니다.
+echo ========================================
+pause
+

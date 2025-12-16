@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, RefreshCw, CheckCircle2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { useToast } from '@/components/ui/Toast';
 
 interface WritingAction {
