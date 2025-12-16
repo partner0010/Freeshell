@@ -55,27 +55,27 @@ export function BlockRenderer({ block, isPreview }: BlockRendererProps) {
         return <SpacerBlock content={block.content as { height: string }} />;
       // 고급 블록들
       case 'team':
-        return <TeamBlock content={block.content} />;
+        return <TeamBlock content={block.content as any} />;
       case 'timeline':
-        return <TimelineBlock content={block.content} />;
+        return <TimelineBlock content={block.content as any} />;
       case 'social':
-        return <SocialBlock content={block.content} />;
+        return <SocialBlock content={block.content as any} />;
       case 'newsletter':
-        return <NewsletterBlock content={block.content} />;
+        return <NewsletterBlock content={block.content as any} />;
       case 'logos':
-        return <LogosBlock content={block.content} />;
+        return <LogosBlock content={block.content as any} />;
       case 'countdown':
-        return <CountdownBlock content={block.content} />;
+        return <CountdownBlock content={block.content as any} />;
       case 'process':
-        return <ProcessBlock content={block.content} />;
+        return <ProcessBlock content={block.content as any} />;
       case 'accordion':
-        return <AccordionBlock content={block.content} />;
+        return <AccordionBlock content={block.content as any} />;
       case 'banner':
-        return <BannerBlock content={block.content} />;
+        return <BannerBlock content={block.content as any} />;
       case 'comparison':
-        return <ComparisonBlock content={block.content} />;
+        return <ComparisonBlock content={block.content as any} />;
       case 'map':
-        return <MapBlock content={block.content} />;
+        return <MapBlock content={block.content as any} />;
       default:
         return <div className="p-4 text-gray-400">Unknown block type: {block.type}</div>;
     }
