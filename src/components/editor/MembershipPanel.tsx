@@ -98,10 +98,15 @@ export function MembershipPanel() {
     { id: '3', name: 'API 문서', type: 'page', requiredTier: 'Enterprise', views: 234 },
   ]);
   
-  const [newTier, setNewTier] = useState({
+  const [newTier, setNewTier] = useState<{
+    name: string;
+    price: string;
+    interval: 'monthly' | 'yearly';
+    features: string;
+  }>({
     name: '',
     price: '',
-    interval: 'monthly' as const,
+    interval: 'monthly',
     features: '',
   });
 
