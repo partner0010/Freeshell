@@ -94,7 +94,7 @@ import { UnifiedNotificationCenter } from '../notifications/UnifiedNotificationC
 import { AIRecommendationsPanel } from '../ai/AIRecommendationsPanel';
 import { HighContrastPanel } from '../accessibility/HighContrastPanel';
 
-type SidebarTab = 
+export type SidebarTab = 
   | 'blocks' | 'styles' | 'ai' | 'pages' | 'theme' | 'seo' 
   | 'export' | 'project' | 'history' | 'performance' | 'accessibility' 
   | 'css' | 'share' | 'collab' | 'version' | 'copilot'

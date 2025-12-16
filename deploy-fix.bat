@@ -53,7 +53,9 @@ git commit -m "fix: 빌드 오류 수정
 - GamificationPanel.tsx에서 Lucide 아이콘 타입 호환성 오류 수정
 - ImprovedSidebar.tsx에서 Sidebar 컴포넌트 props 오류 수정 (props 제거)
 - MembershipPanel.tsx에서 newTier interval 타입 오류 수정 (타입 명시적 지정)
-- OnboardingTutorial.tsx에서 Lucide 아이콘 타입 호환성 오류 수정"
+- OnboardingTutorial.tsx에서 Lucide 아이콘 타입 호환성 오류 수정
+- Sidebar.tsx에서 SidebarTab 타입 export 추가
+- OrganizedSidebar.tsx에서 SidebarTab import 오류 수정"
 echo.
 
 echo [4/4] 푸시...
