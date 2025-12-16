@@ -136,7 +136,7 @@ export function ImprovedSidebar({ activeTab, onTabChange }: ImprovedSidebarProps
         </div>
       )}
       
-      <Sidebar activeTab={activeTab} onTabChange={onTabChange} />
+      <Sidebar />
     </div>
   );
 }

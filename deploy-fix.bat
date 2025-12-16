@@ -50,7 +50,8 @@ git commit -m "fix: 빌드 오류 수정
 - ElectronicSignature.tsx에서 initialDocument content 타입 오류 수정 (undefined 체크 추가)
 - FloatingToolbar.tsx에서 EditorState blocks 속성 오류 수정 (project에서 추출)
 - FloatingToolbar.tsx에서 moveBlock 호출 시 타입 오류 수정 (인덱스 사용)
-- GamificationPanel.tsx에서 Lucide 아이콘 타입 호환성 오류 수정"
+- GamificationPanel.tsx에서 Lucide 아이콘 타입 호환성 오류 수정
+- ImprovedSidebar.tsx에서 Sidebar 컴포넌트 props 오류 수정 (props 제거)"
 echo.
 
 echo [4/4] 푸시...
