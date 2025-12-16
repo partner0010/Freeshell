@@ -48,9 +48,9 @@ export function WebScrapingPanel() {
       setResult({
         url,
         title: seo.title,
-        content: seo.description,
+        content: seo.description || '',
         metadata: {
-          description: seo.description,
+          description: seo.description || '',
           keywords: seo.keywords || '',
           'og:image': seo.ogImage || '',
         },
