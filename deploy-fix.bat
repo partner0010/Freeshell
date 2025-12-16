@@ -63,7 +63,8 @@ git commit -m "fix: 빌드 오류 수정
 - Toolbar.tsx에서 ToolbarButton의 icon prop 타입을 React.ComponentType<any>로 변경
 - FileManagerPanel.tsx에서 Button의 as prop 제거 및 span으로 직접 렌더링
 - ImportExportPanel.tsx에서 Button의 as prop 제거 및 span으로 직접 렌더링
-- Badge.tsx에서 BadgeProps에 React.HTMLAttributes 확장하여 style prop 지원 추가"
+- Badge.tsx에서 BadgeProps에 React.HTMLAttributes 확장하여 style prop 지원 추가
+- advanced-optimization.ts에서 OptimizationReport 인터페이스에 requestReduction 속성 추가"
 echo.
 
 echo [4/4] 푸시...

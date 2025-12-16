@@ -240,6 +240,7 @@ export interface OptimizationReport {
   improvements: {
     sizeReduction: number;
     timeReduction: number;
+    requestReduction: number;
     score: number;
   };
   recommendations: string[];
@@ -256,6 +257,7 @@ export const advancedOptimizationSystem = {
       improvements: {
         sizeReduction: 15,
         timeReduction: 20,
+        requestReduction: 25,
         score: 85,
       },
       recommendations: [
