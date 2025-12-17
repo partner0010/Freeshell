@@ -109,7 +109,7 @@ export class UserManagement {
 
   // 팀 가져오기
   getTeam(id: string): Team | undefined {
-    return this.teams.get(teamId);
+    return this.teams.get(id);
   }
 
   // 모든 팀 가져오기
