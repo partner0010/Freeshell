@@ -76,7 +76,8 @@ export class WorkflowAutomation {
   }
 
   private async runSteps(workflow: Workflow, execution: WorkflowExecution): Promise<void> {
-    let currentStepId = workflow.steps[0]?.id;
+    // 워크플로우 시작 단계 ID (없을 수 있으므로 명시적으로 union 타입 지정)
+    let currentStepId: string | undefined = workflow.steps[0]?.id;
 
     while (currentStepId) {
       const step = workflow.steps.find((s) => s.id === currentStepId);
@@ -89,6 +90,7 @@ export class WorkflowAutomation {
           await this.executeAction(step, execution);
           break;
         case 'condition':
+          // 조건 결과에 따라 다음 단계 ID가 없을 수도 있으므로 union 허용
           currentStepId = await this.evaluateCondition(step, execution);
           continue;
         case 'delay':
