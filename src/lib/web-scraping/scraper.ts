@@ -98,14 +98,15 @@ export class WebScraper {
 
       // 메타데이터 추출
       const metaTags = Array.from(doc.querySelectorAll('meta'));
-      result.metadata = {};
+      const metadata: Record<string, string> = {};
       metaTags.forEach((meta) => {
         const name = meta.getAttribute('name') || meta.getAttribute('property');
         const content = meta.getAttribute('content');
         if (name && content) {
-          result.metadata[name] = content;
+          metadata[name] = content;
         }
       });
+      result.metadata = metadata;
 
       return result;
     } catch (error) {
