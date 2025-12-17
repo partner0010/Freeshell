@@ -136,8 +136,9 @@ export class MultiChannelNotificationSystem {
       }
     }
 
-    // 채널 활성화 확인
-    if (!prefs.channels[channel]) return false;
+    // 채널 활성화 확인 (in-app 키는 inApp으로 매핑)
+    const channelKey = channel === 'in-app' ? 'inApp' : channel;
+    if (!prefs.channels[channelKey]) return false;
 
     // 타입별 채널 확인
     return prefs.types[type].includes(channel);
