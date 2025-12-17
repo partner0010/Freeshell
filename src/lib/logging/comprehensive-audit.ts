@@ -112,8 +112,8 @@ export class ComprehensiveAuditSystem {
     if (query.userId) {
       logs = logs.filter((l) => l.userId === query.userId);
     }
-    if (query.action) {
-      logs = logs.filter((l) => l.action.includes(query.action));
+    if (typeof query.action === 'string') {
+      logs = logs.filter((l) => l.action?.includes(query.action as string));
     }
     if (query.resource) {
       logs = logs.filter((l) => l.resource === query.resource);
