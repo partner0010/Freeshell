@@ -83,7 +83,15 @@ export class DocumentationGenerator {
 
   // OpenAPI (Swagger) 형식으로 생성
   generateOpenAPI(docs: APIDocumentation): string {
-    const openAPI = {
+    const openAPI: {
+      openapi: string;
+      info: {
+        title: string;
+        description: string;
+        version: string;
+      };
+      paths: Record<string, Record<string, any>>;
+    } = {
       openapi: '3.0.0',
       info: {
         title: docs.title,
