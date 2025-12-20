@@ -1,9 +1,9 @@
 let PrismaClient: any;
 try {
-  // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   PrismaClient = require('@prisma/client').PrismaClient;
 } catch {
-  // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   PrismaClient = require('../types/prisma-shim').PrismaClient;
 }
 

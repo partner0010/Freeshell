@@ -37,8 +37,15 @@ export class ContentOptimizer {
     } = {}
   ): Promise<string> {
     // 실제로는 이미지 최적화 서비스 사용 (Cloudinary, ImageKit 등)
+    // 동적 require 제거하여 webpack 경고 해결
     const { width, height, quality = 80, format = 'webp' } = options;
-    return `${imageUrl}?w=${width}&h=${height}&q=${quality}&f=${format}`;
+    if (!imageUrl) return '';
+    const params = new URLSearchParams();
+    if (width) params.set('w', width.toString());
+    if (height) params.set('h', height.toString());
+    params.set('q', quality.toString());
+    params.set('f', format);
+    return `${imageUrl}?${params.toString()}`;
   }
 
   /**

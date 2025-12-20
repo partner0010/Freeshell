@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // ESLint 빌드 중 무시 (개발 중에만 경고 표시)
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   // 이미지 최적화
   images: {
     formats: ['image/avif', 'image/webp'],

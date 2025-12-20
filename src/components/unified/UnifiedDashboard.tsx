@@ -19,7 +19,7 @@ import {
 } from '@/lib/core/agent-orchestrator';
 import { eventBus } from '@/lib/core/event-bus';
 import { freeshellBridge } from '@/lib/integrations/freeshell-bridge';
-import { gripBridge } from '@/lib/integrations/grip-bridge';
+// GRIP 브릿지 제거됨 - Freeshell 브릿지로 대체
 
 export function UnifiedDashboard() {
   const [input, setInput] = useState('');
@@ -58,7 +58,7 @@ export function UnifiedDashboard() {
       }
       
       if (/\b(웹사이트|사이트|웹|코드)\b/.test(prompt)) {
-        // GRIP 웹 개발
+        // Freeshell 웹 개발
         await eventBus.emit('dev.request', {
           type: 'create-website',
           input: { name: '새 웹사이트', description: prompt },

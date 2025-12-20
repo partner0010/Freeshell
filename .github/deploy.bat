@@ -1,69 +1,46 @@
 @echo off
 chcp 65001 >nul
 echo ========================================
-echo Freeshell 서버 배포
+echo 배포
 echo ========================================
 echo.
 
-REM 스크립트 위치로 이동
 cd /d "%~dp0"
+cd ..
 
-echo [1/5] Git 상태 확인...
-git status
+echo [1/3] 빌드 테스트...
+call npm run build
 if errorlevel 1 (
-    echo 오류: Git 상태 확인 실패
+    echo ❌ 빌드 실패!
+    echo.
+    echo fix-build.bat를 먼저 실행하세요.
     pause
     exit /b 1
 )
+echo ✅ 빌드 성공
 echo.
 
-echo [2/5] 변경사항 추가...
+echo [2/3] Git 상태 확인...
+git status --short
+echo.
+
+echo [3/3] 커밋 및 푸시...
+set /p COMMIT_MSG="커밋 메시지를 입력하세요 (기본: deploy): "
+if "%COMMIT_MSG%"=="" set COMMIT_MSG=deploy
+
 git add .
+git commit -m "%COMMIT_MSG%"
+git push origin main
+
 if errorlevel 1 (
-    echo 오류: git add 실패
+    echo ❌ 푸시 실패
     pause
     exit /b 1
 )
-echo.
 
-echo [3/5] 커밋 생성...
-git commit -m "feat: GENSPARK AI 디자인 적용 및 새로운 AI 서비스 통합
-
-- GENSPARK AI 스타일의 글로벌 디자인 적용
-- Rewritify AI 통합 (텍스트 인간화)
-- Hugging Face Inference API 통합
-- Replicate API 통합
-- AI 에이전트 시스템 구현
-- 메뉴 재구성 및 최적화
-- 전체 디버깅 및 오류 수정
-- 자동화 파이프라인 개선"
-if errorlevel 1 (
-    echo 경고: 커밋 실패 (변경사항이 없을 수 있음)
-    echo 계속 진행합니다...
-)
 echo.
-
-echo [4/5] 원격 저장소로 푸시...
-git push origin main
-if errorlevel 1 (
-    echo main 브랜치가 없습니다. master 브랜치를 시도합니다...
-    git push origin master
-    if errorlevel 1 (
-        echo 오류: git push 실패
-        echo.
-        echo 현재 브랜치 확인: git branch
-        echo 수동으로 푸시하세요: git push origin [브랜치명]
-        pause
-        exit /b 1
-    )
-)
+echo ✅ 배포 완료!
 echo.
-
-echo [5/5] 배포 완료!
-echo.
-echo ========================================
-echo 모든 변경사항이 서버에 반영되었습니다.
-echo Vercel에서 자동 빌드/배포가 시작됩니다.
-echo ========================================
+echo Vercel에서 자동으로 배포가 시작됩니다.
 echo.
 pause
