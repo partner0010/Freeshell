@@ -1,90 +1,85 @@
-# 🚨 긴급: Prisma Client 생성 필요
+# 🚨 긴급: Vercel Prisma 빌드 오류 수정
 
 ## 문제
-- Prisma Client가 초기화되지 않아 빌드 실패
-- `prisma/schema.prisma` 파일은 생성되었지만 `prisma generate`가 실행되지 않음
 
-## ✅ 즉시 해결 방법
-
-### 프로젝트 루트에서 실행
-
-프로젝트 루트 (`C:\Users\partn\OneDrive\바탕 화면\Cursor\Freeshell`)에서 다음 명령을 실행하세요:
-
-```bash
-# 1. 프로젝트 루트로 이동
-cd "C:\Users\partn\OneDrive\바탕 화면\Cursor\Freeshell"
-
-# 2. Prisma Client 생성
-npx prisma generate
-
-# 3. 빌드 테스트
-npm run build
+Vercel 빌드 로그 오류:
+```
+PrismaClientInitializationError: Prisma has detected that this project was built on Vercel, 
+which caches dependencies. This leads to an outdated Prisma Client because Prisma's 
+auto-generation isn't triggered.
 ```
 
-### 또는 배치 파일 실행
+**원인:**
+- Prisma schema가 `.github/prisma/schema.prisma`에만 있음
+- Prisma는 기본적으로 프로젝트 루트의 `prisma/schema.prisma`를 찾음
+- Vercel 빌드 시 schema를 찾지 못해 Prisma Client 생성 실패
 
-프로젝트 루트에서:
+## ✅ 해결 방법
+
+### 1단계: 프로젝트 루트에 prisma 폴더 및 schema.prisma 생성
+
+프로젝트 루트 (`C:\Users\partn\OneDrive\바탕 화면\Cursor\Freeshell`)에서:
+
+1. **prisma 폴더 생성**
+   ```bash
+   mkdir prisma
+   ```
+
+2. **schema.prisma 복사**
+   ```bash
+   copy .github\prisma\schema.prisma prisma\schema.prisma
+   ```
+
+또는 수동으로:
+- `.github/prisma/schema.prisma` 파일 열기
+- 전체 내용 복사
+- 프로젝트 루트에 `prisma/schema.prisma` 파일 생성
+- 내용 붙여넣기
+
+### 2단계: 변경사항 커밋 및 푸시
+
 ```bash
-.github\run-prisma-generate.bat
+git add prisma/schema.prisma
+git commit -m "fix: add Prisma schema to standard location for Vercel"
+git push origin main
 ```
+
+### 3단계: Vercel 자동 재배포 확인
+
+- GitHub에 푸시하면 Vercel에서 자동으로 재배포 시작
+- 약 1-2분 소요
+- 배포 상태 확인: https://vercel.com/dashboard
 
 ---
 
 ## 📋 확인 사항
 
-1. **프로젝트 루트 확인**
-   - `prisma/schema.prisma` 파일이 있는지 확인
-   - `package.json` 파일이 있는지 확인
-
-2. **Prisma 설치 확인**
-   ```bash
-   npm list prisma
-   ```
-   - 설치되어 있지 않으면: `npm install prisma @prisma/client`
-
-3. **Prisma Client 생성**
-   ```bash
-   npx prisma generate
-   ```
+프로젝트 루트에 다음 파일이 있어야 합니다:
+- ✅ `prisma/schema.prisma` (새로 생성)
+- ✅ `package.json` (이미 있음)
+- ✅ `package.json`의 `build` 스크립트: `"prisma generate && next build"`
 
 ---
 
-## ⚠️ 중요
+## 🆘 빠른 해결 (자동 스크립트)
 
-**빌드 전에 반드시 `prisma generate`를 실행해야 합니다!**
-
-### package.json에 추가 (권장)
-
-`package.json`의 `scripts`에 다음을 추가:
-
-```json
-{
-  "scripts": {
-    "postinstall": "prisma generate",
-    "build": "prisma generate && next build"
-  }
-}
+프로젝트 루트에서:
+```bash
+.github\deploy-prisma-fix.bat
 ```
 
-이렇게 하면:
-- `npm install` 후 자동으로 `prisma generate` 실행
-- `npm run build` 전에 자동으로 `prisma generate` 실행
+이 스크립트가 자동으로:
+1. Prisma schema 확인
+2. 변경사항 커밋
+3. GitHub에 푸시
+4. Vercel 자동 재배포 트리거
 
 ---
 
 ## ✅ 예상 결과
 
-`prisma generate` 실행 후:
-- ✅ `node_modules/.prisma/client` 폴더 생성
-- ✅ Prisma Client 타입 생성
+- ✅ Prisma schema가 표준 위치에 있음
+- ✅ Vercel 빌드 시 `prisma generate` 성공
+- ✅ Prisma Client 정상 생성
 - ✅ 빌드 성공
-
----
-
-## 🚀 빠른 실행
-
-프로젝트 루트에서:
-```bash
-npx prisma generate && npm run build
-```
-
+- ✅ 배포 성공
