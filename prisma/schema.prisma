@@ -146,7 +146,7 @@ model IdentityVerification {
 model SubscriptionLicense {
   id              String   @id @default(cuid())
   licenseKey      String   @unique // 라이선스 키
-  userId          String?  // 사용자 ID (null이면 미할당)
+  userId          String?  @unique // 사용자 ID (null이면 미할당, unique로 one-to-one 관계)
   tier            String   // 'free' | 'pro' | 'enterprise'
   status          String   @default("active") // 'active' | 'expired' | 'revoked' | 'pending'
   issuedAt        DateTime @default(now())
@@ -158,6 +158,7 @@ model SubscriptionLicense {
   updatedAt       DateTime @updatedAt
 
   user            User?    @relation(fields: [userId], references: [id])
+  usages          LicenseUsage[]
 
   @@index([licenseKey])
   @@index([userId])
