@@ -28,6 +28,7 @@ import {
   Megaphone,
   Activity,
   LifeBuoy,
+  Key,
 } from 'lucide-react';
 
 const navItems = [

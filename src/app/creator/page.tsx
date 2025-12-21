@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
+import { AdBanner } from '@/components/ads/AdBanner';
 
 export default function CreatorPage() {
   const [selectedType, setSelectedType] = useState<string | null>(null);

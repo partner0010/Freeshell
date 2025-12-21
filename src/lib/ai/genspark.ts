@@ -167,10 +167,14 @@ export async function collectInformationWithAgents(
     })
   );
 
+  const researchResult = results.find((r) => r.type === 'research')?.data;
+  const summaryResult = results.find((r) => r.type === 'summarize')?.data;
+  const visualizationsResult = results.find((r) => r.type === 'visualize')?.data;
+
   return {
-    research: results.find((r) => r.type === 'research')?.data || '',
-    summary: results.find((r) => r.type === 'summarize')?.data || '',
-    visualizations: results.find((r) => r.type === 'visualize')?.data,
+    research: (typeof researchResult === 'string' ? researchResult : '') || '',
+    summary: (typeof summaryResult === 'string' ? summaryResult : '') || '',
+    visualizations: Array.isArray(visualizationsResult) ? visualizationsResult : undefined,
   };
 }
 

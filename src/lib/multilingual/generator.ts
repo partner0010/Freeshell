@@ -88,7 +88,13 @@ export async function generateMultilingualContent(
 
       // 지역별 최적화
       if (regionalOptimization) {
-        result.seo = await optimizeForRegion(result.seo || {}, lang);
+        const defaultSeo = {
+          title: '',
+          description: '',
+          keywords: [],
+          tags: [],
+        };
+        result.seo = await optimizeForRegion(result.seo || defaultSeo, lang);
       }
 
       return {

@@ -4,6 +4,8 @@ import { getToken } from 'next-auth/jwt';
 
 const prisma = new PrismaClient();
 
+type SubscriptionLicense = Awaited<ReturnType<typeof prisma.subscriptionLicense.findMany>>[number];
+
 export async function GET(request: NextRequest) {
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
@@ -34,7 +36,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      licenses: licenses.map(license => ({
+      licenses: licenses.map((license: SubscriptionLicense) => ({
         id: license.id,
         licenseKey: license.licenseKey,
         tier: license.tier,

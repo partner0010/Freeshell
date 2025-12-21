@@ -87,7 +87,11 @@ export class NanoBanaAI {
       n: 1,
     });
 
-    return response.data[0].url || '';
+    if (!response.data || response.data.length === 0) {
+      throw new Error('이미지 생성 실패: 응답에 데이터가 없습니다');
+    }
+
+    return response.data[0]?.url || '';
   }
 
   /**

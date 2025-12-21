@@ -25,7 +25,7 @@ export { default as NetworkSecurity } from './network';
 
 // Code Security
 export * from './code-security';
-export { default as CodeSecurity } from './code-security';
+export { CodeSecurityScanner as CodeSecurity } from './code-security';
 
 // Environment Validator
 export * from './env-validator';
