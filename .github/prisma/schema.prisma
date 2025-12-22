@@ -79,7 +79,7 @@ model IdentityVerification {
   id        String   @id @default(cuid())
   userId    String
   phone     String
-  code      String   // 인증 코드
+  code      String
   verified  Boolean  @default(false)
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -90,29 +90,30 @@ model IdentityVerification {
 }
 
 model SubscriptionLicense {
-  id          String   @id @default(cuid())
-  licenseKey  String   @unique // 라이선스 키
-  tier        String   // free, basic, premium
-  status      String   @default("active") // active, expired, revoked
-  userId      String?  @unique // 사용자 ID (null이면 미할당, unique로 one-to-one 관계)
-  expiresAt   DateTime? // 만료일
-  maxDevices  Int      @default(1) // 최대 기기 수
-  issuedAt    DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id          String    @id @default(cuid())
+  licenseKey  String    @unique
+  tier        String    // free, basic, premium
+  status      String    @default("active") // active, expired, revoked
+  userId      String?   @unique // 사용자 ID (null이면 미할당, unique로 one-to-one 관계)
+  expiresAt   DateTime?
+  maxDevices  Int       @default(1)
+  issuedAt    DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  usages      LicenseUsage[]
+  user   User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  usages LicenseUsage[]
 
   @@map("subscription_licenses")
 }
 
 model LicenseUsage {
-  id          String   @id @default(cuid())
-  licenseId  String
-  deviceId   String   // 기기 식별자
-  deviceName String?  // 기기 이름
-  lastUsedAt DateTime @default(now())
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  licenseId String
+  deviceId  String
+  deviceInfo String? @db.Text
+  lastUsed  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   license SubscriptionLicense @relation(fields: [licenseId], references: [id], onDelete: Cascade)
 
