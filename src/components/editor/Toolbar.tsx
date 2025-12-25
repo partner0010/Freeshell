@@ -37,25 +37,25 @@ export function Toolbar({ onOpenTemplates, viewport = 'desktop', onViewportChang
   ];
 
   return (
-    <div className="h-16 bg-white border-b flex items-center justify-between px-6">
+    <div className="h-14 sm:h-16 bg-white border-b flex items-center justify-between px-3 sm:px-4 md:px-6 overflow-x-auto">
       {/* 좌측: 프로젝트 정보 */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center">
-            <Sparkles className="text-white" size={20} />
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Sparkles className="text-white" size={16} />
           </div>
-          <div className="relative">
+          <div className="relative min-w-0 hidden sm:block">
             <button
               onClick={() => setShowProjectMenu(!showProjectMenu)}
               className="flex items-center gap-1 hover:bg-gray-100 rounded-lg px-2 py-1 transition-colors"
             >
-              <div>
-                <h1 className="font-display font-bold text-gray-800 text-left">
+              <div className="min-w-0">
+                <h1 className="font-display font-bold text-gray-800 text-left text-sm sm:text-base truncate">
                   {project?.name || 'GRIP'}
                 </h1>
-                <p className="text-xs text-gray-500 text-left">AI 웹사이트 빌더</p>
+                <p className="text-xs text-gray-500 text-left hidden md:block">AI 웹사이트 빌더</p>
               </div>
-              <ChevronDown size={16} className="text-gray-400" />
+              <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
             </button>
 
             {/* 프로젝트 메뉴 */}
@@ -99,18 +99,18 @@ export function Toolbar({ onOpenTemplates, viewport = 'desktop', onViewportChang
         {onOpenTemplates && (
           <button
             onClick={onOpenTemplates}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
           >
-            <Layout size={16} />
-            템플릿
+            <Layout size={14} className="sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">템플릿</span>
           </button>
         )}
       </div>
 
       {/* 중앙: 주요 액션 */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2 flex-1 justify-center min-w-0">
         {/* Undo/Redo */}
-        <div className="flex items-center gap-1 px-2 border-r">
+        <div className="flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 border-r">
           <ToolbarButton
             icon={Undo2}
             onClick={undo}
@@ -125,8 +125,8 @@ export function Toolbar({ onOpenTemplates, viewport = 'desktop', onViewportChang
           />
         </div>
 
-        {/* 뷰포트 */}
-        <div className="flex items-center gap-1 px-2 border-r">
+        {/* 뷰포트 - 모바일에서 숨김 */}
+        <div className="hidden sm:flex items-center gap-1 px-2 border-r">
           {viewports.map((vp) => (
             <ToolbarButton
               key={vp.id}
@@ -144,27 +144,28 @@ export function Toolbar({ onOpenTemplates, viewport = 'desktop', onViewportChang
           onClick={() => setPreviewMode(!isPreviewMode)}
           active={isPreviewMode}
           tooltip={isPreviewMode ? '편집 모드' : '미리보기'}
-          className="px-4"
+          className="px-2 sm:px-4"
         >
-          <span className="ml-2 text-sm">
+          <span className="ml-1 sm:ml-2 text-xs sm:text-sm whitespace-nowrap">
             {isPreviewMode ? '편집' : '미리보기'}
           </span>
         </ToolbarButton>
       </div>
 
       {/* 우측: 저장/내보내기 */}
-      <div className="flex items-center gap-3">
-        <ToolbarButton icon={Save} tooltip="저장 (Ctrl+S)" />
-        <ToolbarButton icon={HelpCircle} tooltip="도움말" />
+      <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+        <ToolbarButton icon={Save} tooltip="저장 (Ctrl+S)" className="hidden sm:flex" />
+        <ToolbarButton icon={HelpCircle} tooltip="도움말" className="hidden md:flex" />
         
-        <div className="w-px h-6 bg-gray-200" />
+        <div className="w-px h-6 bg-gray-200 hidden sm:block" />
         
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="btn-primary text-sm py-2"
+          className="btn-primary text-xs sm:text-sm py-1.5 sm:py-2 px-3 sm:px-4 whitespace-nowrap"
         >
-          게시하기
+          <span className="hidden sm:inline">게시하기</span>
+          <span className="sm:hidden">게시</span>
         </motion.button>
       </div>
     </div>
@@ -198,7 +199,7 @@ function ToolbarButton({
       disabled={disabled}
       title={tooltip}
       className={`
-        flex items-center p-2 rounded-lg transition-colors
+        flex items-center p-1.5 sm:p-2 rounded-lg transition-colors
         ${active 
           ? 'bg-primary-100 text-primary-600' 
           : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
@@ -207,7 +208,7 @@ function ToolbarButton({
         ${className}
       `}
     >
-      <Icon size={18} />
+      <Icon size={16} className="sm:w-[18px] sm:h-[18px]" />
       {children}
     </motion.button>
   );

@@ -14,9 +14,7 @@ import { Footer } from '@/components/layout/Footer';
 import { ChatGPTLikeSearch } from '@/components/ai/ChatGPTLikeSearch';
 import { SocialShare } from '@/components/social/SocialShare';
 import { PersonalizedRecommendations } from '@/components/recommendations/PersonalizedRecommendations';
-import { AccessibilityMenu } from '@/components/accessibility/AccessibilityMenu';
-import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
-import { OfflineIndicator } from '@/components/offline/OfflineIndicator';
+import { FloatingWidgets } from '@/components/ui/FloatingWidgets';
 import { StructuredData } from '@/components/seo/StructuredData';
 
 export default function HomePage() {
@@ -296,14 +294,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 접근성 메뉴 */}
-      <AccessibilityMenu />
-
-      {/* 피드백 위젯 */}
-      <FeedbackWidget />
-
-      {/* 오프라인 표시기 */}
-      <OfflineIndicator />
+      {/* 플로팅 위젯 통합 (접근성, 피드백, 오프라인) */}
+      <FloatingWidgets />
 
       {/* 푸터 */}
       <Footer />

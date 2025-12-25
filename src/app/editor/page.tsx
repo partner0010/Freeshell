@@ -229,10 +229,10 @@ function EditorPageContent() {
       />
 
       {/* 메인 영역 */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* 사이드바 - 미리보기 모드에서 숨김 */}
+      <div className="flex-1 flex overflow-hidden flex-col md:flex-row">
+        {/* 사이드바 - 미리보기 모드에서 숨김, 모바일에서는 드로어 */}
         {!isPreviewMode && (
-          <div className="flex-shrink-0">
+          <div className="hidden md:flex flex-shrink-0">
             <OrganizedSidebar
               activeTab={(useEditorStore.getState().sidebarTab || 'blocks') as any}
               onTabChange={(tab) => {
@@ -248,7 +248,7 @@ function EditorPageContent() {
         )}
 
         {/* 캔버스 */}
-        <main className={`flex-1 overflow-auto ${isPreviewMode ? 'p-0' : 'p-8 bg-gray-100'}`}>
+        <main className={`flex-1 overflow-auto ${isPreviewMode ? 'p-0' : 'p-4 sm:p-6 md:p-8 bg-gray-100'}`}>
           {/* 미리보기 모드 배너 및 컨트롤 */}
           {isPreviewMode && (
             <div className={`fixed top-16 left-0 right-0 z-40 bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-2xl transition-all duration-300 ${isFullscreen ? 'opacity-0 hover:opacity-100' : 'opacity-100'}`}>

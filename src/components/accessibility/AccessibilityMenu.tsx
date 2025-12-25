@@ -34,8 +34,8 @@ export function AccessibilityMenu() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl border border-gray-200 p-4 w-64">
+    <div className="w-full">
+      <div className="bg-white rounded-xl shadow-2xl border border-gray-200 p-3 sm:p-4 w-full">
         <div className="flex items-center gap-2 mb-4">
           <Accessibility className="text-purple-600" size={20} />
           <h3 className="font-bold text-gray-900">접근성 설정</h3>
