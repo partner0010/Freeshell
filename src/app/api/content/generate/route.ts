@@ -12,7 +12,7 @@ import { validateCSRFRequest } from '@/lib/security/csrf-protection';
 export async function POST(request: NextRequest) {
   try {
     // CSRF 토큰 검증
-    const csrfCheck = validateCSRFRequest(request);
+    const csrfCheck = await validateCSRFRequest(request);
     if (!csrfCheck.valid) {
       return NextResponse.json(
         { error: 'CSRF 토큰 검증 실패', message: csrfCheck.error },

@@ -255,7 +255,7 @@ export async function middleware(request: NextRequest) {
 
   // CSRF 토큰 검증 (POST, PUT, PATCH, DELETE 요청)
   if (isApiRoute && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
-    const csrfCheck = validateCSRFRequest(request);
+    const csrfCheck = await validateCSRFRequest(request);
     if (!csrfCheck.valid) {
       return new NextResponse(
         JSON.stringify({ 
@@ -278,7 +278,7 @@ export async function middleware(request: NextRequest) {
 
   // CSRF 토큰을 쿠키에 설정 (GET 요청 시)
   if (request.method === 'GET' && !request.cookies.get('csrf-token')) {
-    const csrfToken = generateCSRFToken();
+    const csrfToken = await generateCSRFToken();
     response.cookies.set('csrf-token', csrfToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

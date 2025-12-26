@@ -7,7 +7,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { aiSecurityGuard } from '@/lib/security/ai-security-guard';
 import { wafSystem } from '@/lib/security/waf';
 import { dlpSystem } from '@/lib/security/dlp';
-import crypto from 'crypto';
 
 export async function securityMiddleware(request: NextRequest) {
   const ip = request.ip || 

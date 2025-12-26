@@ -1,22 +1,71 @@
 /**
  * CSRF 보호 시스템
  * Cross-Site Request Forgery 방어
+ * Edge Runtime 호환: Web Crypto API 사용
  */
 
 import { NextRequest } from 'next/server';
-import { randomBytes, createHmac } from 'crypto';
 
 const CSRF_SECRET = process.env.CSRF_SECRET || 'default-csrf-secret-change-in-production';
 
 /**
+ * 랜덤 바이트 생성 (Web Crypto API)
+ */
+async function randomBytes(length: number): Promise<Uint8Array> {
+  const array = new Uint8Array(length);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(array);
+  } else {
+    // Fallback for environments without crypto
+    for (let i = 0; i < length; i++) {
+      array[i] = Math.floor(Math.random() * 256);
+    }
+  }
+  return array;
+}
+
+/**
+ * 바이트를 hex 문자열로 변환
+ */
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/**
+ * HMAC 생성 (Web Crypto API)
+ */
+async function createHmac(algorithm: string, secret: string, data: string): Promise<string> {
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    // Fallback: 간단한 해시 (프로덕션에서는 사용하지 않음)
+    return btoa(secret + data).substring(0, 64);
+  }
+
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(data);
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: algorithm.toUpperCase() },
+    false,
+    ['sign']
+  );
+
+  const signature = await crypto.subtle.sign('HMAC', key, messageData);
+  return bytesToHex(new Uint8Array(signature));
+}
+
+/**
  * CSRF 토큰 생성
  */
-export function generateCSRFToken(): string {
-  const token = randomBytes(32).toString('hex');
+export async function generateCSRFToken(): Promise<string> {
+  const tokenBytes = await randomBytes(32);
+  const token = bytesToHex(tokenBytes);
   const timestamp = Date.now().toString();
-  const hmac = createHmac('sha256', CSRF_SECRET)
-    .update(token + timestamp)
-    .digest('hex');
+  const hmac = await createHmac('SHA-256', CSRF_SECRET, token + timestamp);
   
   return `${token}:${timestamp}:${hmac}`;
 }
@@ -24,7 +73,7 @@ export function generateCSRFToken(): string {
 /**
  * CSRF 토큰 검증
  */
-export function validateCSRFToken(token: string): boolean {
+export async function validateCSRFToken(token: string): Promise<boolean> {
   try {
     const [tokenPart, timestamp, hmac] = token.split(':');
     
@@ -40,9 +89,7 @@ export function validateCSRFToken(token: string): boolean {
     }
     
     // HMAC 검증
-    const expectedHmac = createHmac('sha256', CSRF_SECRET)
-      .update(tokenPart + timestamp)
-      .digest('hex');
+    const expectedHmac = await createHmac('SHA-256', CSRF_SECRET, tokenPart + timestamp);
     
     return hmac === expectedHmac;
   } catch (error) {
@@ -82,7 +129,7 @@ export function requiresCSRFProtection(method: string): boolean {
  * CSRF 검증 미들웨어
  * API 라우트에서만 검증 (일반 페이지는 제외)
  */
-export function validateCSRFRequest(request: NextRequest): { valid: boolean; error?: string } {
+export async function validateCSRFRequest(request: NextRequest): Promise<{ valid: boolean; error?: string }> {
   const method = request.method;
   
   // GET, HEAD, OPTIONS는 CSRF 보호 불필요
@@ -102,7 +149,7 @@ export function validateCSRFRequest(request: NextRequest): { valid: boolean; err
     return { valid: false, error: 'CSRF 토큰이 없습니다.' };
   }
   
-  if (!validateCSRFToken(token)) {
+  if (!(await validateCSRFToken(token))) {
     return { valid: false, error: 'CSRF 토큰이 유효하지 않습니다.' };
   }
   
