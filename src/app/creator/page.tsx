@@ -98,27 +98,43 @@ export default function CreatorPage() {
               seoOptimize: true,
             },
           }),
-        }).then(res => res.json())
+        }).then(async (res) => {
+          const data = await res.json();
+          if (!res.ok || data.error) {
+            throw new Error(data.error || `HTTP ${res.status}: ${res.statusText}`);
+          }
+          return data;
+        })
       );
 
       const results = await Promise.all(generatePromises);
-      const contents = results.map((resultData, index) => ({
-        id: index + 1,
-        data: resultData.data,
-        title: `${topic.trim()} - 변형 ${index + 1}`,
-        preview: resultData.data?.preview || resultData.data?.url || resultData.data?.content,
-        createdAt: new Date(),
-      }));
+      const contents = results.map((resultData, index) => {
+        // API 응답 구조에 맞게 데이터 추출
+        const data = resultData.data || resultData;
+        return {
+          id: index + 1,
+          data: data,
+          title: `${topic.trim()} - 변형 ${index + 1}`,
+          preview: data?.preview || data?.url || data?.content || data?.title || data?.post?.content || data?.ebook?.content || '미리보기 없음',
+          createdAt: new Date(),
+        };
+      });
 
       setGeneratedContents(contents);
       setResult(null); // 단일 결과 대신 여러 결과 표시
       
       console.log('생성 결과:', contents);
     } catch (error: any) {
-      setError(`생성 중 오류가 발생했습니다: ${error.message}`);
+      const errorMessage = error?.message || error?.toString() || '알 수 없는 오류가 발생했습니다';
+      setError(`생성 중 오류가 발생했습니다: ${errorMessage}`);
       setResult(null);
       setGeneratedContents([]);
       console.error('생성 오류:', error);
+      
+      // 사용자에게 더 자세한 오류 정보 제공
+      if (error?.response) {
+        console.error('API 응답 오류:', await error.response?.json().catch(() => ({})));
+      }
     } finally {
       setIsGenerating(false);
     }

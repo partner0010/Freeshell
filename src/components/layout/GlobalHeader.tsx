@@ -5,17 +5,24 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Sparkles, Menu, X, Search, 
-  Video, FileText, Zap, Monitor, Bug, Shield, Accessibility, Users, HelpCircle, FileSignature
+  Video, FileText, Zap, Monitor, Bug, Shield, Accessibility, Users, HelpCircle, FileSignature,
+  Home, ArrowLeft
 } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { LanguageSelector } from '@/components/i18n/LanguageSelector';
 import type { Notification } from '@/components/notifications/NotificationCenter';
 
 export function GlobalHeader() {
+  const router = useRouter();
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showAccessibility, setShowAccessibility] = useState(false);
+  
+  const isHomePage = pathname === '/';
+  const canGoBack = typeof window !== 'undefined' && window.history.length > 1;
 
   useEffect(() => {
     // 예시 알림 (실제로는 서버에서 받아옴)
@@ -72,6 +79,28 @@ export function GlobalHeader() {
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/80 dark:border-gray-700/80 shadow-sm supports-[backdrop-filter]:bg-white/80 supports-[backdrop-filter]:dark:bg-gray-900/80">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 md:h-18 min-h-[56px]">
+          {/* 모바일 네비게이션 버튼 (뒤로가기/홈) */}
+          <div className="flex items-center gap-1 lg:hidden flex-shrink-0">
+            {!isHomePage && (
+              <button
+                onClick={() => router.back()}
+                className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                aria-label="뒤로가기"
+              >
+                <ArrowLeft size={20} />
+              </button>
+            )}
+            {!isHomePage && (
+              <Link
+                href="/"
+                className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                aria-label="홈으로"
+              >
+                <Home size={20} />
+              </Link>
+            )}
+          </div>
+
           {/* 로고 */}
           <Link href="/" className="flex items-center gap-2 sm:gap-3 group flex-shrink-0">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">

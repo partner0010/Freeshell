@@ -134,6 +134,20 @@ body {
   * {
     @apply border-surface-border;
   }
+  
+  /* 빨간색 테두리 제거 및 포커스 스타일 개선 */
+  *:focus {
+    outline: none !important;
+  }
+  
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid rgba(139, 92, 246, 0.5) !important;
+    outline-offset: 2px;
+  }
 }
 
 @layer components {

@@ -34,23 +34,36 @@ export default function AgentsPage() {
   };
 
   const handleCreateTask = async () => {
-    if (!selectedAgent || !taskInput.trim()) return;
+    if (!selectedAgent || !taskInput.trim()) {
+      alert('에이전트를 선택하고 작업 내용을 입력하세요.');
+      return;
+    }
 
-    const task = agentManager.createTask({
-      agentId: selectedAgent.id,
-      type: 'generate',
-      input: { prompt: taskInput },
-    });
-
-    setTasks([...tasks, task]);
-    setTaskInput('');
-
-    // 작업 실행
     try {
-      await agentManager.executeTask(task.id);
-      loadTasks();
+      const task = agentManager.createTask({
+        agentId: selectedAgent.id,
+        type: 'generate',
+        input: { prompt: taskInput },
+      });
+
+      setTasks([...tasks, task]);
+      const currentInput = taskInput;
+      setTaskInput('');
+
+      // 작업 실행
+      try {
+        await agentManager.executeTask(task.id);
+        loadTasks();
+        // 성공 메시지 (선택사항)
+        console.log('작업이 성공적으로 실행되었습니다.');
+      } catch (error: any) {
+        console.error('작업 실행 오류:', error);
+        alert(`작업 실행 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`);
+        loadTasks(); // 상태 업데이트를 위해 다시 로드
+      }
     } catch (error: any) {
-      console.error('작업 실행 오류:', error);
+      console.error('작업 생성 오류:', error);
+      alert(`작업 생성 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`);
     }
   };
 
