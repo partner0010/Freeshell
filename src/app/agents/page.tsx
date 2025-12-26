@@ -15,6 +15,7 @@ import { ScheduleCreateModal } from '@/components/agents/ScheduleCreateModal';
 import { contentScheduler, type ScheduleConfig } from '@/lib/scheduling/scheduler';
 import { AutonomousAgentPanel } from '@/components/ai/AutonomousAgentPanel';
 import { LearningSystemsDashboard } from '@/components/ai/LearningSystemsDashboard';
+import { getCSRFToken } from '@/lib/utils/csrf-client';
 
 export default function AgentsPage() {
   const { showToast } = useToast();
@@ -559,18 +560,39 @@ export default function AgentsPage() {
                               return;
                             }
                             
-                            // API를 통해 작업 실행
-                            const response = await fetch('/api/agents/execute', {
+                            // 콘텐츠 생성 API 직접 호출
+                            const contentTypeMap: Record<string, string> = {
+                              'video': 'short-video',
+                              'image': 'image',
+                              'text': 'blog',
+                              'code': 'code',
+                              'audio': 'audio',
+                              'music': 'music',
+                              'ebook': 'ebook',
+                              'blog': 'blog',
+                            };
+
+                            const apiContentType = contentTypeMap[selectedContentType] || selectedContentType;
+                            
+                            // CSRF 토큰 가져오기
+                            const csrfToken = getCSRFToken();
+                            
+                            const headers: HeadersInit = { 
+                              'Content-Type': 'application/json',
+                            };
+                            
+                            if (csrfToken) {
+                              headers['X-CSRF-Token'] = csrfToken;
+                            }
+                            
+                            const response = await fetch('/api/content/generate', {
                               method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
+                              headers,
+                              credentials: 'include', // 쿠키 포함
                               body: JSON.stringify({
-                                agentId: agent.id,
-                                task: taskInput,
-                                type: 'generate',
-                                input: {
-                                  prompt: taskInput,
-                                  contentType: selectedContentType,
-                                },
+                                contentType: apiContentType,
+                                topic: taskInput,
+                                options: {},
                               }),
                             });
 
@@ -586,10 +608,11 @@ export default function AgentsPage() {
                               loadTasks();
                               setIsExecuting(false);
                             } else {
-                              const errorData = await response.json();
+                              const errorData = await response.json().catch(() => ({ error: '알 수 없는 오류' }));
+                              console.error('콘텐츠 생성 오류:', errorData);
                               showToast({
                                 type: 'error',
-                                message: errorData.error || '콘텐츠 생성에 실패했습니다.',
+                                message: errorData.error || errorData.message || '콘텐츠 생성에 실패했습니다.',
                               });
                               setIsExecuting(false);
                             }

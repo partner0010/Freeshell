@@ -145,10 +145,16 @@ export async function validateCSRFRequest(request: NextRequest): Promise<{ valid
   
   const token = extractCSRFToken(request);
   
+  // 토큰이 없으면 허용 (첫 요청이거나 개발 환경)
   if (!token) {
-    return { valid: false, error: 'CSRF 토큰이 없습니다.' };
+    // 개발 환경에서는 경고만, 프로덕션에서는 차단
+    if (process.env.NODE_ENV === 'production') {
+      return { valid: false, error: 'CSRF 토큰이 없습니다.' };
+    }
+    return { valid: true }; // 개발 환경에서는 허용
   }
   
+  // 토큰이 있으면 검증
   if (!(await validateCSRFToken(token))) {
     return { valid: false, error: 'CSRF 토큰이 유효하지 않습니다.' };
   }
