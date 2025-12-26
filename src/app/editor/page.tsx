@@ -22,10 +22,18 @@ import { ThemeToggle as NewThemeToggle } from '@/components/ui/ThemeToggle';
 import { UnifiedNotificationCenter } from '@/components/notifications/UnifiedNotificationCenter';
 import { HighContrastToggle } from '@/components/accessibility/HighContrastToggle';
 import { registerServiceWorker } from '@/lib/pwa/pwa-installer';
+import dynamic from 'next/dynamic';
 import { EditorFloatingWidgets } from '@/components/editor/EditorFloatingWidgets';
-import { VoiceTranslation } from '@/components/editor/VoiceTranslation';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
-import { RealTimeCollaboration } from '@/components/collaboration/RealTimeCollaboration';
+
+// 동적 임포트로 코드 분할
+const VoiceTranslation = dynamic(() => import('@/components/editor/VoiceTranslation').then(mod => ({ default: mod.VoiceTranslation })), {
+  ssr: false,
+});
+
+const RealTimeCollaboration = dynamic(() => import('@/components/collaboration/RealTimeCollaboration').then(mod => ({ default: mod.RealTimeCollaboration })), {
+  ssr: false,
+});
 
 // 전체화면 이벤트 핸들러 컴포넌트
 function PreviewFullscreenHandler({ onFullscreenChange }: { onFullscreenChange: (isFullscreen: boolean) => void }) {

@@ -16,7 +16,7 @@ export function WebScrapingPanel() {
 
   const handleScrape = async () => {
     if (!url.trim()) {
-      showToast('warning', 'URL을 입력해주세요');
+      showToast({ type: 'warning', message: 'URL을 입력해주세요' });
       return;
     }
 
@@ -25,12 +25,12 @@ export function WebScrapingPanel() {
       const data = await webScraper.scrape({ url });
       setResult(data);
       if (data.error) {
-        showToast('error', data.error);
+        showToast({ type: 'error', message: data.error });
       } else {
-        showToast('success', '스크래핑이 완료되었습니다');
+        showToast({ type: 'success', message: '스크래핑이 완료되었습니다' });
       }
     } catch (error) {
-      showToast('error', '스크래핑 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '스크래핑 중 오류가 발생했습니다' });
     } finally {
       setIsScraping(false);
     }
@@ -38,7 +38,7 @@ export function WebScrapingPanel() {
 
   const handleExtractSEO = async () => {
     if (!url.trim()) {
-      showToast('warning', 'URL을 입력해주세요');
+      showToast({ type: 'warning', message: 'URL을 입력해주세요' });
       return;
     }
 
@@ -55,9 +55,9 @@ export function WebScrapingPanel() {
           'og:image': seo.ogImage || '',
         },
       });
-      showToast('success', 'SEO 데이터를 추출했습니다');
+      showToast({ type: 'success', message: 'SEO 데이터를 추출했습니다' });
     } catch (error) {
-      showToast('error', 'SEO 추출 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: 'SEO 추출 중 오류가 발생했습니다' });
     } finally {
       setIsScraping(false);
     }
@@ -199,7 +199,7 @@ export function WebScrapingPanel() {
                         a.download = `scraping-${Date.now()}.json`;
                         a.click();
                         URL.revokeObjectURL(url);
-                        showToast('success', '다운로드되었습니다');
+                        showToast({ type: 'success', message: '다운로드되었습니다' });
                       }}
                     >
                       <Download size={18} />

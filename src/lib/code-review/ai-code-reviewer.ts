@@ -1,7 +1,12 @@
 /**
  * AI 코드 리뷰어
  * AI Code Reviewer
+ * 자기 학습 시스템 통합: 리뷰 결과에서 학습하여 정확도 향상
  */
+
+import { selfLearningSystem } from '@/lib/ai/self-learning';
+import { selfMonitoringSystem } from '@/lib/ai/self-monitoring';
+import { selfImprovementSystem } from '@/lib/ai/self-improvement';
 
 export type ReviewSeverity = 'error' | 'warning' | 'info' | 'suggestion';
 
@@ -72,13 +77,44 @@ export class AICodeReviewer {
     const summary = this.generateSummary(issues, score);
     const suggestions = this.generateSuggestions(issues);
 
-    return {
+    const review: CodeReview = {
       file: 'reviewed-file.ts',
       issues,
       score,
       summary,
       suggestions,
     };
+
+    // 자기 학습: 리뷰 결과에서 학습
+    selfLearningSystem.learnFromExperience({
+      task: 'code_review',
+      input: { codeLength: code.length, language },
+      output: review,
+      success: score >= 70,
+      performance: score / 100,
+      patterns: issues.map(i => i.rule),
+      improvements: suggestions,
+    }).catch(err => console.error('코드 리뷰 학습 오류:', err));
+
+    // 자기 모니터링: 성능 추적
+    selfMonitoringSystem.recordPerformance({
+      task: 'code_review',
+      performance: score / 100,
+      timestamp: new Date(),
+    }).catch(err => console.error('성능 모니터링 오류:', err));
+
+    // 성능이 낮으면 자기 개선 트리거
+    if (score < 70) {
+      selfImprovementSystem.triggerImprovement({
+        issue: `코드 리뷰 점수가 낮습니다 (${score}/100)`,
+        context: {
+          issuesCount: issues.length,
+          errorCount: issues.filter(i => i.severity === 'error').length,
+        },
+      }).catch(err => console.error('자기 개선 트리거 오류:', err));
+    }
+
+    return review;
   }
 
   // 요약 생성

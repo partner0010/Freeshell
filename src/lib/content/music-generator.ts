@@ -125,10 +125,49 @@ export class MusicGenerator {
     }
 
     // 실제 API 호출은 환경 변수에 API 키가 있을 때만 수행
-    // const apiKey = process.env.REMUSIC_API_KEY || process.env.ANYMUSIC_API_KEY;
-    // if (apiKey && service !== 'default') {
-    //   // 실제 API 호출 로직
-    // }
+    const apiKey = process.env.REMUSIC_API_KEY || process.env.ANYMUSIC_API_KEY || process.env.MSONG_API_KEY;
+    if (apiKey && service !== 'default') {
+      try {
+        // 실제 API 호출 시도
+        const response = await fetch(serviceUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            genre: config.genre,
+            mood: config.mood,
+            duration: config.duration,
+            topic: config.topic,
+            instruments: config.instruments,
+            vocals: config.vocals,
+          }),
+        });
+
+        if (response.ok) {
+          const apiData = await response.json();
+          return {
+            id: `music-${Date.now()}`,
+            title,
+            url: apiData.url || apiData.downloadUrl || serviceUrl,
+            duration: config.duration,
+            genre: config.genre,
+            mood: config.mood,
+            metadata: {
+              bpm,
+              key,
+              instruments: config.instruments,
+              service: serviceName,
+            },
+            createdAt: Date.now(),
+          };
+        }
+      } catch (error) {
+        console.warn(`음악 생성 API 호출 실패 (${serviceName}):`, error);
+        // API 호출 실패 시 기본 생성으로 폴백
+      }
+    }
 
     return {
       id: `music-${Date.now()}`,
@@ -179,10 +218,49 @@ export class MusicGenerator {
     }
 
     // 실제 API 호출은 환경 변수에 API 키가 있을 때만 수행
-    // const apiKey = process.env.AISONGMAKER_API_KEY || process.env.MUSICHERO_API_KEY;
-    // if (apiKey && service !== 'default') {
-    //   // 실제 API 호출 로직
-    // }
+    const apiKey = process.env.AISONGMAKER_API_KEY || process.env.MUSICHERO_API_KEY;
+    if (apiKey && service !== 'default') {
+      try {
+        // 실제 API 호출 시도
+        const response = await fetch(serviceUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            lyrics: config.lyrics,
+            genre: config.genre,
+            mood: config.mood,
+            style: config.style,
+            duration: config.duration,
+            tempo: config.tempo,
+          }),
+        });
+
+        if (response.ok) {
+          const apiData = await response.json();
+          return {
+            id: `song-${Date.now()}`,
+            title,
+            lyrics: config.lyrics,
+            url: apiData.url || apiData.downloadUrl || serviceUrl,
+            duration: config.duration,
+            genre: config.genre,
+            mood: config.mood,
+            metadata: {
+              bpm,
+              key,
+              service: serviceName,
+            },
+            createdAt: Date.now(),
+          };
+        }
+      } catch (error) {
+        console.warn(`노래 생성 API 호출 실패 (${serviceName}):`, error);
+        // API 호출 실패 시 기본 생성으로 폴백
+      }
+    }
 
     return {
       id: `song-${Date.now()}`,

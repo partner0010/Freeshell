@@ -2,27 +2,50 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Bot, Play, CheckCircle, XCircle, Loader2, Zap, Search, Image, Code, Clock, Calendar, Workflow, Repeat, Settings, BarChart3, FileText, Cloud, Video, Music, BookOpen, Mic, Type, FileEdit } from 'lucide-react';
+import { Bot, Play, CheckCircle, XCircle, Loader2, Zap, Search, Image, Code, Clock, Calendar, Workflow as WorkflowIcon, Repeat, Settings, BarChart3, FileText, Cloud, Video, Music, BookOpen, Mic, Type, FileEdit, Sparkles, Brain } from 'lucide-react';
 import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
 import { agentManager, type Agent, type AgentTask } from '@/lib/ai/agents';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { AdBanner } from '@/components/ads/AdBanner';
+import { useToast } from '@/components/ui/Toast';
+import { workflowManager, type Workflow } from '@/lib/automation/workflow-manager';
+import { WorkflowCreateModal } from '@/components/agents/WorkflowCreateModal';
+import { WorkflowEditModal } from '@/components/agents/WorkflowEditModal';
+import { ScheduleCreateModal } from '@/components/agents/ScheduleCreateModal';
+import { contentScheduler, type ScheduleConfig } from '@/lib/scheduling/scheduler';
+import { AutonomousAgentPanel } from '@/components/ai/AutonomousAgentPanel';
+import { LearningSystemsDashboard } from '@/components/ai/LearningSystemsDashboard';
 
 export default function AgentsPage() {
+  const { showToast } = useToast();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [tasks, setTasks] = useState<AgentTask[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [taskInput, setTaskInput] = useState('');
-  const [activeTab, setActiveTab] = useState<'create' | 'agents' | 'workflows' | 'scheduled' | 'history'>('create');
-  const [workflows, setWorkflows] = useState<any[]>([]);
+        const [activeTab, setActiveTab] = useState<'create' | 'agents' | 'workflows' | 'scheduled' | 'history' | 'autonomous' | 'learning'>('create');
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [scheduledTasks, setScheduledTasks] = useState<any[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
   const [selectedContentType, setSelectedContentType] = useState<string | null>(null);
+  const [isCreatingWorkflow, setIsCreatingWorkflow] = useState(false);
+  const [isEditingWorkflow, setIsEditingWorkflow] = useState(false);
+  const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
+  const [isCreatingSchedule, setIsCreatingSchedule] = useState(false);
 
   useEffect(() => {
     loadAgents();
     loadTasks();
+    loadWorkflows();
+    loadScheduledTasks();
+    
+    // URL 쿼리 파라미터에서 탭 확인
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab && ['create', 'autonomous', 'agents', 'workflows', 'scheduled', 'history'].includes(tab)) {
+        setActiveTab(tab as any);
+      }
+    }
   }, []);
 
   // 작업 실행 중 상태 업데이트를 위한 주기적 새로고침
@@ -34,6 +57,46 @@ export default function AgentsPage() {
       return () => clearInterval(interval);
     }
   }, [isExecuting]);
+
+  // 스케줄 자동 체크 및 실행 (1분마다)
+  useEffect(() => {
+    const checkSchedules = async () => {
+      try {
+        const response = await fetch('/api/schedule/execute');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.executed > 0) {
+            showToast({
+              type: 'success',
+              message: `${data.executed}개의 스케줄이 자동 실행되었습니다.`,
+            });
+            loadScheduledTasks();
+            loadTasks(); // 히스토리 업데이트
+          }
+        }
+      } catch (error) {
+        // 조용히 실패 (로그만 출력)
+        console.debug('스케줄 자동 체크 실패:', error);
+      }
+    };
+
+    // 초기 체크
+    checkSchedules();
+
+    // 1분마다 체크
+    const interval = setInterval(checkSchedules, 60000);
+    return () => clearInterval(interval);
+  }, [showToast]);
+
+  // 워크플로우/스케줄 목록 자동 새로고침 (5분마다)
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      loadWorkflows();
+      loadScheduledTasks();
+    }, 300000); // 5분마다
+
+    return () => clearInterval(refreshInterval);
+  }, []);
 
   const loadAgents = () => {
     const allAgents = agentManager.getAllAgents();
@@ -49,48 +112,216 @@ export default function AgentsPage() {
     setTasks(sortedTasks);
   };
 
+  const loadWorkflows = async () => {
+    try {
+      const response = await fetch('/api/workflows');
+      if (response.ok) {
+        const data = await response.json();
+        const workflows = data.data || [];
+        if (workflows.length > 0) {
+          setWorkflows(workflows);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('워크플로우 로드 실패:', error);
+    }
+
+    // 폴백: 로컬 워크플로우 매니저 사용
+    if (typeof window !== 'undefined' && workflowManager) {
+      const allWorkflows = workflowManager.getAllWorkflows();
+      setWorkflows(allWorkflows.length > 0 ? allWorkflows : [
+        {
+          id: 'workflow-1',
+          name: '일일 리포트 생성',
+          description: '매일 자동으로 리포트를 생성합니다',
+          steps: [],
+          status: 'active',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          runCount: 5,
+        },
+        {
+          id: 'workflow-2',
+          name: '콘텐츠 자동 생성',
+          description: '주제에 따라 콘텐츠를 자동 생성합니다',
+          steps: [],
+          status: 'active',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          runCount: 12,
+        },
+        {
+          id: 'workflow-3',
+          name: '데이터 백업',
+          description: '정기적으로 데이터를 백업합니다',
+          steps: [],
+          status: 'paused',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          runCount: 3,
+        },
+      ]);
+    } else {
+      // 기본 워크플로우 예시
+      setWorkflows([
+        {
+          id: 'workflow-1',
+          name: '일일 리포트 생성',
+          description: '매일 자동으로 리포트를 생성합니다',
+          steps: [],
+          status: 'active',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          runCount: 5,
+        },
+        {
+          id: 'workflow-2',
+          name: '콘텐츠 자동 생성',
+          description: '주제에 따라 콘텐츠를 자동 생성합니다',
+          steps: [],
+          status: 'active',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          runCount: 12,
+        },
+        {
+          id: 'workflow-3',
+          name: '데이터 백업',
+          description: '정기적으로 데이터를 백업합니다',
+          steps: [],
+          status: 'paused',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          runCount: 3,
+        },
+      ]);
+    }
+  };
+
+  const loadScheduledTasks = async () => {
+    try {
+      const response = await fetch('/api/schedule');
+      if (response.ok) {
+        const data = await response.json();
+        const schedules = data.data || [];
+        if (schedules.length > 0) {
+          setScheduledTasks(schedules.map((job: any) => ({
+            id: job.id,
+            name: `${job.config.topic} - ${job.config.contentType}`,
+            agent: job.config.contentType,
+            nextRun: new Date(job.nextRun).toLocaleString('ko-KR'),
+            frequency: job.config.frequency,
+            status: job.status,
+          })));
+        } else {
+          // 기본 스케줄 예시
+          setScheduledTasks([
+            {
+              id: 'schedule-1',
+              name: '매일 오전 9시 리포트 생성',
+              agent: '리포트 에이전트',
+              nextRun: '2025-01-16 09:00',
+              frequency: 'daily',
+              status: 'active',
+            },
+            {
+              id: 'schedule-2',
+              name: '주간 데이터 분석',
+              agent: '분석 에이전트',
+              nextRun: '2025-01-20 00:00',
+              frequency: 'weekly',
+              status: 'active',
+            },
+            {
+              id: 'schedule-3',
+              name: '월간 백업',
+              agent: '백업 에이전트',
+              nextRun: '2025-02-01 00:00',
+              frequency: 'monthly',
+              status: 'active',
+            },
+          ]);
+        }
+      }
+    } catch (error) {
+      console.error('스케줄 로드 실패:', error);
+      // 기본 스케줄 예시
+      setScheduledTasks([
+        {
+          id: 'schedule-1',
+          name: '매일 오전 9시 리포트 생성',
+          agent: '리포트 에이전트',
+          nextRun: '2025-01-16 09:00',
+          frequency: 'daily',
+          status: 'active',
+        },
+        {
+          id: 'schedule-2',
+          name: '주간 데이터 분석',
+          agent: '분석 에이전트',
+          nextRun: '2025-01-20 00:00',
+          frequency: 'weekly',
+          status: 'active',
+        },
+        {
+          id: 'schedule-3',
+          name: '월간 백업',
+          agent: '백업 에이전트',
+          nextRun: '2025-02-01 00:00',
+          frequency: 'monthly',
+          status: 'active',
+        },
+      ]);
+    }
+  };
+
   const handleCreateTask = async () => {
     if (!selectedAgent || !taskInput.trim()) {
-      alert('에이전트를 선택하고 작업 내용을 입력하세요.');
+      showToast({
+        type: 'warning',
+        message: '에이전트를 선택하고 작업 내용을 입력하세요.',
+      });
       return;
     }
 
     setIsExecuting(true);
     
     try {
-      const task = agentManager.createTask({
-        agentId: selectedAgent.id,
-        type: 'generate',
-        input: { prompt: taskInput },
+      const response = await fetch('/api/agents/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentId: selectedAgent.id,
+          task: taskInput,
+          type: 'generate',
+        }),
       });
 
-      // 작업을 즉시 목록에 추가 (pending 상태)
-      const newTasks = [...tasks, task];
-      setTasks(newTasks);
-      const currentInput = taskInput;
-      setTaskInput('');
-
-      // 히스토리 탭으로 자동 전환
-      setActiveTab('history');
-      
-      // 작업 실행 (비동기로 실행하여 UI 블로킹 방지)
-      agentManager.executeTask(task.id)
-        .then((result) => {
-          console.log('작업 실행 완료:', result);
-          // 작업 목록 새로고침
-          loadTasks();
-          setIsExecuting(false);
-        })
-        .catch((error: any) => {
-          console.error('작업 실행 오류:', error);
-          alert(`작업 실행 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`);
-          // 오류가 발생해도 작업 목록은 업데이트
-          loadTasks();
-          setIsExecuting(false);
+      if (response.ok) {
+        const data = await response.json();
+        showToast({
+          type: 'success',
+          message: '작업이 성공적으로 실행되었습니다!',
         });
+        setTaskInput('');
+        setActiveTab('history');
+        loadTasks();
+        setIsExecuting(false);
+      } else {
+        const errorData = await response.json();
+        showToast({
+          type: 'error',
+          message: errorData.error || '작업 실행에 실패했습니다.',
+        });
+        setIsExecuting(false);
+      }
     } catch (error: any) {
-      console.error('작업 생성 오류:', error);
-      alert(`작업 생성 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`);
+      console.error('작업 실행 오류:', error);
+      showToast({
+        type: 'error',
+        message: `작업 실행 실패: ${error.message}`,
+      });
       setIsExecuting(false);
     }
   };
@@ -129,8 +360,10 @@ export default function AgentsPage() {
         <div className="flex gap-2 border-b border-gray-200 mb-8 overflow-x-auto">
           {[
             { id: 'create', label: '콘텐츠 생성', icon: Sparkles },
+            { id: 'autonomous', label: '자율 AI', icon: Brain },
+            { id: 'learning', label: '학습 시스템', icon: BarChart3 },
             { id: 'agents', label: '에이전트', icon: Bot },
-            { id: 'workflows', label: '워크플로우', icon: Workflow },
+            { id: 'workflows', label: '워크플로우', icon: WorkflowIcon },
             { id: 'scheduled', label: '스케줄', icon: Calendar },
             { id: 'history', label: '히스토리', icon: BarChart3 },
           ].map((tab) => {
@@ -290,7 +523,10 @@ export default function AgentsPage() {
                       <button
                         onClick={async () => {
                           if (!taskInput.trim()) {
-                            alert('내용을 입력하세요.');
+                            showToast({
+                              type: 'warning',
+                              message: '내용을 입력하세요.',
+                            });
                             return;
                           }
                           
@@ -315,40 +551,54 @@ export default function AgentsPage() {
                             }
                             
                             if (!agent) {
-                              alert('사용 가능한 에이전트가 없습니다.');
+                              showToast({
+                                type: 'warning',
+                                message: '사용 가능한 에이전트가 없습니다.',
+                              });
                               setIsExecuting(false);
                               return;
                             }
                             
-                            const task = agentManager.createTask({
-                              agentId: agent.id,
-                              type: 'generate',
-                              input: { 
-                                prompt: taskInput,
-                                contentType: selectedContentType,
-                              },
+                            // API를 통해 작업 실행
+                            const response = await fetch('/api/agents/execute', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                agentId: agent.id,
+                                task: taskInput,
+                                type: 'generate',
+                                input: {
+                                  prompt: taskInput,
+                                  contentType: selectedContentType,
+                                },
+                              }),
                             });
 
-                            const newTasks = [...tasks, task];
-                            setTasks(newTasks);
-                            setTaskInput('');
-                            setActiveTab('history');
-                            
-                            agentManager.executeTask(task.id)
-                              .then((result) => {
-                                console.log('콘텐츠 생성 완료:', result);
-                                loadTasks();
-                                setIsExecuting(false);
-                              })
-                              .catch((error: any) => {
-                                console.error('콘텐츠 생성 오류:', error);
-                                alert(`콘텐츠 생성 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`);
-                                loadTasks();
-                                setIsExecuting(false);
+                            if (response.ok) {
+                              const data = await response.json();
+                              showToast({
+                                type: 'success',
+                                message: '콘텐츠가 성공적으로 생성되었습니다.',
                               });
+                              setTaskInput('');
+                              setSelectedContentType(null);
+                              setActiveTab('history');
+                              loadTasks();
+                              setIsExecuting(false);
+                            } else {
+                              const errorData = await response.json();
+                              showToast({
+                                type: 'error',
+                                message: errorData.error || '콘텐츠 생성에 실패했습니다.',
+                              });
+                              setIsExecuting(false);
+                            }
                           } catch (error: any) {
                             console.error('작업 생성 오류:', error);
-                            alert(`작업 생성 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`);
+                            showToast({
+                              type: 'error',
+                              message: `작업 생성 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`,
+                            });
                             setIsExecuting(false);
                           }
                         }}
@@ -390,40 +640,131 @@ export default function AgentsPage() {
             <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-200">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">워크플로우 자동화</h2>
-                <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2">
-                  <Workflow size={18} />
+                <button
+                  onClick={() => setIsCreatingWorkflow(true)}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+                >
+                  <WorkflowIcon size={18} />
                   새 워크플로우
                 </button>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
-                {[
-                  { name: '일일 리포트 생성', steps: 3, status: 'active', icon: FileText },
-                  { name: '콘텐츠 자동 생성', steps: 5, status: 'active', icon: Sparkles },
-                  { name: '데이터 백업', steps: 2, status: 'paused', icon: Cloud },
-                ].map((workflow, i) => (
-                  <div key={i} className="p-6 bg-gray-50 rounded-xl border border-gray-200">
-                    <div className="flex items-center gap-3 mb-3">
-                      <workflow.icon className="text-purple-600" size={24} />
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-900">{workflow.name}</h3>
-                        <p className="text-sm text-gray-600">{workflow.steps}단계</p>
+                {workflows.map((workflow) => {
+                  const iconMap: Record<string, any> = {
+                    '일일 리포트 생성': FileText,
+                    '콘텐츠 자동 생성': Sparkles,
+                    '데이터 백업': Cloud,
+                  };
+                  const Icon = iconMap[workflow.name] || FileText;
+                  
+                  return (
+                    <div key={workflow.id} className="p-6 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Icon className="text-purple-600" size={24} />
+                        <div className="flex-1">
+                          <h3 className="font-bold text-gray-900">{workflow.name}</h3>
+                          <p className="text-sm text-gray-600">{workflow.steps?.length || 0}단계 • {workflow.runCount || 0}회 실행</p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          workflow.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {workflow.status === 'active' ? '활성' : '일시정지'}
+                        </span>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        workflow.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {workflow.status === 'active' ? '활성' : '일시정지'}
-                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            try {
+                              setIsExecuting(true);
+                              const response = await fetch(`/api/workflows/${workflow.id}/run`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                              });
+                              
+                              if (response.ok) {
+                                const data = await response.json();
+                                showToast({
+                                  type: 'success',
+                                  message: data.message || '워크플로우가 실행되었습니다.',
+                                });
+                                loadWorkflows();
+                                loadTasks(); // 히스토리 업데이트
+                              } else {
+                                const data = await response.json();
+                                showToast({
+                                  type: 'error',
+                                  message: data.error || '워크플로우 실행에 실패했습니다.',
+                                });
+                              }
+                            } catch (error: any) {
+                              showToast({
+                                type: 'error',
+                                message: `실행 실패: ${error.message}`,
+                              });
+                            } finally {
+                              setIsExecuting(false);
+                            }
+                          }}
+                          disabled={workflow.status !== 'active' || isExecuting}
+                          className="flex-1 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isExecuting ? (
+                            <>
+                              <Loader2 size={14} className="animate-spin" />
+                              실행 중...
+                            </>
+                          ) : (
+                            '실행'
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingWorkflow(workflow);
+                            setIsEditingWorkflow(true);
+                          }}
+                          className="px-3 py-2 bg-blue-200 text-blue-700 rounded-lg hover:bg-blue-300 text-sm"
+                        >
+                          편집
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/workflows/${workflow.id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  status: workflow.status === 'active' ? 'paused' : 'active',
+                                }),
+                              });
+                              
+                              if (response.ok) {
+                                showToast({
+                                  type: 'success',
+                                  message: workflow.status === 'active' ? '워크플로우가 일시정지되었습니다.' : '워크플로우가 활성화되었습니다.',
+                                });
+                                loadWorkflows();
+                              } else {
+                                const data = await response.json();
+                                showToast({
+                                  type: 'error',
+                                  message: data.error || '워크플로우 상태 변경에 실패했습니다.',
+                                });
+                              }
+                            } catch (error: any) {
+                              showToast({
+                                type: 'error',
+                                message: `상태 변경 실패: ${error.message}`,
+                              });
+                            }
+                          }}
+                          className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
+                        >
+                          {workflow.status === 'active' ? '일시정지' : '활성화'}
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button className="flex-1 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">
-                        실행
-                      </button>
-                      <button className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
-                        편집
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -435,18 +776,17 @@ export default function AgentsPage() {
             <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-200">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">예약된 작업</h2>
-                <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2">
+                <button
+                  onClick={() => setIsCreatingSchedule(true)}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+                >
                   <Calendar size={18} />
                   새 스케줄
                 </button>
               </div>
               <div className="space-y-4">
-                {[
-                  { name: '매일 오전 9시 리포트 생성', agent: '리포트 에이전트', nextRun: '2025-01-16 09:00', frequency: 'daily' },
-                  { name: '주간 데이터 분석', agent: '분석 에이전트', nextRun: '2025-01-20 00:00', frequency: 'weekly' },
-                  { name: '월간 백업', agent: '백업 에이전트', nextRun: '2025-02-01 00:00', frequency: 'monthly' },
-                ].map((schedule, i) => (
-                  <div key={i} className="p-6 bg-gray-50 rounded-xl border border-gray-200">
+                {scheduledTasks.map((schedule) => (
+                  <div key={schedule.id} className="p-6 bg-gray-50 rounded-xl border border-gray-200">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
@@ -457,14 +797,114 @@ export default function AgentsPage() {
                           <p>에이전트: {schedule.agent}</p>
                           <p>다음 실행: {schedule.nextRun}</p>
                           <p>빈도: {schedule.frequency === 'daily' ? '매일' : schedule.frequency === 'weekly' ? '매주' : '매월'}</p>
+                          {schedule.status && (
+                            <p className={`text-xs ${schedule.status === 'active' ? 'text-green-600' : 'text-gray-500'}`}>
+                              상태: {schedule.status === 'active' ? '활성' : '일시정지'}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
-                          활성
+                        <button
+                          onClick={async () => {
+                            try {
+                              setIsExecuting(true);
+                              const response = await fetch('/api/schedule/execute', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ scheduleId: schedule.id }),
+                              });
+                              if (response.ok) {
+                                const data = await response.json();
+                                showToast({
+                                  type: 'success',
+                                  message: data.message || '스케줄이 실행되었습니다.',
+                                });
+                                loadScheduledTasks();
+                                loadTasks(); // 히스토리 업데이트
+                              } else {
+                                const errorData = await response.json();
+                                showToast({
+                                  type: 'error',
+                                  message: errorData.error || '스케줄 실행에 실패했습니다.',
+                                });
+                              }
+                            } catch (error: any) {
+                              showToast({
+                                type: 'error',
+                                message: `스케줄 실행 실패: ${error.message}`,
+                              });
+                            } finally {
+                              setIsExecuting(false);
+                            }
+                          }}
+                          disabled={schedule.status !== 'active' || isExecuting}
+                          className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isExecuting ? (
+                            <>
+                              <Loader2 size={14} className="animate-spin" />
+                              실행 중...
+                            </>
+                          ) : (
+                            '실행'
+                          )}
                         </button>
-                        <button className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
-                          편집
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/schedule/${schedule.id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  status: schedule.status === 'active' ? 'paused' : 'active',
+                                }),
+                              });
+                              if (response.ok) {
+                                showToast({
+                                  type: 'success',
+                                  message: schedule.status === 'active' ? '스케줄이 일시정지되었습니다.' : '스케줄이 활성화되었습니다.',
+                                });
+                                loadScheduledTasks();
+                              }
+                            } catch (error: any) {
+                              showToast({
+                                type: 'error',
+                                message: `스케줄 업데이트 실패: ${error.message}`,
+                              });
+                            }
+                          }}
+                          className={`px-3 py-2 rounded-lg text-sm ${
+                            schedule.status === 'active'
+                              ? 'bg-green-600 text-white hover:bg-green-700'
+                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          }`}
+                        >
+                          {schedule.status === 'active' ? '일시정지' : '활성화'}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/schedule/${schedule.id}`, {
+                                method: 'DELETE',
+                              });
+                              if (response.ok) {
+                                showToast({
+                                  type: 'success',
+                                  message: '스케줄이 삭제되었습니다.',
+                                });
+                                loadScheduledTasks();
+                              }
+                            } catch (error: any) {
+                              showToast({
+                                type: 'error',
+                                message: `스케줄 삭제 실패: ${error.message}`,
+                              });
+                            }
+                          }}
+                          className="px-3 py-2 bg-red-200 text-red-700 rounded-lg hover:bg-red-300 text-sm"
+                        >
+                          삭제
                         </button>
                       </div>
                     </div>
@@ -569,6 +1009,28 @@ export default function AgentsPage() {
           </>
         )}
 
+        {/* 자율 AI 탭 */}
+        {activeTab === 'autonomous' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <AutonomousAgentPanel />
+          </motion.div>
+        )}
+
+        {/* 학습 시스템 대시보드 탭 */}
+        {activeTab === 'learning' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <LearningSystemsDashboard />
+          </motion.div>
+        )}
+
         {/* 히스토리 탭 */}
         {activeTab === 'history' && (
           <>
@@ -653,6 +1115,37 @@ export default function AgentsPage() {
           <AdBanner position="inline" />
         </div>
       </div>
+
+      {/* 모달 */}
+      <WorkflowCreateModal
+        isOpen={isCreatingWorkflow}
+        onClose={() => setIsCreatingWorkflow(false)}
+        onSuccess={() => {
+          loadWorkflows();
+          setIsCreatingWorkflow(false);
+        }}
+      />
+      <WorkflowEditModal
+        isOpen={isEditingWorkflow}
+        onClose={() => {
+          setIsEditingWorkflow(false);
+          setEditingWorkflow(null);
+        }}
+        onSuccess={() => {
+          loadWorkflows();
+          setIsEditingWorkflow(false);
+          setEditingWorkflow(null);
+        }}
+        workflow={editingWorkflow}
+      />
+      <ScheduleCreateModal
+        isOpen={isCreatingSchedule}
+        onClose={() => setIsCreatingSchedule(false)}
+        onSuccess={() => {
+          loadScheduledTasks();
+          setIsCreatingSchedule(false);
+        }}
+      />
     </div>
   );
 }

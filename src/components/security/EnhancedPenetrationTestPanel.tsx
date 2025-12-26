@@ -23,14 +23,14 @@ export function EnhancedPenetrationTestPanel() {
       setCurrentResult(result);
       
       if (result.status === 'passed') {
-        showToast('success', `보안 스캔 통과! 점수: ${result.score}/100`);
+        showToast({ type: 'success', message: `보안 스캔 통과! 점수: ${result.score}/100` });
       } else if (result.status === 'warning') {
-        showToast('warning', `경고 발견. 점수: ${result.score}/100`);
+        showToast({ type: 'warning', message: `경고 발견. 점수: ${result.score}/100` });
       } else {
-        showToast('error', `심각한 취약점 발견. 점수: ${result.score}/100`);
+        showToast({ type: 'error', message: `심각한 취약점 발견. 점수: ${result.score}/100` });
       }
     } catch (error) {
-      showToast('error', '보안 스캔 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '보안 스캔 중 오류가 발생했습니다' });
     } finally {
       setIsScanning(false);
     }
@@ -58,9 +58,9 @@ export function EnhancedPenetrationTestPanel() {
 
       setTestResults([...testResults, result]);
       setCurrentResult(result);
-      showToast('success', `빠른 스캔 완료. 점수: ${result.score}/100`);
+      showToast({ type: 'success', message: `빠른 스캔 완료. 점수: ${result.score}/100` });
     } catch (error) {
-      showToast('error', '빠른 스캔 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '빠른 스캔 중 오류가 발생했습니다' });
     } finally {
       setIsScanning(false);
     }

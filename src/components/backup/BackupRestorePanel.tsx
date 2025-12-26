@@ -31,7 +31,7 @@ export function BackupRestorePanel() {
 
   const handleCreateBackup = async () => {
     if (!backupName.trim()) {
-      showToast('warning', '백업 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '백업 이름을 입력해주세요' });
       return;
     }
 
@@ -40,9 +40,9 @@ export function BackupRestorePanel() {
       const backup = await backupRestore.createBackup(backupName, backupType);
       setBackups(backupRestore.getAllBackups());
       setBackupName('');
-      showToast('success', '백업이 완료되었습니다');
+      showToast({ type: 'success', message: '백업이 완료되었습니다' });
     } catch (error) {
-      showToast('error', '백업 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '백업 중 오류가 발생했습니다' });
     } finally {
       setIsCreating(false);
     }
@@ -52,16 +52,16 @@ export function BackupRestorePanel() {
     try {
       await backupRestore.startRestore(backupId);
       setBackups(backupRestore.getAllBackups());
-      showToast('success', '복원이 완료되었습니다');
+      showToast({ type: 'success', message: '복원이 완료되었습니다' });
     } catch (error) {
-      showToast('error', '복원 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '복원 중 오류가 발생했습니다' });
     }
   };
 
   const handleDelete = (backupId: string) => {
     backupRestore.deleteBackup(backupId);
     setBackups(backupRestore.getAllBackups());
-    showToast('success', '백업이 삭제되었습니다');
+    showToast({ type: 'success', message: '백업이 삭제되었습니다' });
   };
 
   const tabs = [

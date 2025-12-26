@@ -31,7 +31,7 @@ export function ReportBuilderPanel() {
 
   const handleCreateReport = () => {
     if (!reportName.trim()) {
-      showToast('warning', '보고서 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '보고서 이름을 입력해주세요' });
       return;
     }
 
@@ -39,7 +39,7 @@ export function ReportBuilderPanel() {
     setReports([...reports, report]);
     setSelectedReport(report);
     setReportName('');
-    showToast('success', '보고서가 생성되었습니다');
+    showToast({ type: 'success', message: '보고서가 생성되었습니다' });
   };
 
   const handleAddColumn = () => {
@@ -53,7 +53,7 @@ export function ReportBuilderPanel() {
 
     setReports(reportBuilder.getAllReports());
     setSelectedReport(reportBuilder.getReport(selectedReport.id) || null);
-    showToast('success', '컬럼이 추가되었습니다');
+    showToast({ type: 'success', message: '컬럼이 추가되었습니다' });
   };
 
   const handleGenerate = async () => {
@@ -62,10 +62,10 @@ export function ReportBuilderPanel() {
     setIsGenerating(true);
     try {
       const result = await reportBuilder.generateReport(selectedReport.id);
-      showToast('success', '보고서가 생성되었습니다');
+      showToast({ type: 'success', message: '보고서가 생성되었습니다' });
       // 결과 표시 로직 추가 가능
     } catch (error) {
-      showToast('error', '보고서 생성 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '보고서 생성 중 오류가 발생했습니다' });
     } finally {
       setIsGenerating(false);
     }
@@ -78,7 +78,7 @@ export function ReportBuilderPanel() {
       ? reportBuilder.exportToPDF(selectedReport.id)
       : reportBuilder.exportToExcel(selectedReport.id);
     
-    showToast('success', `${filename} 다운로드 준비됨`);
+    showToast({ type: 'success', message: `${filename} 다운로드 준비됨` });
   };
 
   return (

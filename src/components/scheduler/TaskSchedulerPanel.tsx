@@ -31,7 +31,7 @@ export function TaskSchedulerPanel() {
 
   const handleCreateTask = () => {
     if (!taskName.trim() || !schedule.trim()) {
-      showToast('warning', '작업 이름과 스케줄을 입력해주세요');
+      showToast({ type: 'warning', message: '작업 이름과 스케줄을 입력해주세요' });
       return;
     }
 
@@ -39,13 +39,13 @@ export function TaskSchedulerPanel() {
     setTasks(taskScheduler.getAllTasks());
     setTaskName('');
     setSchedule('');
-    showToast('success', '작업이 생성되었습니다');
+    showToast({ type: 'success', message: '작업이 생성되었습니다' });
   };
 
   const handleExecute = async (taskId: string) => {
     await taskScheduler.executeTask(taskId);
     setTasks(taskScheduler.getAllTasks());
-    showToast('success', '작업이 실행되었습니다');
+    showToast({ type: 'success', message: '작업이 실행되었습니다' });
   };
 
   const handleToggle = (taskId: string) => {

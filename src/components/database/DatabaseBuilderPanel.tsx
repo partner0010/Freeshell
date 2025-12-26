@@ -27,7 +27,7 @@ export function DatabaseBuilderPanel() {
 
   const handleCreateSchema = () => {
     if (!schemaName.trim()) {
-      showToast('warning', '스키마 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '스키마 이름을 입력해주세요' });
       return;
     }
 
@@ -35,7 +35,7 @@ export function DatabaseBuilderPanel() {
     setSchemas([...schemas, schema]);
     setSelectedSchema(schema);
     setSchemaName('');
-    showToast('success', '스키마가 생성되었습니다');
+    showToast({ type: 'success', message: '스키마가 생성되었습니다' });
   };
 
   const handleAddTable = () => {
@@ -48,7 +48,7 @@ export function DatabaseBuilderPanel() {
 
     setSchemas(databaseBuilder.getAllSchemas());
     setSelectedSchema(databaseBuilder.getSchema(selectedSchema.id) || null);
-    showToast('success', '테이블이 추가되었습니다');
+    showToast({ type: 'success', message: '테이블이 추가되었습니다' });
   };
 
   const handleCopySQL = () => {
@@ -56,7 +56,7 @@ export function DatabaseBuilderPanel() {
 
     const sql = databaseBuilder.generateSQL(selectedSchema);
     navigator.clipboard.writeText(sql);
-    showToast('success', 'SQL 코드가 복사되었습니다');
+    showToast({ type: 'success', message: 'SQL 코드가 복사되었습니다' });
   };
 
   return (

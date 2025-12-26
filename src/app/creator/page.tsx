@@ -2,15 +2,18 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { 
-  Video, Image, BookOpen, FileText, Mic, Sparkles, Music,
+  Video, Image as ImageIcon, BookOpen, FileText, Mic, Sparkles, Music,
   Play, Download, Globe, Zap, Settings, ArrowRight, Calendar, Clock, Layers, CheckSquare
 } from 'lucide-react';
 import Link from 'next/link';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { AdBanner } from '@/components/ads/AdBanner';
+import { useToast } from '@/components/ui/Toast';
 
 export default function CreatorPage() {
+  const { showToast } = useToast();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [topic, setTopic] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -32,7 +35,7 @@ export default function CreatorPage() {
     {
       id: 'image',
       name: '이미지',
-      icon: Image,
+      icon: ImageIcon,
       description: 'NanoBana AI로 캐릭터/이미지 생성',
       color: 'from-pink-500 to-red-500',
     },
@@ -92,34 +95,29 @@ export default function CreatorPage() {
     setError(null);
     
     try {
-      // 6개의 콘텐츠를 자동 생성
-      const generatePromises = Array.from({ length: 6 }, (_, index) => 
-        fetch('/api/content/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+      // 6개의 콘텐츠를 자동 생성 (API 클라이언트 사용)
+      const { apiClient } = await import('@/lib/api/api-client');
+      const generatePromises = Array.from({ length: 6 }, async (_, index) => {
+        const response = await apiClient.post('/api/content/generate', {
+          contentType: selectedType,
+          topic: topic.trim(),
+          variant: index + 1, // 변형 번호
+          options: {
+            duration: selectedType === 'short-video' ? duration : undefined,
+            language: 'ko',
+            multilingual,
+            includeSubtitles: true,
+            includeBackgroundMusic: true,
+            seoOptimize: true,
           },
-          body: JSON.stringify({
-            contentType: selectedType,
-            topic: topic.trim(),
-            variant: index + 1, // 변형 번호
-            options: {
-              duration: selectedType === 'short-video' ? duration : undefined,
-              language: 'ko',
-              multilingual,
-              includeSubtitles: true,
-              includeBackgroundMusic: true,
-              seoOptimize: true,
-            },
-          }),
-        }).then(async (res) => {
-          const data = await res.json();
-          if (!res.ok || data.error) {
-            throw new Error(data.error || `HTTP ${res.status}: ${res.statusText}`);
-          }
-          return data;
-        })
-      );
+        });
+        
+        if (!response.ok || response.data?.error) {
+          throw new Error(response.data?.error || `HTTP ${response.status}`);
+        }
+        
+        return response.data;
+      });
 
       const results = await Promise.all(generatePromises);
       const contents = results.map((resultData, index) => {
@@ -143,6 +141,12 @@ export default function CreatorPage() {
       setError(`생성 중 오류가 발생했습니다: ${errorMessage}`);
       setResult(null);
       setGeneratedContents([]);
+      
+      showToast({
+        type: 'error',
+        message: `생성 중 오류가 발생했습니다: ${errorMessage}`,
+      });
+      
       console.error('생성 오류:', error);
       
       // 사용자에게 더 자세한 오류 정보 제공
@@ -155,24 +159,89 @@ export default function CreatorPage() {
   };
 
   const handleDownload = (content: any) => {
-    // 다운로드 로직
-    if (content.data?.url) {
-      const link = document.createElement('a');
-      link.href = content.data.url;
-      link.download = `${content.title}.${content.data.url.split('.').pop()}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else if (content.data?.content) {
-      const blob = new Blob([content.data.content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${content.title}.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+    try {
+      // 다운로드 로직
+      if (content.data?.url) {
+        // URL이 있는 경우 (이미지, 비디오 등)
+        const link = document.createElement('a');
+        link.href = content.data.url;
+        link.download = `${content.title}.${content.data.url.split('.').pop()}`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else if (content.data?.content) {
+        // 텍스트 콘텐츠인 경우
+        const blob = new Blob([typeof content.data.content === 'string' ? content.data.content : JSON.stringify(content.data.content, null, 2)], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${content.title}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else if (content.data?.post) {
+        // 블로그 포스트인 경우
+        const blogContent = `제목: ${content.data.post.title || content.title}\n\n${content.data.post.content || content.data.post.excerpt || ''}`;
+        const blob = new Blob([blogContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${content.title}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else if (content.data?.ebook) {
+        // 전자책인 경우
+        const ebookContent = `제목: ${content.data.ebook.title || content.title}\n\n${content.data.ebook.content || ''}`;
+        const blob = new Blob([ebookContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${content.title}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else if (content.data?.track || content.data?.song) {
+        // 음악/노래인 경우
+        const musicData = content.data.track || content.data.song;
+        const musicInfo = `제목: ${musicData.title || content.title}\n장르: ${musicData.genre || ''}\n무드: ${musicData.mood || ''}\nURL: ${musicData.url || 'URL 없음'}`;
+        const blob = new Blob([musicInfo], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${content.title}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        // 기타: 전체 데이터를 JSON으로 다운로드
+        const jsonContent = JSON.stringify(content.data || content, null, 2);
+        const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${content.title}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+      
+      showToast({
+        type: 'success',
+        message: `${content.title} 다운로드가 시작되었습니다.`,
+      });
+    } catch (error: any) {
+      console.error('다운로드 오류:', error);
+      showToast({
+        type: 'error',
+        message: `다운로드 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`,
+      });
     }
   };
 
@@ -409,12 +478,19 @@ export default function CreatorPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-8"
+            className="mt-8 scroll-mt-8"
+            id="generated-contents"
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <Sparkles size={24} />
-              생성된 콘텐츠 미리보기 ({generatedContents.length}개)
-            </h2>
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 mb-6 border-2 border-purple-200">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                <Sparkles size={24} className="text-purple-600" />
+                생성된 콘텐츠 미리보기
+              </h2>
+              <p className="text-gray-600 text-sm sm:text-base">
+                총 <span className="font-bold text-purple-600">{generatedContents.length}개</span>의 콘텐츠가 생성되었습니다. 
+                원하는 콘텐츠를 선택하고 다운로드하세요.
+              </p>
+            </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {generatedContents.map((content, index) => (
                 <motion.div
@@ -442,23 +518,87 @@ export default function CreatorPage() {
                   <div className="mb-3 sm:mb-4 rounded-lg overflow-hidden bg-gray-100 min-h-[150px] sm:min-h-[200px] flex items-center justify-center">
                     {content.data?.url ? (
                       selectedType === 'image' ? (
-                        <img src={content.data.url} alt={content.title} className="w-full h-full object-cover" />
+                        <Image 
+                          src={content.data.url} 
+                          alt={content.title} 
+                          width={400}
+                          height={300}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          unoptimized={content.data.url.startsWith('http') && !content.data.url.includes('localhost')}
+                        />
                       ) : selectedType === 'video' || selectedType === 'short-video' ? (
                         <video src={content.data.url} controls className="w-full h-full object-cover" />
                       ) : (
                         <div className="p-4 text-center">
                           <FileText size={40} className="sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
                           <p className="text-xs sm:text-sm text-gray-600">미리보기</p>
+                          <a href={content.data.url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-600 hover:underline mt-2 block">
+                            링크 열기
+                          </a>
                         </div>
                       )
+                    ) : content.data?.post ? (
+                      // 블로그 포스트
+                      <div className="p-3 sm:p-4 w-full h-full overflow-y-auto">
+                        <h4 className="font-bold text-xs sm:text-sm text-gray-900 mb-2">{content.data.post.title || content.title}</h4>
+                        <p className="text-xs sm:text-sm text-gray-700 line-clamp-4">
+                          {content.data.post.content || content.data.post.excerpt || '콘텐츠가 생성되었습니다.'}
+                        </p>
+                      </div>
+                    ) : content.data?.ebook ? (
+                      // 전자책
+                      <div className="p-3 sm:p-4 w-full h-full overflow-y-auto">
+                        <h4 className="font-bold text-xs sm:text-sm text-gray-900 mb-2">{content.data.ebook.title || content.title}</h4>
+                        <p className="text-xs sm:text-sm text-gray-700 line-clamp-4">
+                          {content.data.ebook.content || '전자책이 생성되었습니다.'}
+                        </p>
+                      </div>
+                    ) : content.data?.track || content.data?.song ? (
+                      // 음악/노래
+                      <div className="p-4 text-center w-full">
+                        <Music size={40} className="sm:w-12 sm:h-12 text-purple-400 mx-auto mb-2" />
+                        <h4 className="font-bold text-xs sm:text-sm text-gray-900 mb-1">
+                          {(content.data.track || content.data.song)?.title || content.title}
+                        </h4>
+                        <p className="text-xs text-gray-600">
+                          장르: {(content.data.track || content.data.song)?.genre || 'N/A'}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          무드: {(content.data.track || content.data.song)?.mood || 'N/A'}
+                        </p>
+                        {(content.data.track || content.data.song)?.url && (
+                          <a 
+                            href={(content.data.track || content.data.song).url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-xs text-purple-600 hover:underline mt-2 block"
+                          >
+                            음악 듣기
+                          </a>
+                        )}
+                      </div>
                     ) : content.data?.content ? (
-                      <div className="p-3 sm:p-4 text-xs sm:text-sm text-gray-700 max-h-[150px] sm:max-h-[200px] overflow-y-auto">
-                        {content.data.content.substring(0, 150)}...
+                      // 일반 텍스트 콘텐츠
+                      <div className="p-3 sm:p-4 text-xs sm:text-sm text-gray-700 max-h-[150px] sm:max-h-[200px] overflow-y-auto w-full">
+                        {typeof content.data.content === 'string' 
+                          ? (content.data.content.length > 200 
+                              ? content.data.content.substring(0, 200) + '...' 
+                              : content.data.content)
+                          : JSON.stringify(content.data.content, null, 2).substring(0, 200) + '...'}
+                      </div>
+                    ) : content.data?.title ? (
+                      // 제목만 있는 경우
+                      <div className="p-4 text-center w-full">
+                        <h4 className="font-bold text-sm sm:text-base text-gray-900 mb-2">{content.data.title}</h4>
+                        <p className="text-xs sm:text-sm text-gray-600">콘텐츠가 생성되었습니다</p>
                       </div>
                     ) : (
-                      <div className="p-4 text-center">
-                        <Sparkles size={40} className="sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
-                        <p className="text-xs sm:text-sm text-gray-600">콘텐츠 생성됨</p>
+                      // 기본 상태
+                      <div className="p-4 text-center w-full">
+                        <Sparkles size={40} className="sm:w-12 sm:h-12 text-purple-400 mx-auto mb-2" />
+                        <p className="text-xs sm:text-sm text-gray-600 font-semibold">콘텐츠 생성 완료</p>
+                        <p className="text-xs text-gray-500 mt-1">다운로드 버튼을 클릭하여 확인하세요</p>
                       </div>
                     )}
                   </div>
@@ -537,11 +677,15 @@ export default function CreatorPage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">생성된 이미지</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {result.images.map((img: string, i: number) => (
-                    <img
+                    <Image
                       key={i}
                       src={img}
                       alt={`이미지 ${i + 1}`}
+                      width={300}
+                      height={192}
                       className="w-full h-48 object-cover rounded-lg"
+                      loading="lazy"
+                      unoptimized={img.startsWith('http') && !img.includes('localhost')}
                     />
                   ))}
                 </div>
@@ -555,10 +699,14 @@ export default function CreatorPage() {
                   {result.videoUrl.startsWith('http') ? (
                     <video src={result.videoUrl} controls className="w-full h-full" />
                   ) : (
-                    <img
+                    <Image
                       src={result.videoUrl}
                       alt="영상 미리보기"
+                      width={800}
+                      height={450}
                       className="w-full h-full object-cover"
+                      loading="lazy"
+                      unoptimized={result.videoUrl.startsWith('http') && !result.videoUrl.includes('localhost')}
                     />
                   )}
                 </div>

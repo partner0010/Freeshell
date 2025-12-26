@@ -17,7 +17,7 @@ export function VersionComparisonPanel() {
 
   const handleCompare = () => {
     if (!version1.trim() || !version2.trim()) {
-      showToast('warning', '두 버전 모두 입력해주세요');
+      showToast({ type: 'warning', message: '두 버전 모두 입력해주세요' });
       return;
     }
 
@@ -30,9 +30,9 @@ export function VersionComparisonPanel() {
         version2
       );
       setDiff(result);
-      showToast('success', '비교가 완료되었습니다');
+      showToast({ type: 'success', message: '비교가 완료되었습니다' });
     } catch (error) {
-      showToast('error', '비교 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '비교 중 오류가 발생했습니다' });
     } finally {
       setIsComparing(false);
     }

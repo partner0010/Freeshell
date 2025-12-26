@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       }
     } else if (type === 'file') {
       if (!content || typeof content !== 'string') {
-        return NextResponse.json(
+    return NextResponse.json(
           { error: '파일 내용을 입력하세요.' },
           { status: 400 }
         );

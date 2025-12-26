@@ -8,14 +8,21 @@ import {
   Type, Palette, Rocket, Brain, Search, Code,
   Wand2, Layers, Zap as Lightning, MessageSquare, X
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Footer } from '@/components/layout/Footer';
-import { ChatGPTLikeSearch } from '@/components/ai/ChatGPTLikeSearch';
-import { SocialShare } from '@/components/social/SocialShare';
-import { PersonalizedRecommendations } from '@/components/recommendations/PersonalizedRecommendations';
-import { FloatingWidgets } from '@/components/ui/FloatingWidgets';
 import { StructuredData } from '@/components/seo/StructuredData';
+
+// 동적 임포트로 코드 분할
+const ChatGPTLikeSearch = dynamic(() => import('@/components/ai/ChatGPTLikeSearch').then(mod => ({ default: mod.ChatGPTLikeSearch })), {
+  loading: () => <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div></div>,
+  ssr: false,
+});
+
+const FloatingWidgets = dynamic(() => import('@/components/ui/FloatingWidgets').then(mod => ({ default: mod.FloatingWidgets })), {
+  ssr: false,
+});
 
 export default function HomePage() {
 

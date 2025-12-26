@@ -48,9 +48,9 @@ export function FileManagerPanel() {
         await fileManager.uploadFile(fileList[i]);
       }
       setFiles(fileManager.getAllFiles());
-      showToast('success', '파일이 업로드되었습니다');
+      showToast({ type: 'success', message: '파일이 업로드되었습니다' });
     } catch (error) {
-      showToast('error', '업로드 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '업로드 중 오류가 발생했습니다' });
     } finally {
       setIsUploading(false);
     }
@@ -59,7 +59,7 @@ export function FileManagerPanel() {
   const handleDelete = (id: string) => {
     fileManager.deleteFile(id);
     setFiles(fileManager.getAllFiles());
-    showToast('success', '파일이 삭제되었습니다');
+    showToast({ type: 'success', message: '파일이 삭제되었습니다' });
   };
 
   const getTypeIcon = (type: FileType) => {

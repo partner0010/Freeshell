@@ -26,7 +26,7 @@ export function MultimodalAIPanel() {
 
   const handleProcess = async () => {
     if (!text.trim()) {
-      showToast('warning', '입력 내용을 입력해주세요');
+      showToast({ type: 'warning', message: '입력 내용을 입력해주세요' });
       return;
     }
 
@@ -55,9 +55,9 @@ export function MultimodalAIPanel() {
       }
 
       setResult(resultData);
-      showToast('success', '처리가 완료되었습니다');
+      showToast({ type: 'success', message: '처리가 완료되었습니다' });
     } catch (error) {
-      showToast('error', '처리 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '처리 중 오류가 발생했습니다' });
     } finally {
       setIsProcessing(false);
     }
@@ -179,7 +179,7 @@ export function MultimodalAIPanel() {
                   variant="outline"
                   onClick={() => {
                     navigator.clipboard.writeText(result);
-                    showToast('success', '복사되었습니다');
+                    showToast({ type: 'success', message: '복사되었습니다' });
                   }}
                   className="flex-1"
                 >

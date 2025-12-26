@@ -35,7 +35,7 @@ export function SecretsManagerPanel() {
 
   const handleCreateSecret = () => {
     if (!secretName.trim() || !secretValue.trim()) {
-      showToast('warning', '이름과 값을 입력해주세요');
+      showToast({ type: 'warning', message: '이름과 값을 입력해주세요' });
       return;
     }
 
@@ -44,7 +44,7 @@ export function SecretsManagerPanel() {
     setSecretName('');
     setSecretValue('');
     setSecretDescription('');
-    showToast('success', 'Secret이 생성되었습니다');
+    showToast({ type: 'success', message: 'Secret이 생성되었습니다' });
   };
 
   const handleViewSecret = (id: string) => {
@@ -62,7 +62,7 @@ export function SecretsManagerPanel() {
     if (newValue) {
       secretsManager.rotateSecret(selectedSecret.id, newValue);
       setSecrets(secretsManager.getAllSecrets());
-      showToast('success', 'Secret이 로테이션되었습니다');
+      showToast({ type: 'success', message: 'Secret이 로테이션되었습니다' });
       setSelectedSecret(null);
       setShowValue(false);
     }

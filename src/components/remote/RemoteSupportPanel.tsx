@@ -31,12 +31,12 @@ export function RemoteSupportPanel() {
     setSessions([...sessions, session]);
     setSelectedSession(session);
     setIsCreating(false);
-    showToast('success', `세션이 생성되었습니다. 코드: ${session.sessionCode}`);
+    showToast({ type: 'success', message: `세션이 생성되었습니다. 코드: ${session.sessionCode}` });
   };
 
   const handleConnect = () => {
     if (!sessionCode.trim()) {
-      showToast('warning', '세션 코드를 입력해주세요');
+      showToast({ type: 'warning', message: '세션 코드를 입력해주세요' });
       return;
     }
 
@@ -44,9 +44,9 @@ export function RemoteSupportPanel() {
     if (session) {
       setSelectedSession(session);
       setSessions([...sessions, session]);
-      showToast('success', '세션에 연결되었습니다');
+      showToast({ type: 'success', message: '세션에 연결되었습니다' });
     } else {
-      showToast('error', '세션을 찾을 수 없거나 이미 종료되었습니다');
+      showToast({ type: 'error', message: '세션을 찾을 수 없거나 이미 종료되었습니다' });
     }
   };
 
@@ -56,7 +56,7 @@ export function RemoteSupportPanel() {
     if (selectedSession?.id === sessionId) {
       setSelectedSession(null);
     }
-    showToast('success', '세션이 종료되었습니다');
+    showToast({ type: 'success', message: '세션이 종료되었습니다' });
   };
 
   const handleSendMessage = () => {
@@ -70,7 +70,7 @@ export function RemoteSupportPanel() {
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(true);
-    showToast('success', '코드가 복사되었습니다');
+    showToast({ type: 'success', message: '코드가 복사되었습니다' });
     setTimeout(() => setCopiedCode(false), 2000);
   };
 

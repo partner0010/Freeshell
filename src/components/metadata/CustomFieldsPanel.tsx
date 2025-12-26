@@ -42,7 +42,7 @@ export function CustomFieldsPanel() {
 
   const handleCreateField = () => {
     if (!fieldName.trim() || !fieldLabel.trim()) {
-      showToast('warning', '필드 이름과 레이블을 입력해주세요');
+      showToast({ type: 'warning', message: '필드 이름과 레이블을 입력해주세요' });
       return;
     }
 
@@ -50,31 +50,31 @@ export function CustomFieldsPanel() {
     setFields(customFieldsManager.getAllFields());
     setFieldName('');
     setFieldLabel('');
-    showToast('success', '필드가 생성되었습니다');
+    showToast({ type: 'success', message: '필드가 생성되었습니다' });
   };
 
   const handleCreateTag = () => {
     if (!tagName.trim()) {
-      showToast('warning', '태그 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '태그 이름을 입력해주세요' });
       return;
     }
 
     customFieldsManager.createTag(tagName);
     setTags(customFieldsManager.getAllTags());
     setTagName('');
-    showToast('success', '태그가 생성되었습니다');
+    showToast({ type: 'success', message: '태그가 생성되었습니다' });
   };
 
   const handleCreateCategory = () => {
     if (!categoryName.trim()) {
-      showToast('warning', '카테고리 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '카테고리 이름을 입력해주세요' });
       return;
     }
 
     customFieldsManager.createCategory(categoryName);
     setCategories(customFieldsManager.getAllCategories());
     setCategoryName('');
-    showToast('success', '카테고리가 생성되었습니다');
+    showToast({ type: 'success', message: '카테고리가 생성되었습니다' });
   };
 
   const tabs = [

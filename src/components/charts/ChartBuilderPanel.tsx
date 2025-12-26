@@ -30,7 +30,7 @@ export function ChartBuilderPanel() {
       data,
     });
     setConfig(newConfig);
-    showToast('success', '차트가 생성되었습니다');
+    showToast({ type: 'success', message: '차트가 생성되었습니다' });
   };
 
   const handleExport = () => {
@@ -43,7 +43,7 @@ export function ChartBuilderPanel() {
     a.download = `chart-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('success', '차트 설정이 다운로드되었습니다');
+    showToast({ type: 'success', message: '차트 설정이 다운로드되었습니다' });
   };
 
   return (

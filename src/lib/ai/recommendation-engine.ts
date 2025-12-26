@@ -1,7 +1,11 @@
 /**
  * AI 추천 시스템
  * AI Recommendation Engine
+ * 자기 학습 시스템 통합: 추천 결과에서 학습하여 추천 정확도 향상
  */
+
+import { selfLearningSystem } from './self-learning';
+import { selfMonitoringSystem } from './self-monitoring';
 
 export interface Recommendation {
   id: string;
@@ -86,7 +90,28 @@ export class RecommendationEngine {
       });
     }
 
-    return recommendations.sort((a, b) => b.priority - a.priority).slice(0, 5);
+    const finalRecommendations = recommendations.sort((a, b) => b.priority - a.priority).slice(0, 5);
+
+    // 자기 학습: 추천 결과에서 학습
+    selfLearningSystem.learnFromExperience({
+      task: 'recommendation_generation',
+      input: { behavior: this.behavior },
+      output: { recommendations: finalRecommendations },
+      success: finalRecommendations.length > 0,
+      performance: finalRecommendations.reduce((sum, r) => sum + r.confidence, 0) / finalRecommendations.length,
+      patterns: finalRecommendations.map(r => r.type),
+      improvements: [],
+    }).catch(err => console.error('추천 시스템 학습 오류:', err));
+
+    // 자기 모니터링: 성능 추적
+    const avgConfidence = finalRecommendations.reduce((sum, r) => sum + r.confidence, 0) / finalRecommendations.length;
+    selfMonitoringSystem.recordPerformance({
+      task: 'recommendation_generation',
+      performance: avgConfidence,
+      timestamp: new Date(),
+    }).catch(err => console.error('성능 모니터링 오류:', err));
+
+    return finalRecommendations;
   }
 
   // 맞춤형 대시보드 제안

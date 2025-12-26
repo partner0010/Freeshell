@@ -51,12 +51,12 @@ export function CodeSnippetsPanel() {
 
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(code);
-    showToast('success', '코드가 복사되었습니다');
+    showToast({ type: 'success', message: '코드가 복사되었습니다' });
   };
 
   const handleDownload = (snippet: CodeSnippet) => {
     codeSnippetsLibrary.downloadSnippet(snippet.id);
-    showToast('success', '스니펫이 다운로드되었습니다');
+    showToast({ type: 'success', message: '스니펫이 다운로드되었습니다' });
   };
 
   const getLanguageColor = (lang: string) => {

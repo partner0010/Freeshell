@@ -44,7 +44,7 @@ export function AIWritingAssistant() {
 
   const handleAction = async (actionType: WritingAction['type']) => {
     if (!text.trim()) {
-      showToast('warning', '텍스트를 입력해주세요');
+      showToast({ type: 'warning', message: '텍스트를 입력해주세요' });
       return;
     }
 
@@ -70,9 +70,9 @@ export function AIWritingAssistant() {
       }
 
       setResult(processedText);
-      showToast('success', '작업이 완료되었습니다');
+      showToast({ type: 'success', message: '작업이 완료되었습니다' });
     } catch (error) {
-      showToast('error', '처리 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '처리 중 오류가 발생했습니다' });
     } finally {
       setIsProcessing(false);
     }
@@ -144,7 +144,7 @@ export function AIWritingAssistant() {
                   variant="outline"
                   onClick={() => {
                     navigator.clipboard.writeText(result);
-                    showToast('success', '복사되었습니다');
+                    showToast({ type: 'success', message: '복사되었습니다' });
                   }}
                 >
                   복사

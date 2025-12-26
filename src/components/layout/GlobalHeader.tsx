@@ -6,14 +6,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Sparkles, Menu, X, Search, 
   Video, FileText, Zap, Monitor, Bug, Shield, Accessibility, Users, HelpCircle, FileSignature,
-  Home, ArrowLeft
+  Home, ArrowLeft, Mic
 } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { LanguageSelector } from '@/components/i18n/LanguageSelector';
+import { useLanguage } from '@/components/i18n/LanguageProvider';
 import type { Notification } from '@/components/notifications/NotificationCenter';
 
 export function GlobalHeader() {
+  const { t } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,18 +27,47 @@ export function GlobalHeader() {
   const canGoBack = typeof window !== 'undefined' && window.history.length > 1;
 
   useEffect(() => {
-    // 예시 알림 (실제로는 서버에서 받아옴)
-    const exampleNotifications: Notification[] = [
-      {
-        id: '1',
-        type: 'info',
-        title: '새로운 기능이 추가되었습니다!',
-        message: 'AI 채팅에 음성 입력 기능이 추가되었습니다.',
-        timestamp: new Date(),
-        read: false,
-      },
-    ];
-    setNotifications(exampleNotifications);
+    // 실제 서버에서 알림 가져오기
+    const loadNotifications = async () => {
+      try {
+        const response = await fetch('/api/notifications');
+        if (response.ok) {
+          const data = await response.json();
+          setNotifications(data.notifications || []);
+        } else {
+          // 폴백: 예시 알림
+          setNotifications([
+            {
+              id: '1',
+              type: 'info',
+              title: '새로운 기능이 추가되었습니다!',
+              message: 'AI 채팅에 음성 입력 기능이 추가되었습니다.',
+              timestamp: new Date(),
+              read: false,
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error('알림 로드 실패:', error);
+        // 폴백: 예시 알림
+        setNotifications([
+          {
+            id: '1',
+            type: 'info',
+            title: '새로운 기능이 추가되었습니다!',
+            message: 'AI 채팅에 음성 입력 기능이 추가되었습니다.',
+            timestamp: new Date(),
+            read: false,
+          },
+        ]);
+      }
+    };
+
+    loadNotifications();
+    
+    // 주기적으로 알림 업데이트 (5분마다)
+    const interval = setInterval(loadNotifications, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleDismiss = (id: string) => {
@@ -55,25 +86,26 @@ export function GlobalHeader() {
   // 논리적 그룹: 생성/편집 → AI 자동화 → 비즈니스 → 정보/소통 → 지원
   const mainMenu = [
     // 생성/편집 도구
-    { href: '/editor', label: '에디터', icon: FileText, category: '생성' },
-    { href: '/creator', label: '콘텐츠 생성', icon: Video, category: '생성' },
+    { href: '/editor', labelKey: 'menu.editor', icon: FileText, category: '생성' },
+    { href: '/creator', labelKey: 'menu.creator', icon: Video, category: '생성' },
     // AI 자동화
-    { href: '/agents', label: 'AI 에이전트', icon: Zap, category: '자동화' },
+    { href: '/agents', labelKey: 'menu.agents', icon: Zap, category: '자동화' },
+    { href: '/meeting-notes', labelKey: 'menu.meetingNotes', icon: Mic, category: '자동화' },
     // 비즈니스 도구
-    { href: '/signature', label: '전자서명', icon: FileSignature, category: '비즈니스' },
-    { href: '/remote', label: '원격 솔루션', icon: Monitor, category: '비즈니스' },
+    { href: '/signature', labelKey: 'menu.signature', icon: FileSignature, category: '비즈니스' },
+    { href: '/remote', labelKey: 'menu.remote', icon: Monitor, category: '비즈니스' },
     // 정보 및 소통
-    { href: '/trends', label: '최신 트렌드', icon: Sparkles, category: '정보' },
-    { href: '/community', label: '커뮤니티', icon: Users, category: '소통' },
+    { href: '/trends', labelKey: 'menu.trends', icon: Sparkles, category: '정보' },
+    { href: '/community', labelKey: 'menu.community', icon: Users, category: '소통' },
     // 지원
-    { href: '/help', label: '도움말', icon: HelpCircle, category: '지원' },
-  ];
+    { href: '/help', labelKey: 'menu.help', icon: HelpCircle, category: '지원' },
+  ].map(item => ({ ...item, label: t(item.labelKey) }));
 
   // 유틸리티 메뉴 (디버깅, 검증 등)
   const utilityMenu = [
-    { href: '/debug', label: '디버깅', icon: Bug },
-    { href: '/validate', label: '사이트 검증', icon: Shield },
-  ];
+    { href: '/debug', labelKey: 'menu.debugging', icon: Bug },
+    { href: '/validate', labelKey: 'menu.validation', icon: Shield },
+  ].map(item => ({ ...item, label: t(item.labelKey) }));
 
   return (
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/80 dark:border-gray-700/80 shadow-sm supports-[backdrop-filter]:bg-white/80 supports-[backdrop-filter]:dark:bg-gray-900/80">

@@ -21,7 +21,7 @@ export function ABTestingPanel() {
 
   const handleCreateTest = () => {
     if (!testName.trim()) {
-      showToast('warning', '테스트 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '테스트 이름을 입력해주세요' });
       return;
     }
 
@@ -29,7 +29,7 @@ export function ABTestingPanel() {
     setTests([...tests, test]);
     setSelectedTest(test);
     setTestName('');
-    showToast('success', 'A/B 테스트가 생성되었습니다');
+    showToast({ type: 'success', message: 'A/B 테스트가 생성되었습니다' });
   };
 
   const handleAddVariant = () => {
@@ -44,7 +44,7 @@ export function ABTestingPanel() {
 
     setTests(abTester.getAllTests());
     setSelectedTest(abTester.getTest(selectedTest.id) || null);
-    showToast('success', '변형이 추가되었습니다');
+    showToast({ type: 'success', message: '변형이 추가되었습니다' });
   };
 
   const handleStartTest = () => {
@@ -53,7 +53,7 @@ export function ABTestingPanel() {
     abTester.startTest(selectedTest.id);
     setTests(abTester.getAllTests());
     setSelectedTest(abTester.getTest(selectedTest.id) || null);
-    showToast('success', '테스트가 시작되었습니다');
+    showToast({ type: 'success', message: '테스트가 시작되었습니다' });
   };
 
   const handlePauseTest = () => {
@@ -62,7 +62,7 @@ export function ABTestingPanel() {
     abTester.pauseTest(selectedTest.id);
     setTests(abTester.getAllTests());
     setSelectedTest(abTester.getTest(selectedTest.id) || null);
-    showToast('success', '테스트가 정지되었습니다');
+    showToast({ type: 'success', message: '테스트가 정지되었습니다' });
   };
 
   const stats = selectedTest ? abTester.calculateStats(selectedTest) : {};

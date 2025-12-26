@@ -56,7 +56,7 @@ export function DocumentationGeneratorPanel() {
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('success', `${format.toUpperCase()} 문서가 생성되었습니다`);
+    showToast({ type: 'success', message: `${format.toUpperCase()} 문서가 생성되었습니다` });
   };
 
   return (

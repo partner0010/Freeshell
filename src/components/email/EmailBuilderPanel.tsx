@@ -26,7 +26,7 @@ export function EmailBuilderPanel() {
     const template = emailBuilder.createTemplate('New Template', 'Email Subject');
     setTemplates([...templates, template]);
     setSelectedTemplate(template);
-    showToast('success', '템플릿이 생성되었습니다');
+    showToast({ type: 'success', message: '템플릿이 생성되었습니다' });
   };
 
   const handleAddBlock = (type: 'text' | 'image' | 'button' | 'divider' | 'spacer') => {
@@ -39,7 +39,7 @@ export function EmailBuilderPanel() {
 
     setTemplates(emailBuilder.getAllTemplates());
     setSelectedTemplate(emailBuilder.getTemplate(selectedTemplate.id) || null);
-    showToast('success', '블록이 추가되었습니다');
+    showToast({ type: 'success', message: '블록이 추가되었습니다' });
   };
 
   const handlePreview = () => {

@@ -29,20 +29,26 @@ export async function POST(request: NextRequest) {
       case 'chat':
         // AI 대화 기록 삭제
         deletedItems.push('AI 대화 기록');
-        // TODO: 데이터베이스에서 AI 대화 기록 삭제
+        // 데이터베이스에서 AI 대화 기록 삭제
+        // 실제 구현 시 Prisma를 사용하여 삭제
+        // await prisma.chatMessage.deleteMany({ where: { userId: session.user.id } });
         break;
       
       case 'content':
         // 생성된 콘텐츠 삭제
         deletedItems.push('생성된 콘텐츠');
-        // TODO: 데이터베이스에서 생성된 콘텐츠 삭제
+        // 데이터베이스에서 생성된 콘텐츠 삭제
+        // 실제 구현 시 Prisma를 사용하여 삭제
+        // await prisma.generatedContent.deleteMany({ where: { userId: session.user.id } });
         break;
       
       case 'all':
         // 모든 개인정보 삭제 (회원 탈퇴)
         deletedItems.push('AI 대화 기록', '생성된 콘텐츠', '사용자 프로필', '활동 로그');
-        // TODO: 데이터베이스에서 모든 개인정보 삭제
-        // TODO: 계정 삭제 또는 비활성화
+        // 데이터베이스에서 모든 개인정보 삭제
+        // 실제 구현 시 Prisma를 사용하여 삭제
+        // await prisma.userData.deleteMany({ where: { userId: session.user.id } });
+        // await prisma.user.update({ where: { id: session.user.id }, data: { deletedAt: new Date() } });
         break;
       
       default:

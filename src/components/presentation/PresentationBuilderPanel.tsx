@@ -18,7 +18,7 @@ export function PresentationBuilderPanel() {
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
-      showToast('warning', '주제를 입력해주세요');
+      showToast({ type: 'warning', message: '주제를 입력해주세요' });
       return;
     }
 
@@ -26,9 +26,9 @@ export function PresentationBuilderPanel() {
     try {
       const result = await aiPresentationBuilder.generatePresentation(topic, numSlides);
       setPresentation(result);
-      showToast('success', '프레젠테이션이 생성되었습니다');
+      showToast({ type: 'success', message: '프레젠테이션이 생성되었습니다' });
     } catch (error) {
-      showToast('error', '생성 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '생성 중 오류가 발생했습니다' });
     } finally {
       setIsGenerating(false);
     }
@@ -37,7 +37,7 @@ export function PresentationBuilderPanel() {
   const handleExport = (format: 'pdf' | 'pptx' | 'html') => {
     if (!presentation) return;
     const filename = aiPresentationBuilder.exportPresentation(presentation, format);
-    showToast('success', `${filename} 다운로드 준비됨`);
+    showToast({ type: 'success', message: `${filename} 다운로드 준비됨` });
     // 실제 다운로드 로직 구현
   };
 

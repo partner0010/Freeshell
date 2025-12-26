@@ -32,7 +32,7 @@ export function FeatureFlagsPanel() {
 
   const handleCreateFlag = () => {
     if (!flagName.trim()) {
-      showToast('warning', 'Flag 이름을 입력해주세요');
+      showToast({ type: 'warning', message: 'Flag 이름을 입력해주세요' });
       return;
     }
 
@@ -41,7 +41,7 @@ export function FeatureFlagsPanel() {
     setSelectedFlag(flag);
     setFlagName('');
     setFlagDescription('');
-    showToast('success', 'Feature Flag가 생성되었습니다');
+    showToast({ type: 'success', message: 'Feature Flag가 생성되었습니다' });
   };
 
   const handleToggleFlag = (id: string, enabled: boolean) => {
@@ -50,7 +50,7 @@ export function FeatureFlagsPanel() {
     if (selectedFlag?.id === id) {
       setSelectedFlag(featureFlagsManager.getFlag(id) || null);
     }
-    showToast('success', enabled ? 'Flag가 활성화되었습니다' : 'Flag가 비활성화되었습니다');
+    showToast({ type: 'success', message: enabled ? 'Flag가 활성화되었습니다' : 'Flag가 비활성화되었습니다' });
   };
 
   const handleUpdateStrategy = () => {
@@ -63,7 +63,7 @@ export function FeatureFlagsPanel() {
     );
     setFlags(featureFlagsManager.getAllFlags());
     setSelectedFlag(featureFlagsManager.getFlag(selectedFlag.id) || null);
-    showToast('success', '전략이 업데이트되었습니다');
+    showToast({ type: 'success', message: '전략이 업데이트되었습니다' });
   };
 
   return (

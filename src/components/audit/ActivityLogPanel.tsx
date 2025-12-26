@@ -66,7 +66,7 @@ export function ActivityLogPanel() {
     a.download = `activity-logs.${format}`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('success', '로그가 내보내졌습니다');
+    showToast({ type: 'success', message: '로그가 내보내졌습니다' });
   };
 
   const getTypeColor = (type: ActivityType) => {

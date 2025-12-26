@@ -60,7 +60,7 @@ export function FeedbackPanel() {
 
   const handleCreateFeedback = () => {
     if (!feedbackTitle.trim() || !feedbackDescription.trim()) {
-      showToast('warning', '제목과 내용을 입력해주세요');
+      showToast({ type: 'warning', message: '제목과 내용을 입력해주세요' });
       return;
     }
 
@@ -68,7 +68,7 @@ export function FeedbackPanel() {
     setFeedbackTitle('');
     setFeedbackDescription('');
     loadFeedbacks();
-    showToast('success', '피드백이 제출되었습니다');
+    showToast({ type: 'success', message: '피드백이 제출되었습니다' });
   };
 
   const handleVote = (id: string) => {

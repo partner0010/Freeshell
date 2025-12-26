@@ -27,17 +27,17 @@ export function PluginManagerPanel() {
 
     if (plugin.enabled) {
       pluginSystem.deactivatePlugin(id);
-      showToast('success', `"${plugin.name}" 플러그인이 비활성화되었습니다`);
+      showToast({ type: 'success', message: `"${plugin.name}" 플러그인이 비활성화되었습니다` });
     } else {
       pluginSystem.activatePlugin(id);
-      showToast('success', `"${plugin.name}" 플러그인이 활성화되었습니다`);
+      showToast({ type: 'success', message: `"${plugin.name}" 플러그인이 활성화되었습니다` });
     }
     loadPlugins();
   };
 
   const handleInstall = () => {
     // 플러그인 설치 로직
-    showToast('info', '플러그인 설치 기능은 개발 중입니다');
+    showToast({ type: 'info', message: '플러그인 설치 기능은 개발 중입니다' });
   };
 
   return (

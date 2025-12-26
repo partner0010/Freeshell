@@ -38,19 +38,19 @@ export function ImportExportPanel() {
       } else if (file.name.endsWith('.json')) {
         result = await dataImporter.importJSON(file);
       } else {
-        showToast('error', '지원하지 않는 파일 형식입니다');
+        showToast({ type: 'error', message: '지원하지 않는 파일 형식입니다' });
         return;
       }
 
       setImportResult(result);
       
       if (result.success) {
-        showToast('success', `${result.imported}개 항목이 가져와졌습니다`);
+        showToast({ type: 'success', message: `${result.imported}개 항목이 가져와졌습니다` });
       } else {
-        showToast('warning', `${result.failed}개 항목 가져오기 실패`);
+        showToast({ type: 'warning', message: `${result.failed}개 항목 가져오기 실패` });
       }
     } catch (error) {
-      showToast('error', '가져오기 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '가져오기 중 오류가 발생했습니다' });
     }
   };
 
@@ -80,7 +80,7 @@ export function ImportExportPanel() {
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('success', '내보내기가 완료되었습니다');
+    showToast({ type: 'success', message: '내보내기가 완료되었습니다' });
   };
 
   const tabs = [

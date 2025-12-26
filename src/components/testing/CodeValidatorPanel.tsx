@@ -16,7 +16,7 @@ export function CodeValidatorPanel() {
 
   const handleValidateCode = async () => {
     if (!codeToValidate.trim()) {
-      showToast('warning', '검증할 코드를 입력해주세요');
+      showToast({ type: 'warning', message: '검증할 코드를 입력해주세요' });
       return;
     }
 
@@ -24,12 +24,12 @@ export function CodeValidatorPanel() {
     try {
       const result = await codeValidator.validateReactComponent(codeToValidate, 'test.tsx');
       setResults([result]);
-      showToast(
-        result.passed ? 'success' : 'error',
-        result.passed ? '검증 통과' : `${result.errors.length}개의 오류 발견`
-      );
+      showToast({
+        type: result.passed ? 'success' : 'error',
+        message: result.passed ? '검증 통과' : `${result.errors.length}개의 오류 발견`
+      });
     } catch (error) {
-      showToast('error', '검증 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '검증 중 오류가 발생했습니다' });
     } finally {
       setIsValidating(false);
     }
@@ -43,12 +43,12 @@ export function CodeValidatorPanel() {
       const validationResults = await codeValidator.validateProject(mockFiles);
       setResults(validationResults);
       const totalErrors = validationResults.reduce((sum, r) => sum + r.errors.length, 0);
-      showToast(
-        totalErrors === 0 ? 'success' : 'warning',
-        `${validationResults.length}개 파일 검증 완료 - ${totalErrors}개 오류 발견`
-      );
+      showToast({
+        type: totalErrors === 0 ? 'success' : 'warning',
+        message: `${validationResults.length}개 파일 검증 완료 - ${totalErrors}개 오류 발견`
+      });
     } catch (error) {
-      showToast('error', '프로젝트 검증 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '프로젝트 검증 중 오류가 발생했습니다' });
     } finally {
       setIsValidating(false);
     }

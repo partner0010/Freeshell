@@ -32,7 +32,7 @@ export function CodePlaygroundPanel() {
 
   const handleCreateSession = () => {
     if (!sessionName.trim()) {
-      showToast('warning', '세션 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '세션 이름을 입력해주세요' });
       return;
     }
 
@@ -40,7 +40,7 @@ export function CodePlaygroundPanel() {
     setSessions([...sessions, session]);
     setSelectedSession(session);
     setSessionName('');
-    showToast('success', '세션이 생성되었습니다');
+    showToast({ type: 'success', message: '세션이 생성되었습니다' });
   };
 
   const handleExecute = async () => {
@@ -53,9 +53,9 @@ export function CodePlaygroundPanel() {
       selectedSession.errors = result.errors;
       setSessions(codePlayground.getAllSessions());
       setSelectedSession({ ...selectedSession });
-      showToast('success', '코드가 실행되었습니다');
+      showToast({ type: 'success', message: '코드가 실행되었습니다' });
     } catch (error) {
-      showToast('error', '실행 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '실행 중 오류가 발생했습니다' });
     } finally {
       setIsExecuting(false);
     }

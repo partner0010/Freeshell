@@ -47,6 +47,13 @@ export default function SchedulePage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // agents 페이지로 리다이렉트 (중복 제거)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/agents?tab=scheduled';
+    }
+  }, []);
+
   useEffect(() => {
     loadSchedules();
   }, []);

@@ -34,42 +34,42 @@ export function DeploymentManagerPanel() {
 
   const handleCreateDeployment = () => {
     if (!deployName.trim()) {
-      showToast('warning', '배포 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '배포 이름을 입력해주세요' });
       return;
     }
 
     const deployment = deploymentManager.createDeployment(deployName, branch, environment);
     setDeployments([...deployments, deployment]);
     setDeployName('');
-    showToast('success', '배포가 생성되었습니다');
+    showToast({ type: 'success', message: '배포가 생성되었습니다' });
   };
 
   const handleStartDeployment = async (deploymentId: string) => {
     try {
       await deploymentManager.startDeployment(deploymentId);
       setDeployments(deploymentManager.getAllDeployments());
-      showToast('success', '배포가 시작되었습니다');
+      showToast({ type: 'success', message: '배포가 시작되었습니다' });
     } catch (error) {
-      showToast('error', '배포 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '배포 중 오류가 발생했습니다' });
     }
   };
 
   const handleCreateDomain = () => {
     if (!domainName.trim()) {
-      showToast('warning', '도메인 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '도메인 이름을 입력해주세요' });
       return;
     }
 
     const domain = deploymentManager.createDomain(domainName);
     setDomains([...domains, domain]);
     setDomainName('');
-    showToast('success', '도메인이 추가되었습니다');
+    showToast({ type: 'success', message: '도메인이 추가되었습니다' });
   };
 
   const handleEnableSSL = (domainId: string) => {
     deploymentManager.enableSSL(domainId);
     setDomains(deploymentManager.getAllDomains());
-    showToast('success', 'SSL이 활성화되었습니다');
+    showToast({ type: 'success', message: 'SSL이 활성화되었습니다' });
   };
 
   const getStatusColor = (status: string) => {

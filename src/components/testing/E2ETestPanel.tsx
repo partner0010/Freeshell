@@ -34,12 +34,12 @@ export function E2ETestPanel() {
       setSelectedTest(result);
       
       if (result.status === 'passed') {
-        showToast('success', '테스트 통과!');
+        showToast({ type: 'success', message: '테스트 통과!' });
       } else {
-        showToast('error', '테스트 실패');
+        showToast({ type: 'error', message: '테스트 실패' });
       }
     } catch (error) {
-      showToast('error', '테스트 실행 중 오류 발생');
+      showToast({ type: 'error', message: '테스트 실행 중 오류 발생' });
     } finally {
       setIsRunning(false);
     }
@@ -51,9 +51,9 @@ export function E2ETestPanel() {
       const results = await e2eTestRunner.runAllTests();
       setTests(results);
       const passedCount = results.filter(r => r.status === 'passed').length;
-      showToast('success', `${passedCount}/${results.length} 테스트 통과`);
+      showToast({ type: 'success', message: `${passedCount}/${results.length} 테스트 통과` });
     } catch (error) {
-      showToast('error', '테스트 실행 중 오류 발생');
+      showToast({ type: 'error', message: '테스트 실행 중 오류 발생' });
     } finally {
       setIsRunning(false);
     }

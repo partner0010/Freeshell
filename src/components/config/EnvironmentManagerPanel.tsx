@@ -40,7 +40,7 @@ export function EnvironmentManagerPanel() {
 
   const handleAddVariable = () => {
     if (!selectedEnv || !newKey.trim() || !newValue.trim()) {
-      showToast('warning', '키와 값을 입력해주세요');
+      showToast({ type: 'warning', message: '키와 값을 입력해주세요' });
       return;
     }
 
@@ -54,9 +54,9 @@ export function EnvironmentManagerPanel() {
       setSelectedEnv(environmentManager.getEnvironment(selectedEnv.id) || null);
       setNewKey('');
       setNewValue('');
-      showToast('success', '변수가 추가되었습니다');
+      showToast({ type: 'success', message: '변수가 추가되었습니다' });
     } catch (error: any) {
-      showToast('error', error.message || '변수 추가 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: error.message || '변수 추가 중 오류가 발생했습니다' });
     }
   };
 
@@ -75,9 +75,9 @@ export function EnvironmentManagerPanel() {
       a.download = `.env.${selectedEnv.name.toLowerCase()}`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast('success', '내보내기가 완료되었습니다');
+      showToast({ type: 'success', message: '내보내기가 완료되었습니다' });
     } catch (error: any) {
-      showToast('error', error.message || '내보내기 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: error.message || '내보내기 중 오류가 발생했습니다' });
     }
   };
 

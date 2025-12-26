@@ -73,25 +73,64 @@ export class OnlineLearningSystem {
   async fetchNpmTrending(): Promise<OnlineTrend[]> {
     try {
       // npm API를 통한 인기 패키지 수집
-      const response = await fetch('https://api.npmjs.org/downloads/range/last-week/react');
-      
-      // npm은 직접적인 trending API가 없으므로, 인기 패키지 목록 사용
+      // npm-registry API 사용
       const popularPackages = [
         'react', 'next', 'typescript', 'tailwindcss', 'prisma',
-        'zustand', 'framer-motion', 'axios', 'react-query', 'swr'
+        'zustand', 'framer-motion', 'axios', 'react-query', 'swr',
+        'vite', 'esbuild', 'turbo', 'turborepo', 'remix'
       ];
 
-      const trends: OnlineTrend[] = popularPackages.map((pkg, index) => ({
-        id: `npm-${pkg}`,
-        title: pkg,
-        description: `인기 npm 패키지: ${pkg}`,
-        source: 'npm',
-        url: `https://www.npmjs.com/package/${pkg}`,
-        category: 'framework',
-        publishedAt: new Date(),
-        relevance: index < 3 ? 'high' : 'medium',
-        tags: [pkg, 'npm', 'package'],
-      }));
+      const trends: OnlineTrend[] = [];
+      
+      // 각 패키지의 최신 정보 수집 (병렬 처리)
+      const packagePromises = popularPackages.slice(0, 10).map(async (pkg, index) => {
+        try {
+          const response = await fetch(`https://registry.npmjs.org/${pkg}`, {
+            headers: { 'Accept': 'application/json' },
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            const latestVersion = data['dist-tags']?.latest;
+            const versionData = data.versions?.[latestVersion];
+            
+            return {
+              id: `npm-${pkg}`,
+              title: pkg,
+              description: versionData?.description || `인기 npm 패키지: ${pkg}`,
+              source: 'npm',
+              url: `https://www.npmjs.com/package/${pkg}`,
+              category: 'framework' as const,
+              publishedAt: versionData?.time ? new Date(versionData.time) : new Date(),
+              relevance: index < 3 ? 'high' as const : 'medium' as const,
+              tags: [
+                pkg,
+                'npm',
+                'package',
+                ...(versionData?.keywords || []).slice(0, 3),
+              ],
+            };
+          }
+        } catch (error) {
+          console.warn(`패키지 ${pkg} 정보 수집 실패:`, error);
+        }
+        
+        // 폴백
+        return {
+          id: `npm-${pkg}`,
+          title: pkg,
+          description: `인기 npm 패키지: ${pkg}`,
+          source: 'npm',
+          url: `https://www.npmjs.com/package/${pkg}`,
+          category: 'framework' as const,
+          publishedAt: new Date(),
+          relevance: index < 3 ? 'high' as const : 'medium' as const,
+          tags: [pkg, 'npm', 'package'],
+        };
+      });
+
+      const results = await Promise.all(packagePromises);
+      trends.push(...results.filter(Boolean));
 
       this.learnedData.set('npm', trends);
       this.lastFetchTime.set('npm', new Date());
@@ -107,18 +146,66 @@ export class OnlineLearningSystem {
    */
   async fetchSecurityTrends(): Promise<OnlineTrend[]> {
     try {
-      // GitHub Security Advisories API
-      const response = await fetch('https://api.github.com/repos/advisories', {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json',
-        },
-      });
-
       const trends: OnlineTrend[] = [];
       
-      // 실제 API가 제한적이므로, 보안 뉴스 RSS 피드나 다른 소스 사용
-      // 여기서는 시뮬레이션 + 실제 웹 검색 결과 활용
+      // 1. GitHub Security Advisories (공개 API)
+      try {
+        const ghResponse = await fetch('https://api.github.com/search/repositories?q=topic:security+stars:>100&sort=updated&order=desc&per_page=10', {
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+          },
+        });
+        
+        if (ghResponse.ok) {
+          const ghData = await ghResponse.json();
+          const securityRepos = ghData.items?.slice(0, 5).map((repo: any, index: number) => ({
+            id: `gh-security-${repo.id}`,
+            title: repo.name,
+            description: repo.description || '보안 관련 저장소',
+            source: 'GitHub Security',
+            url: repo.html_url,
+            category: 'security' as const,
+            publishedAt: new Date(repo.updated_at),
+            relevance: index < 2 ? 'high' : 'medium' as const,
+            tags: ['security', 'github', ...(repo.topics || []).slice(0, 3)],
+          }));
+          trends.push(...securityRepos);
+        }
+      } catch (ghError) {
+        console.warn('GitHub 보안 트렌드 수집 실패:', ghError);
+      }
+
+      // 2. CVE 데이터베이스 (NVD API - 무료)
+      try {
+        // NVD API는 무료이지만 rate limit이 있음
+        // 최근 CVE 조회 (2025년)
+        const currentYear = new Date().getFullYear();
+        const nvdResponse = await fetch(`https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=${currentYear}-01-01T00:00:00.000&resultsPerPage=10`, {
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+        
+        if (nvdResponse.ok) {
+          const nvdData = await nvdResponse.json();
+          const cves = nvdData.vulnerabilities?.slice(0, 5).map((vuln: any, index: number) => ({
+            id: `cve-${vuln.cve.id}`,
+            title: vuln.cve.id,
+            description: vuln.cve.descriptions?.[0]?.value || '보안 취약점',
+            source: 'NVD (National Vulnerability Database)',
+            url: `https://nvd.nist.gov/vuln/detail/${vuln.cve.id}`,
+            category: 'security' as const,
+            publishedAt: new Date(vuln.cve.published || new Date()),
+            relevance: 'high' as const,
+            tags: ['cve', 'vulnerability', 'security', ...(vuln.cve.metrics?.cvssMetricV31?.[0]?.cvssData?.baseSeverity ? [vuln.cve.metrics.cvssMetricV31[0].cvssData.baseSeverity.toLowerCase()] : [])],
+          }));
+          trends.push(...cves);
+        }
+      } catch (nvdError) {
+        console.warn('NVD CVE 수집 실패:', nvdError);
+      }
       
+      // 3. 보안 뉴스 수집
       const securityNews = await this.fetchSecurityNews();
       trends.push(...securityNews);
 
@@ -179,14 +266,74 @@ export class OnlineLearningSystem {
    */
   private async searchWebForAITrends(): Promise<OnlineTrend[]> {
     try {
-      // DuckDuckGo나 다른 검색 API 사용 (무료)
-      // 또는 Google Custom Search API (API 키 필요)
-      const searchQuery = 'latest AI trends 2025';
+      const trends: OnlineTrend[] = [];
       
-      // 실제 구현 시 검색 API 호출
-      // const response = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json`);
+      // 1. arXiv API를 통한 최신 AI 논문 수집 (무료, 공개 API)
+      try {
+        const arxivResponse = await fetch('http://export.arxiv.org/api/query?search_query=cat:cs.AI+OR+cat:cs.LG&sortBy=submittedDate&sortOrder=descending&max_results=10', {
+          headers: {
+            'Accept': 'application/atom+xml',
+          },
+        });
+        
+        if (arxivResponse.ok) {
+          const arxivText = await arxivResponse.text();
+          // 간단한 XML 파싱 (실제로는 XML 파서 사용 권장)
+          const entries = arxivText.match(/<entry>[\s\S]*?<\/entry>/g) || [];
+          
+          entries.slice(0, 5).forEach((entry, index) => {
+            const titleMatch = entry.match(/<title>([\s\S]*?)<\/title>/);
+            const summaryMatch = entry.match(/<summary>([\s\S]*?)<\/summary>/);
+            const idMatch = entry.match(/<id>([\s\S]*?)<\/id>/);
+            const publishedMatch = entry.match(/<published>([\s\S]*?)<\/published>/);
+            
+            if (titleMatch && idMatch) {
+              trends.push({
+                id: `arxiv-${idMatch[1].split('/').pop()}`,
+                title: titleMatch[1].replace(/\n/g, ' ').trim(),
+                description: summaryMatch?.[1]?.replace(/\n/g, ' ').substring(0, 200).trim() || 'AI 논문',
+                source: 'arXiv',
+                url: idMatch[1],
+                category: 'ai',
+                publishedAt: publishedMatch ? new Date(publishedMatch[1]) : new Date(),
+                relevance: index < 2 ? 'high' : 'medium',
+                tags: ['arxiv', 'ai', 'research', 'paper'],
+              });
+            }
+          });
+        }
+      } catch (arxivError) {
+        console.warn('arXiv API 수집 실패:', arxivError);
+      }
+
+      // 2. GitHub AI 관련 저장소 수집
+      try {
+        const ghResponse = await fetch('https://api.github.com/search/repositories?q=topic:ai+topic:machine-learning+stars:>500&sort=updated&order=desc&per_page=5', {
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+          },
+        });
+        
+        if (ghResponse.ok) {
+          const ghData = await ghResponse.json();
+          const aiRepos = ghData.items?.map((repo: any, index: number) => ({
+            id: `gh-ai-${repo.id}`,
+            title: repo.name,
+            description: repo.description || 'AI/ML 프로젝트',
+            source: 'GitHub AI',
+            url: repo.html_url,
+            category: 'ai' as const,
+            publishedAt: new Date(repo.updated_at),
+            relevance: index < 2 ? 'high' : 'medium' as const,
+            tags: ['ai', 'ml', 'github', ...(repo.topics || []).slice(0, 3)],
+          }));
+          trends.push(...aiRepos);
+        }
+      } catch (ghError) {
+        console.warn('GitHub AI 트렌드 수집 실패:', ghError);
+      }
       
-      return [];
+      return trends;
     } catch (error) {
       console.error('웹 검색 실패:', error);
       return [];

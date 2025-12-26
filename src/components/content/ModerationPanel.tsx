@@ -50,7 +50,7 @@ export function ModerationPanel() {
 
   const handleCreateRule = () => {
     if (!ruleName.trim()) {
-      showToast('warning', '규칙 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '규칙 이름을 입력해주세요' });
       return;
     }
 
@@ -69,21 +69,21 @@ export function ModerationPanel() {
     setRules(contentModerator.getAllRules());
     setRuleName('');
     setKeywords('');
-    showToast('success', '모더레이션 규칙이 생성되었습니다');
+    showToast({ type: 'success', message: '모더레이션 규칙이 생성되었습니다' });
   };
 
   const handleTestModeration = async () => {
     if (!testContent.trim()) {
-      showToast('warning', '테스트할 콘텐츠를 입력해주세요');
+      showToast({ type: 'warning', message: '테스트할 콘텐츠를 입력해주세요' });
       return;
     }
 
     const result = await contentModerator.moderate(testContent);
     setResults(contentModerator.getResults());
-    showToast(
-      result.action === 'allow' ? 'success' : 'warning',
-      `모더레이션 결과: ${result.action === 'allow' ? '허용' : result.action === 'block' ? '차단' : '플래그'}`
-    );
+    showToast({
+      type: result.action === 'allow' ? 'success' : 'warning',
+      message: `모더레이션 결과: ${result.action === 'allow' ? '허용' : result.action === 'block' ? '차단' : '플래그'}`
+    });
   };
 
   const getSeverityColor = (severity: ModerationRule['severity']) => {

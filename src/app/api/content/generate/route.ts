@@ -6,9 +6,20 @@ import { EbookGenerator } from '@/lib/content/ebook-generator';
 import { MusicGenerator } from '@/lib/content/music-generator';
 import { ContentSecurityManager } from '@/lib/security/content-security';
 import { ContentOptimizer } from '@/lib/performance/content-optimizer';
+import { cacheManager, createCacheKey } from '@/lib/performance/cache-manager';
+import { validateCSRFRequest } from '@/lib/security/csrf-protection';
 
 export async function POST(request: NextRequest) {
   try {
+    // CSRF 토큰 검증
+    const csrfCheck = validateCSRFRequest(request);
+    if (!csrfCheck.valid) {
+      return NextResponse.json(
+        { error: 'CSRF 토큰 검증 실패', message: csrfCheck.error },
+        { status: 403 }
+      );
+    }
+
     // 회원가입 없이 사용 가능하도록 인증 제거 (선택사항)
     // const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
     // const userId = token?.id || 'anonymous';
@@ -23,6 +34,20 @@ export async function POST(request: NextRequest) {
         { error: '콘텐츠 유형과 주제를 입력하세요.' },
         { status: 400 }
       );
+    }
+
+    // 캐시 키 생성
+    const cacheKey = createCacheKey('content', contentType, topic, JSON.stringify(options));
+    
+    // 캐시에서 확인 (5분 TTL)
+    const cached = cacheManager.get(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          'X-Cache': 'HIT',
+          'Cache-Control': 'public, max-age=300',
+        },
+      });
     }
 
     const securityManager = new ContentSecurityManager();
@@ -238,7 +263,17 @@ export async function POST(request: NextRequest) {
       console.error('학습 기록 실패:', error);
     }
 
-    return NextResponse.json(responseData);
+    // 결과를 캐시에 저장 (5분 TTL)
+    if (responseData) {
+      cacheManager.set(cacheKey, responseData, 5 * 60 * 1000);
+    }
+
+    return NextResponse.json(responseData, {
+      headers: {
+        'X-Cache': 'MISS',
+        'Cache-Control': 'public, max-age=300',
+      },
+    });
   } catch (error: any) {
     console.error('콘텐츠 생성 오류:', error);
     return NextResponse.json(

@@ -32,7 +32,7 @@ export function SSOPanel() {
 
   const handleCreateConfig = () => {
     if (!configName.trim()) {
-      showToast('warning', '구성 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '구성 이름을 입력해주세요' });
       return;
     }
 
@@ -40,7 +40,7 @@ export function SSOPanel() {
     setConfigs([...configs, config]);
     setSelectedConfig(config);
     setConfigName('');
-    showToast('success', 'SSO 구성이 생성되었습니다');
+    showToast({ type: 'success', message: 'SSO 구성이 생성되었습니다' });
   };
 
   const handleToggleSSO = (id: string, enabled: boolean) => {
@@ -49,17 +49,17 @@ export function SSOPanel() {
     if (selectedConfig?.id === id) {
       setSelectedConfig(ssoManager.getConfig(id) || null);
     }
-    showToast('success', enabled ? 'SSO가 활성화되었습니다' : 'SSO가 비활성화되었습니다');
+    showToast({ type: 'success', message: enabled ? 'SSO가 활성화되었습니다' : 'SSO가 비활성화되었습니다' });
   };
 
   const handleTestSSO = async (provider: SSOProvider) => {
     try {
       const result = await ssoManager.login(provider);
       if (result.success) {
-        showToast('success', 'SSO 로그인 성공');
+        showToast({ type: 'success', message: 'SSO 로그인 성공' });
       }
     } catch (error) {
-      showToast('error', 'SSO 로그인 실패');
+      showToast({ type: 'error', message: 'SSO 로그인 실패' });
     }
   };
 

@@ -159,6 +159,39 @@ export class ContentScheduler {
   }
 
   /**
+   * 스케줄 일시정지
+   */
+  pauseSchedule(id: string): ScheduledJob | null {
+    const job = this.jobs.get(id);
+    if (!job) return null;
+
+    job.status = 'paused';
+    this.jobs.set(id, job);
+
+    return job;
+  }
+
+  /**
+   * 스케줄 재개
+   */
+  resumeSchedule(id: string): ScheduledJob | null {
+    const job = this.jobs.get(id);
+    if (!job) return null;
+
+    job.status = 'active';
+    this.jobs.set(id, job);
+
+    return job;
+  }
+
+  /**
+   * 스케줄 삭제
+   */
+  removeSchedule(id: string): boolean {
+    return this.jobs.delete(id);
+  }
+
+  /**
    * 실행할 작업 조회
    */
   getDueJobs(): ScheduledJob[] {

@@ -1,7 +1,12 @@
 /**
  * AI Agent 프레임워크
  * 자동화된 AI 에이전트 시스템
+ * 자기 학습 시스템 통합: 에이전트 작업 패턴 학습
  */
+
+import { selfLearningSystem } from './self-learning';
+import { selfMonitoringSystem } from './self-monitoring';
+import { crossFeatureLearning } from './cross-feature-learning';
 
 export interface Agent {
   id: string;
@@ -90,11 +95,50 @@ export class AgentManager {
       task.completedAt = new Date();
       this.tasks.set(taskId, task);
 
+      // 자기 학습: 에이전트 작업 경험 저장
+      const performance = result ? 0.9 : 0.3;
+      selfLearningSystem.learnFromExperience({
+        task: `agent_${agent.id}_${task.type}`,
+        input: { agentId: agent.id, taskType: task.type, input: task.input },
+        output: result,
+        success: !!result,
+        performance,
+        patterns: ['agent_task', agent.id, task.type],
+        improvements: [],
+      }).catch(err => console.error('에이전트 학습 오류:', err));
+
+      // 크로스 기능 학습: 에이전트 패턴 전파
+      crossFeatureLearning.shareExperience('agents', {
+        task: `${agent.name} - ${task.type}`,
+        output: result,
+        success: !!result,
+        performance,
+      }).catch(err => console.error('크로스 기능 학습 오류:', err));
+
+      // 자기 모니터링: 에이전트 성능 추적
+      selfMonitoringSystem.recordPerformance({
+        task: `agent_${agent.id}`,
+        performance,
+        timestamp: new Date(),
+      }).catch(err => console.error('성능 모니터링 오류:', err));
+
       return result;
     } catch (error: any) {
       task.status = 'failed';
       task.output = { error: error.message };
       this.tasks.set(taskId, task);
+
+      // 실패 경험도 학습
+      selfLearningSystem.learnFromExperience({
+        task: `agent_${agent.id}_${task.type}`,
+        input: { agentId: agent.id, taskType: task.type },
+        output: { error: error.message },
+        success: false,
+        performance: 0,
+        patterns: ['agent_task', agent.id, task.type, 'failed'],
+        improvements: [error.message],
+      }).catch(err => console.error('에이전트 학습 오류:', err));
+
       throw error;
     }
   }

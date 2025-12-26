@@ -36,7 +36,7 @@ export function PWAPanel() {
     if (installed) {
       setIsInstalled(true);
       setCanInstall(false);
-      showToast('success', 'PWA가 설치되었습니다');
+      showToast({ type: 'success', message: 'PWA가 설치되었습니다' });
     }
   };
 
@@ -44,9 +44,9 @@ export function PWAPanel() {
     const registration = await registerServiceWorker();
     if (registration) {
       setSwRegistered(true);
-      showToast('success', 'Service Worker가 등록되었습니다');
+      showToast({ type: 'success', message: 'Service Worker가 등록되었습니다' });
     } else {
-      showToast('error', 'Service Worker 등록에 실패했습니다');
+      showToast({ type: 'error', message: 'Service Worker 등록에 실패했습니다' });
     }
   };
 

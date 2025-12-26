@@ -38,9 +38,9 @@ export function MonitoringDashboard() {
 
       const report = performanceBenchmark.createReport('Benchmark Test', [benchmark]);
       setPerformanceReports(performanceBenchmark.getReports());
-      showToast('success', `벤치마크 완료: ${benchmark.duration.toFixed(2)}ms`);
+      showToast({ type: 'success', message: `벤치마크 완료: ${benchmark.duration.toFixed(2)}ms` });
     } catch (error) {
-      showToast('error', '벤치마크 실행 중 오류 발생');
+      showToast({ type: 'error', message: '벤치마크 실행 중 오류 발생' });
     }
   };
 

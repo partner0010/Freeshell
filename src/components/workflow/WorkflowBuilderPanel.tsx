@@ -20,7 +20,7 @@ export function WorkflowBuilderPanel() {
 
   const handleCreateWorkflow = () => {
     if (!workflowName.trim()) {
-      showToast('warning', '워크플로우 이름을 입력하세요');
+      showToast({ type: 'warning', message: '워크플로우 이름을 입력하세요' });
       return;
     }
 
@@ -28,7 +28,7 @@ export function WorkflowBuilderPanel() {
     setWorkflows([...workflows, workflow]);
     setSelectedWorkflow(workflow);
     setWorkflowName('');
-    showToast('success', '워크플로우가 생성되었습니다');
+    showToast({ type: 'success', message: '워크플로우가 생성되었습니다' });
   };
 
   const handleExecute = async () => {
@@ -36,9 +36,9 @@ export function WorkflowBuilderPanel() {
 
     try {
       await workflowBuilder.executeWorkflow(selectedWorkflow.id);
-      showToast('success', '워크플로우가 실행되었습니다');
+      showToast({ type: 'success', message: '워크플로우가 실행되었습니다' });
     } catch (error) {
-      showToast('error', '워크플로우 실행 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '워크플로우 실행 중 오류가 발생했습니다' });
     }
   };
 
@@ -48,7 +48,7 @@ export function WorkflowBuilderPanel() {
     if (selectedWorkflow?.id === id) {
       setSelectedWorkflow(null);
     }
-    showToast('success', '워크플로우가 삭제되었습니다');
+    showToast({ type: 'success', message: '워크플로우가 삭제되었습니다' });
   };
 
   return (

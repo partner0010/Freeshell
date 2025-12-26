@@ -27,19 +27,19 @@ export function RateLimiterPanel() {
 
   const handleCreateRule = () => {
     if (!ruleName.trim()) {
-      showToast('warning', '규칙 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '규칙 이름을 입력해주세요' });
       return;
     }
 
     rateLimiter.createRule(ruleName, ruleLimit, ruleWindow);
     setRules(rateLimiter.getAllRules());
     setRuleName('');
-    showToast('success', 'Rate Limit 규칙이 생성되었습니다');
+    showToast({ type: 'success', message: 'Rate Limit 규칙이 생성되었습니다' });
   };
 
   const handleCreatePlan = () => {
     if (!planName.trim()) {
-      showToast('warning', '플랜 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '플랜 이름을 입력해주세요' });
       return;
     }
 
@@ -50,7 +50,7 @@ export function RateLimiterPanel() {
     });
     setPlans(rateLimiter.getAllPlans());
     setPlanName('');
-    showToast('success', '할당량 플랜이 생성되었습니다');
+    showToast({ type: 'success', message: '할당량 플랜이 생성되었습니다' });
   };
 
   const tabs = [

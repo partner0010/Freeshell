@@ -10,6 +10,7 @@ import { securityMiddleware } from './middleware-security';
 import { validateRequest } from '@/lib/security/vulnerability-scanner';
 import { trackRequest } from '@/lib/security/intrusion-detection';
 import { logIntrusionAlert, logVulnerabilityReport } from '@/lib/security/security-monitor';
+import { validateCSRFRequest, generateCSRFToken } from '@/lib/security/csrf-protection';
 
 // ============================================
 // 보안 설정
@@ -73,20 +74,27 @@ function getSecurityHeaders() {
   return {
     'X-DNS-Prefetch-Control': 'on',
     'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'SAMEORIGIN',
+    'X-Frame-Options': 'DENY', // SAMEORIGIN에서 DENY로 강화
     'X-XSS-Protection': '1; mode=block',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
     'Content-Security-Policy': [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
+      "font-src 'self' data: https://fonts.gstatic.com",
       "img-src 'self' data: https: blob:",
-      "connect-src 'self' https://api.openai.com https://*.supabase.co",
+      "connect-src 'self' https://api.openai.com https://api-inference.huggingface.co https://api.cohere.ai https://api.together.xyz https://*.supabase.co",
       "frame-src 'self' https://www.google.com",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "upgrade-insecure-requests",
     ].join('; '),
+    'Cross-Origin-Embedder-Policy': 'require-corp',
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    'Cross-Origin-Resource-Policy': 'same-origin',
   };
 }
 
@@ -245,11 +253,39 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // CSRF 토큰 검증 (POST, PUT, PATCH, DELETE 요청)
+  if (isApiRoute && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
+    const csrfCheck = validateCSRFRequest(request);
+    if (!csrfCheck.valid) {
+      return new NextResponse(
+        JSON.stringify({ 
+          error: 'CSRF 토큰 검증 실패',
+          message: csrfCheck.error 
+        }),
+        { 
+          status: 403,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+  }
+
   // 보안 헤더 추가
   const response = NextResponse.next();
   Object.entries(getSecurityHeaders()).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
+
+  // CSRF 토큰을 쿠키에 설정 (GET 요청 시)
+  if (request.method === 'GET' && !request.cookies.get('csrf-token')) {
+    const csrfToken = generateCSRFToken();
+    response.cookies.set('csrf-token', csrfToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 3600, // 1시간
+    });
+  }
 
   return response;
 }

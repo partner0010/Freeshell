@@ -7,8 +7,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Sparkles, Loader2, Copy, Check, Code, Image, FileText, MessageSquare, Mic, Upload, Play, Square } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Loader2, Copy, Check, Code, Image, FileText, MessageSquare, Mic, Upload, Play, Square, Clock, Search } from 'lucide-react';
 import { CodeGenerator } from './CodeGenerator';
+import { useToast } from '@/components/ui/Toast';
+import { useKeyboardShortcut } from '@/lib/utils/keyboard-shortcuts';
+import { searchSuggestionManager } from '@/lib/realtime/search-suggestions';
+import { activityTracker } from '@/lib/realtime/activity-tracker';
 // import { detectLanguage } from '@/lib/ai/code-assistant';
 // import { generateNanobananaPrompt } from '@/lib/ai/creative-generator';
 
@@ -36,6 +40,7 @@ interface Message {
 }
 
 export function ChatGPTLikeSearch() {
+  const { showToast } = useToast();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -49,6 +54,8 @@ export function ChatGPTLikeSearch() {
   const [mode, setMode] = useState<'chat' | 'code' | 'image'>('chat');
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
+  const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,29 +68,30 @@ export function ChatGPTLikeSearch() {
     scrollToBottom();
   }, [messages]);
 
-  // 키보드 단축키 지원 (최신 트렌드)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl/Cmd + K: 포커스 이동
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        inputRef.current?.focus();
-      }
-      // Escape: 입력창 비우기
-      if (e.key === 'Escape' && document.activeElement === inputRef.current) {
-        setInput('');
-      }
-    };
+  // 키보드 단축키 지원 - 전역 시스템 사용
+  useKeyboardShortcut({ key: 'k', ctrl: true, description: '입력 필드 포커스' }, () => {
+    inputRef.current?.focus();
+  });
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  useKeyboardShortcut({ key: 'Escape', description: '입력 필드 초기화' }, () => {
+    if (document.activeElement === inputRef.current) {
+      setInput('');
+    }
+  });
 
-  // 음성 인식 초기화
+  useKeyboardShortcut({ key: 'Enter', ctrl: true, description: '메시지 전송' }, () => {
+    if (!isLoading && input.trim()) {
+      handleSend();
+    }
+  });
+
+  // 음성 인식 초기화 - 메모리 누수 방지
   useEffect(() => {
+    let recognitionInstance: any = null;
+
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = (window as any).webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
+      recognitionInstance = new SpeechRecognition();
       recognitionInstance.continuous = false;
       recognitionInstance.interimResults = false;
       recognitionInstance.lang = 'ko-KR';
@@ -100,10 +108,34 @@ export function ChatGPTLikeSearch() {
       
       setRecognition(recognitionInstance);
     }
+
+    // Cleanup: 음성 인식 중지
+    return () => {
+      if (recognitionInstance) {
+        try {
+          recognitionInstance.stop();
+        } catch (e) {
+          // 이미 중지된 경우 무시
+        }
+      }
+    };
   }, []);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
+
+    // 활동 추적
+    if (activityTracker) {
+      activityTracker.track('chat_send', {
+        messageLength: input.length,
+        mode,
+      });
+    }
+
+    // 검색어 저장
+    if (searchSuggestionManager) {
+      searchSuggestionManager.addRecentSearch(input.trim());
+    }
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -153,26 +185,22 @@ export function ChatGPTLikeSearch() {
     setMessages((prev) => [...prev, loadingMessage]);
 
     try {
-      // 무료 AI API 호출
-      const response = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: enhancedPrompt,
-          conversation: messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        }),
+      // API 클라이언트 사용 (재시도, 타임아웃, 에러 처리 포함)
+      const apiClientModule = await import('@/lib/api/api-client');
+      const apiClient = apiClientModule.apiClient;
+      const response = await apiClient.post('/api/ai/chat', {
+        message: enhancedPrompt,
+        conversation: messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
       });
 
       if (!response.ok) {
-        throw new Error('AI 응답 실패');
+        throw new Error(response.data?.error || 'AI 응답 실패');
       }
 
-      const data = await response.json();
+      const data = response.data;
       
       // 코드 블록 감지 및 처리
       let responseContent = data.response || '죄송합니다. 응답을 생성할 수 없습니다.';
@@ -194,11 +222,23 @@ export function ChatGPTLikeSearch() {
         };
         return [...filtered, assistantMessage];
       });
+
+      // 성공 알림
+      showToast({
+        type: 'success',
+        message: '응답을 받았습니다.',
+      });
     } catch (error: any) {
+      // Toast 알림 표시
+      showToast({
+        type: 'error',
+        message: `AI 응답 오류: ${error.message || '알 수 없는 오류'}`,
+      });
+
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         role: 'assistant',
-        content: `오류가 발생했습니다: ${error.message}. 다시 시도해주세요.`,
+        content: `오류가 발생했습니다: ${error.message || '알 수 없는 오류'}. 다시 시도해주세요.`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -214,8 +254,19 @@ export function ChatGPTLikeSearch() {
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast({
+        type: 'success',
+        message: '클립보드에 복사되었습니다.',
+      });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        message: '복사에 실패했습니다.',
+      });
+    }
   };
 
   const handleVoiceInput = () => {
@@ -259,17 +310,16 @@ export function ChatGPTLikeSearch() {
   const handleFileAnalysis = async (content: string, fileName: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `다음 파일을 분석해주세요: ${fileName}\n\n${content.substring(0, 2000)}`,
-          conversation: [],
-        }),
+      // API 클라이언트 사용
+      const apiClientModule = await import('@/lib/api/api-client');
+      const apiClient = apiClientModule.apiClient;
+      const response = await apiClient.post('/api/ai/chat', {
+        message: `다음 파일을 분석해주세요: ${fileName}\n\n${content.substring(0, 2000)}`,
+        conversation: [],
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.ok && response.data) {
+        const data = response.data;
         const assistantMessage: Message = {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
@@ -451,6 +501,28 @@ export function ChatGPTLikeSearch() {
 
       {/* 입력 영역 */}
       <div className="p-3 sm:p-4 border-t bg-gray-50 flex-shrink-0">
+        {/* 검색 제안 */}
+        {showSuggestions && searchSuggestions.length > 0 && (
+          <div className="mb-2 bg-white rounded-lg border border-gray-200 shadow-lg max-h-48 overflow-y-auto">
+            {searchSuggestions.map((suggestion) => (
+              <button
+                key={suggestion.id}
+                onClick={() => {
+                  setInput(suggestion.text);
+                  setShowSuggestions(false);
+                  inputRef.current?.focus();
+                }}
+                className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm"
+              >
+                {suggestion.type === 'recent' && <Clock size={14} className="text-gray-400" />}
+                {suggestion.type === 'popular' && <Sparkles size={14} className="text-purple-500" />}
+                {suggestion.type === 'suggestion' && <Search size={14} className="text-blue-500" />}
+                <span className="flex-1 truncate">{suggestion.text}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        
         <div className="flex gap-1.5 sm:gap-2 mb-2">
           <div className="flex-1 relative min-w-0">
             <textarea
@@ -458,6 +530,15 @@ export function ChatGPTLikeSearch() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
+              onFocus={() => {
+                if (input.trim() && searchSuggestions.length > 0) {
+                  setShowSuggestions(true);
+                }
+              }}
+              onBlur={() => {
+                // 약간의 지연을 두어 클릭 이벤트가 먼저 처리되도록
+                setTimeout(() => setShowSuggestions(false), 200);
+              }}
               placeholder="메시지를 입력하세요..."
               className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-20 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none resize-none max-h-32 text-sm sm:text-base min-w-0"
               rows={1}

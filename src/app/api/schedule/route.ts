@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { contentScheduler, type ScheduleConfig } from '@/lib/scheduling/scheduler';
+import * as scheduleDB from '@/lib/scheduling/schedule-db';
+import { calculateNextRun } from '@/lib/scheduling/schedule-utils';
 
 export const runtime = 'nodejs';
 
@@ -9,6 +11,24 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
+    // DB에서 먼저 조회 시도
+    try {
+      if (id) {
+        const schedule = await scheduleDB.getScheduleFromDB(id);
+        if (schedule) {
+          return NextResponse.json({ success: true, data: schedule });
+        }
+      } else {
+        const schedules = await scheduleDB.getAllSchedulesFromDB();
+        if (schedules.length > 0) {
+          return NextResponse.json({ success: true, data: schedules });
+        }
+      }
+    } catch (dbError) {
+      console.warn('DB 조회 실패, 메모리 스케줄러로 폴백:', dbError);
+    }
+
+    // 폴백: 메모리 스케줄러 사용
     if (id) {
       const job = contentScheduler.getSchedule(id);
       if (!job) {
@@ -40,8 +60,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const job = contentScheduler.addSchedule(config);
-    return NextResponse.json({ success: true, data: job });
+    // DB에 저장 시도
+    try {
+      const nextRun = calculateNextRun(config);
+      const schedule = await scheduleDB.createScheduleInDB(config, nextRun);
+      
+      // 실시간 이벤트 전송
+      const { eventStreamManager } = await import('@/lib/realtime/event-stream');
+      eventStreamManager.scheduleEvent('created', schedule);
+      
+      return NextResponse.json({ success: true, data: schedule });
+    } catch (dbError) {
+      console.warn('DB 저장 실패, 메모리 스케줄러로 폴백:', dbError);
+      
+      // 폴백: 메모리 스케줄러 사용
+      const job = contentScheduler.addSchedule(config);
+      return NextResponse.json({ success: true, data: job });
+    }
   } catch (error: any) {
     return NextResponse.json(
       { error: '스케줄 생성 중 오류가 발생했습니다.', detail: error.message },

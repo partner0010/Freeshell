@@ -1,7 +1,12 @@
 /**
  * 강화된 모의해킹 및 침투 테스트 시스템
  * Enhanced Penetration Testing & Security Scanning
+ * 자기 학습 시스템 통합: 테스트 결과에서 학습하여 탐지 정확도 향상
  */
+
+import { selfLearningSystem } from '@/lib/ai/self-learning';
+import { selfMonitoringSystem } from '@/lib/ai/self-monitoring';
+import { selfImprovementSystem } from '@/lib/ai/self-improvement';
 
 export type VulnerabilityType = 
   | 'xss' | 'csrf' | 'sqli' | 'rce' | 'xxe' 
@@ -236,7 +241,7 @@ export class EnhancedPenetrationTester {
 
     const duration = (Date.now() - startTime) / 1000;
 
-    return {
+    const result: PenetrationTestResult = {
       id: `test-${Date.now()}`,
       testName: 'Full Security Scan',
       status: score >= 80 ? 'passed' : score >= 60 ? 'warning' : 'failed',
@@ -245,6 +250,37 @@ export class EnhancedPenetrationTester {
       timestamp: new Date(),
       duration,
     };
+
+    // 자기 학습: 스캔 결과에서 학습
+    selfLearningSystem.learnFromExperience({
+      task: 'penetration_test',
+      input: { codeLength: code.length, url },
+      output: result,
+      success: result.status === 'passed',
+      performance: score / 100,
+      patterns: vulnerabilities.map(v => v.type),
+      improvements: vulnerabilities.map(v => v.recommendation),
+    }).catch(err => console.error('침투 테스트 학습 오류:', err));
+
+    // 자기 모니터링: 성능 추적
+    selfMonitoringSystem.recordPerformance({
+      task: 'penetration_test',
+      performance: score / 100,
+      timestamp: new Date(),
+    }).catch(err => console.error('성능 모니터링 오류:', err));
+
+    // 성능이 낮으면 자기 개선 트리거
+    if (score < 70) {
+      selfImprovementSystem.triggerImprovement({
+        issue: `침투 테스트 점수가 낮습니다 (${score}/100)`,
+        context: {
+          vulnerabilities: vulnerabilities.length,
+          criticalCount: vulnerabilities.filter(v => v.severity === 'critical').length,
+        },
+      }).catch(err => console.error('자기 개선 트리거 오류:', err));
+    }
+
+    return result;
   }
 
   /**

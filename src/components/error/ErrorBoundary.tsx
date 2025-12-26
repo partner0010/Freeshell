@@ -3,6 +3,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { errorReporter } from '@/lib/error/error-reporter';
 
 interface Props {
   children: ReactNode;
@@ -47,17 +48,27 @@ export class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo);
     }
 
-    // 에러 로깅 (실제로는 서버로 전송)
+    // 에러 로깅 (에러 리포터 사용)
     this.logError(error, errorInfo);
   }
 
   private logError = (error: Error, errorInfo: ErrorInfo) => {
-    // 실제로는 서버로 에러 전송
+    // 에러 리포터로 전송
+    if (errorReporter) {
+      errorReporter.report({
+        message: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack || undefined,
+        severity: 'high',
+      });
+    }
+
+    // Sentry가 있는 경우에도 전송
     if (typeof window !== 'undefined' && (window as any).Sentry) {
       (window as any).Sentry.captureException(error, {
         contexts: {
           react: {
-            componentStack: errorInfo.componentStack,
+            componentStack: errorInfo.componentStack || undefined,
           },
         },
       });
@@ -111,7 +122,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <div className="text-xs font-mono text-red-600 bg-white p-3 rounded border overflow-x-auto">
                   {this.state.error.toString()}
                 </div>
-                {this.state.errorInfo && (
+                {this.state.errorInfo && this.state.errorInfo.componentStack && (
                   <details className="mt-3">
                     <summary className="text-xs text-gray-500 cursor-pointer">상세 정보</summary>
                     <pre className="text-xs text-gray-600 mt-2 bg-white p-3 rounded border overflow-x-auto max-h-40">

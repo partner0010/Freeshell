@@ -16,7 +16,7 @@ export function CodeReviewPanel() {
 
   const handleReview = async () => {
     if (!code.trim()) {
-      showToast('warning', '코드를 입력해주세요');
+      showToast({ type: 'warning', message: '코드를 입력해주세요' });
       return;
     }
 
@@ -24,9 +24,9 @@ export function CodeReviewPanel() {
     try {
       const result = await aiCodeReviewer.reviewCode(code);
       setReview(result);
-      showToast('success', '코드 리뷰가 완료되었습니다');
+      showToast({ type: 'success', message: '코드 리뷰가 완료되었습니다' });
     } catch (error) {
-      showToast('error', '코드 리뷰 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '코드 리뷰 중 오류가 발생했습니다' });
     } finally {
       setIsReviewing(false);
     }

@@ -27,7 +27,7 @@ export function FormBuilderPanel() {
 
   const handleCreateForm = () => {
     if (!formName.trim()) {
-      showToast('warning', '폼 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '폼 이름을 입력해주세요' });
       return;
     }
 
@@ -35,7 +35,7 @@ export function FormBuilderPanel() {
     setForms([...forms, form]);
     setSelectedForm(form);
     setFormName('');
-    showToast('success', '폼이 생성되었습니다');
+    showToast({ type: 'success', message: '폼이 생성되었습니다' });
   };
 
   const handleAddField = () => {
@@ -50,7 +50,7 @@ export function FormBuilderPanel() {
 
     setForms(formBuilder.getAllForms());
     setSelectedForm(formBuilder.getForm(selectedForm.id) || null);
-    showToast('success', '필드가 추가되었습니다');
+    showToast({ type: 'success', message: '필드가 추가되었습니다' });
   };
 
   const handleCopyHTML = () => {
@@ -58,7 +58,7 @@ export function FormBuilderPanel() {
 
     const html = formBuilder.generateHTML(selectedForm);
     navigator.clipboard.writeText(html);
-    showToast('success', 'HTML 코드가 복사되었습니다');
+    showToast({ type: 'success', message: 'HTML 코드가 복사되었습니다' });
   };
 
   return (

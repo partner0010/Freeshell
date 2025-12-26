@@ -35,7 +35,7 @@ export function UserManagementPanel() {
 
   const handleCreateUser = () => {
     if (!userEmail.trim() || !userName.trim()) {
-      showToast('warning', '이메일과 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '이메일과 이름을 입력해주세요' });
       return;
     }
 
@@ -43,19 +43,19 @@ export function UserManagementPanel() {
     setUsers([...users, user]);
     setUserEmail('');
     setUserName('');
-    showToast('success', '사용자가 생성되었습니다');
+    showToast({ type: 'success', message: '사용자가 생성되었습니다' });
   };
 
   const handleCreateTeam = () => {
     if (!teamName.trim()) {
-      showToast('warning', '팀 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '팀 이름을 입력해주세요' });
       return;
     }
 
     const team = userManagement.createTeam(teamName);
     setTeams([...teams, team]);
     setTeamName('');
-    showToast('success', '팀이 생성되었습니다');
+    showToast({ type: 'success', message: '팀이 생성되었습니다' });
   };
 
   const getRoleColor = (role: Role) => {

@@ -120,3 +120,38 @@ model LicenseUsage {
   @@unique([licenseId, deviceId])
   @@map("license_usages")
 }
+
+model Workflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String? @db.Text
+  steps       Json     // WorkflowStep[] 배열을 JSON으로 저장
+  status      String   @default("active") // active, paused
+  runCount    Int      @default(0)
+  lastRun     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("workflows")
+}
+
+model Schedule {
+  id          String   @id @default(cuid())
+  topic       String
+  contentType String
+  frequency   String   // daily, weekly, monthly, custom
+  time        String?  // HH:MM 형식
+  dayOfWeek   Int?     // 0-6 (일-토)
+  dayOfMonth  Int?     // 1-31
+  multilingual Boolean @default(false)
+  languages   Json?    // string[] 배열을 JSON으로 저장
+  options     Json?    // 추가 옵션을 JSON으로 저장
+  nextRun     DateTime
+  lastRun     DateTime?
+  status      String   @default("active") // active, paused, completed
+  runCount    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("schedules")
+}

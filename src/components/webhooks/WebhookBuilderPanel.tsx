@@ -33,7 +33,7 @@ export function WebhookBuilderPanel() {
 
   const handleCreateWebhook = () => {
     if (!webhookName.trim()) {
-      showToast('warning', '웹훅 이름을 입력해주세요');
+      showToast({ type: 'warning', message: '웹훅 이름을 입력해주세요' });
       return;
     }
 
@@ -41,7 +41,7 @@ export function WebhookBuilderPanel() {
     setWebhooks([...webhooks, webhook]);
     setSelectedWebhook(webhook);
     setWebhookName('');
-    showToast('success', '웹훅이 생성되었습니다');
+    showToast({ type: 'success', message: '웹훅이 생성되었습니다' });
   };
 
   const handleAddEvent = () => {
@@ -57,7 +57,7 @@ export function WebhookBuilderPanel() {
 
     setWebhooks(webhookBuilder.getAllWebhooks());
     setSelectedWebhook(webhookBuilder.getWebhook(selectedWebhook.id) || null);
-    showToast('success', '이벤트가 추가되었습니다');
+    showToast({ type: 'success', message: '이벤트가 추가되었습니다' });
   };
 
   const handleToggleEvent = (eventId: string) => {
@@ -69,15 +69,15 @@ export function WebhookBuilderPanel() {
     event.active = !event.active;
     setWebhooks(webhookBuilder.getAllWebhooks());
     setSelectedWebhook(webhookBuilder.getWebhook(selectedWebhook.id) || null);
-    showToast('success', `이벤트가 ${event.active ? '활성화' : '비활성화'}되었습니다`);
+    showToast({ type: 'success', message: `이벤트가 ${event.active ? '활성화' : '비활성화'}되었습니다` });
   };
 
   const handleTestEvent = async (event: WebhookEvent) => {
     try {
       const result = await webhookBuilder.triggerEvent(event, { test: true });
-      showToast('success', `테스트 성공: ${result.message}`);
+      showToast({ type: 'success', message: `테스트 성공: ${result.message}` });
     } catch (error) {
-      showToast('error', '테스트 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '테스트 중 오류가 발생했습니다' });
     }
   };
 

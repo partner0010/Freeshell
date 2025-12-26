@@ -10,17 +10,26 @@ export const securityHeaders = {
   'X-XSS-Protection': '1; mode=block',
   
   // HTTPS 강제
-  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
   
-  // Content Security Policy
+  // Cross-Origin 정책
+  'Cross-Origin-Embedder-Policy': 'require-corp',
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Resource-Policy': 'same-origin',
+  
+  // Content Security Policy (강화)
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https:",
-    "font-src 'self' data:",
-    "connect-src 'self' https://api.openai.com https://api-inference.huggingface.co",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: https: blob:",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "connect-src 'self' https://api.openai.com https://api-inference.huggingface.co https://api.cohere.ai https://api.together.xyz https://*.supabase.co",
+    "frame-src 'self' https://www.google.com",
     "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "upgrade-insecure-requests",
   ].join('; '),
   
   // Referrer Policy

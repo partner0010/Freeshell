@@ -1,7 +1,12 @@
 /**
  * AI 기반 이상 탐지 시스템
  * Machine Learning을 활용한 이상 행위 탐지
+ * 자기 학습 시스템 통합: 탐지 결과에서 학습하여 탐지 정확도 향상
  */
+
+import { selfLearningSystem } from './self-learning';
+import { selfMonitoringSystem } from './self-monitoring';
+import { selfImprovementSystem } from './self-improvement';
 
 export interface Anomaly {
   id: string;
@@ -179,6 +184,37 @@ export class AnomalyDetectionSystem {
     };
 
     this.anomalies.set(anomaly.id, anomaly);
+
+    // 자기 학습: 이상 탐지 결과에서 학습
+    selfLearningSystem.learnFromExperience({
+      task: 'anomaly_detection',
+      input: { data, baseline: baseline.normalPatterns },
+      output: anomaly,
+      success: true,
+      performance: confidence / 100,
+      patterns: [anomaly.type, anomaly.severity],
+      improvements: anomaly.recommendations,
+    }).catch(err => console.error('이상 탐지 학습 오류:', err));
+
+    // 자기 모니터링: 성능 추적
+    selfMonitoringSystem.recordPerformance({
+      task: 'anomaly_detection',
+      performance: confidence / 100,
+      timestamp: new Date(),
+    }).catch(err => console.error('성능 모니터링 오류:', err));
+
+    // 심각한 이상이면 자기 개선 트리거
+    if (anomaly.severity === 'critical') {
+      selfImprovementSystem.triggerImprovement({
+        issue: `심각한 이상 탐지: ${anomaly.description}`,
+        context: {
+          anomalyType: anomaly.type,
+          confidence: anomaly.confidence,
+          metrics: anomaly.metrics,
+        },
+      }).catch(err => console.error('자기 개선 트리거 오류:', err));
+    }
+
     return anomaly;
   }
 

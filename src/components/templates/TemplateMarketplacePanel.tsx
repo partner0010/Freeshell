@@ -33,7 +33,7 @@ export function TemplateMarketplacePanel() {
 
   const handleDownload = (template: Template) => {
     templateMarketplace.downloadTemplate(template.id);
-    showToast('success', `"${template.name}" 템플릿이 적용되었습니다`);
+    showToast({ type: 'success', message: `"${template.name}" 템플릿이 적용되었습니다` });
     // 실제로는 프로젝트에 템플릿 적용 로직
   };
 

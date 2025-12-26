@@ -26,7 +26,7 @@ export function APIBuilderPanel() {
 
   const handleCreateCollection = () => {
     if (!collectionName.trim() || !baseUrl.trim()) {
-      showToast('warning', '이름과 Base URL을 입력해주세요');
+      showToast({ type: 'warning', message: '이름과 Base URL을 입력해주세요' });
       return;
     }
 
@@ -35,7 +35,7 @@ export function APIBuilderPanel() {
     setSelectedCollection(collection);
     setCollectionName('');
     setBaseUrl('');
-    showToast('success', 'API 컬렉션이 생성되었습니다');
+    showToast({ type: 'success', message: 'API 컬렉션이 생성되었습니다' });
   };
 
   const handleAddEndpoint = (endpoint: Omit<APIEndpoint, 'id'>) => {
@@ -44,7 +44,7 @@ export function APIBuilderPanel() {
     apiBuilder.addEndpoint(selectedCollection.id, endpoint);
     setCollections(apiBuilder.getAllCollections());
     setSelectedCollection(apiBuilder.getCollection(selectedCollection.id) || null);
-    showToast('success', '엔드포인트가 추가되었습니다');
+    showToast({ type: 'success', message: '엔드포인트가 추가되었습니다' });
   };
 
   const handleTestEndpoint = async (endpoint: APIEndpoint) => {
@@ -52,9 +52,9 @@ export function APIBuilderPanel() {
 
     try {
       const result = await apiBuilder.testEndpoint(endpoint, selectedCollection.baseUrl);
-      showToast('success', `테스트 성공: ${JSON.stringify(result)}`);
+      showToast({ type: 'success', message: `테스트 성공: ${JSON.stringify(result)}` });
     } catch (error) {
-      showToast('error', '테스트 중 오류가 발생했습니다');
+      showToast({ type: 'error', message: '테스트 중 오류가 발생했습니다' });
     }
   };
 
@@ -69,7 +69,7 @@ export function APIBuilderPanel() {
     a.download = `${selectedCollection.name}.${format === 'openapi' ? 'json' : 'json'}`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('success', '내보내기가 완료되었습니다');
+    showToast({ type: 'success', message: '내보내기가 완료되었습니다' });
   };
 
   return (

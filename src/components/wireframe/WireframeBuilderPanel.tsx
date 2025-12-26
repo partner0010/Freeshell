@@ -24,24 +24,24 @@ export function WireframeBuilderPanel() {
     const templateName = templates.find((t) => t.id === templateId)?.name || templateId;
     const newWireframe = wireframeBuilder.fromTemplate(templateName);
     setWireframe(newWireframe);
-    showToast('success', '와이어프레임이 생성되었습니다');
+    showToast({ type: 'success', message: '와이어프레임이 생성되었습니다' });
   };
 
   const handleCreateNew = () => {
     if (!wireframeName.trim()) {
-      showToast('warning', '이름을 입력해주세요');
+      showToast({ type: 'warning', message: '이름을 입력해주세요' });
       return;
     }
     const newWireframe = wireframeBuilder.createWireframe(wireframeName);
     setWireframe(newWireframe);
     setWireframeName('');
-    showToast('success', '와이어프레임이 생성되었습니다');
+    showToast({ type: 'success', message: '와이어프레임이 생성되었습니다' });
   };
 
   const handleExport = (format: 'json' | 'png' | 'svg') => {
     if (!wireframe) return;
     const filename = wireframeBuilder.exportWireframe(wireframe, format);
-    showToast('success', `${filename} 다운로드 준비됨`);
+    showToast({ type: 'success', message: `${filename} 다운로드 준비됨` });
   };
 
   return (
