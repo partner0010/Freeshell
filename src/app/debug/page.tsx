@@ -1,6 +1,6 @@
 /**
  * 디버깅 솔루션 페이지
- * TOP 10 디버깅 도구 통합
+ * 외부 디버깅 도구 통합
  */
 
 'use client';
@@ -143,7 +143,7 @@ export default function DebugPage() {
                 디버깅 솔루션
               </h1>
               <p className="text-gray-600">
-                TOP 10 디버깅 도구를 통합한 종합 디버깅 플랫폼
+                다양한 디버깅 도구를 통합한 종합 디버깅 플랫폼
               </p>
             </div>
             <div className="flex gap-2">

@@ -21,12 +21,8 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { ThemeToggle as NewThemeToggle } from '@/components/ui/ThemeToggle';
 import { UnifiedNotificationCenter } from '@/components/notifications/UnifiedNotificationCenter';
 import { HighContrastToggle } from '@/components/accessibility/HighContrastToggle';
-import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
 import { registerServiceWorker } from '@/lib/pwa/pwa-installer';
-import FeedbackWidget from '@/components/editor/FeedbackWidget';
-import { PreviewSnapshot } from '@/components/editor/PreviewSnapshot';
-import { PreviewPerformance } from '@/components/editor/PreviewPerformance';
-import { PreviewAccessibility } from '@/components/editor/PreviewAccessibility';
+import { EditorFloatingWidgets } from '@/components/editor/EditorFloatingWidgets';
 import { VoiceTranslation } from '@/components/editor/VoiceTranslation';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { RealTimeCollaboration } from '@/components/collaboration/RealTimeCollaboration';
@@ -470,20 +466,8 @@ function EditorPageContent() {
       <AIChatbot />
 
 
-      {/* 피드백 위젯 */}
-      <FeedbackWidget />
-
-      {/* 미리보기 스냅샷 */}
-      {isPreviewMode && <PreviewSnapshot />}
-
-      {/* 미리보기 성능 모니터 */}
-      {isPreviewMode && <PreviewPerformance />}
-
-      {/* 미리보기 접근성 검사 */}
-      {isPreviewMode && <PreviewAccessibility />}
-
-      {/* PWA 설치 프롬프트 */}
-      <PWAInstallPrompt />
+      {/* 에디터 플로팅 위젯 통합 (피드백, 스냅샷, 성능, 접근성, PWA) */}
+      <EditorFloatingWidgets isPreviewMode={isPreviewMode} />
 
       {/* 음성 번역 메모 (최소화 가능) */}
       <VoiceTranslation

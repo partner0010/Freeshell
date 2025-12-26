@@ -90,7 +90,6 @@ export default function HomePage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate">SHELL</h2>
-                    <p className="text-xs sm:text-sm text-gray-500 truncate">AI 어시스턴트 - ChatGPT처럼 질문하고 답변받으세요</p>
                   </div>
                 </div>
               </div>

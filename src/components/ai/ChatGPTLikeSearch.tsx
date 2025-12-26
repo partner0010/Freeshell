@@ -284,7 +284,6 @@ export function ChatGPTLikeSearch() {
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="font-bold text-gray-900 text-sm sm:text-base truncate">SHELL</h2>
-              <p className="text-xs text-gray-600 truncate">AI 어시스턴트 - 무료로 질문하고 답변받으세요</p>
             </div>
           </div>
           <div className="flex gap-1 sm:gap-2 flex-shrink-0">

@@ -18,6 +18,8 @@ export default function CreatorPage() {
   const [error, setError] = useState<string | null>(null);
   const [batchMode, setBatchMode] = useState(false);
   const [batchTopics, setBatchTopics] = useState<string[]>(['']);
+  const [generatedContents, setGeneratedContents] = useState<any[]>([]);
+  const [selectedContent, setSelectedContent] = useState<number | null>(null);
 
   const contentTypes = [
     {
@@ -71,46 +73,76 @@ export default function CreatorPage() {
     if (!selectedType || !topic.trim()) return;
     
     setIsGenerating(true);
+    setGeneratedContents([]);
+    setSelectedContent(null);
+    setError(null);
+    
     try {
-      const response = await fetch('/api/content/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contentType: selectedType,
-          topic: topic.trim(),
-          options: {
-            duration: selectedType === 'short-video' ? duration : undefined,
-            language: 'ko',
-            multilingual,
-            includeSubtitles: true,
-            includeBackgroundMusic: true,
-            seoOptimize: true,
+      // 6개의 콘텐츠를 자동 생성
+      const generatePromises = Array.from({ length: 6 }, (_, index) => 
+        fetch('/api/content/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        }),
-      });
+          body: JSON.stringify({
+            contentType: selectedType,
+            topic: topic.trim(),
+            variant: index + 1, // 변형 번호
+            options: {
+              duration: selectedType === 'short-video' ? duration : undefined,
+              language: 'ko',
+              multilingual,
+              includeSubtitles: true,
+              includeBackgroundMusic: true,
+              seoOptimize: true,
+            },
+          }),
+        }).then(res => res.json())
+      );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '생성 실패');
-      }
+      const results = await Promise.all(generatePromises);
+      const contents = results.map((resultData, index) => ({
+        id: index + 1,
+        data: resultData.data,
+        title: `${topic.trim()} - 변형 ${index + 1}`,
+        preview: resultData.data?.preview || resultData.data?.url || resultData.data?.content,
+        createdAt: new Date(),
+      }));
 
-      const resultData = await response.json();
-      setResult(resultData.data);
-      setError(null);
+      setGeneratedContents(contents);
+      setResult(null); // 단일 결과 대신 여러 결과 표시
       
-      if (resultData.data?.message) {
-        setError(resultData.data.message);
-      }
-      
-      console.log('생성 결과:', resultData);
+      console.log('생성 결과:', contents);
     } catch (error: any) {
       setError(`생성 중 오류가 발생했습니다: ${error.message}`);
       setResult(null);
+      setGeneratedContents([]);
       console.error('생성 오류:', error);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleDownload = (content: any) => {
+    // 다운로드 로직
+    if (content.data?.url) {
+      const link = document.createElement('a');
+      link.href = content.data.url;
+      link.download = `${content.title}.${content.data.url.split('.').pop()}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else if (content.data?.content) {
+      const blob = new Blob([content.data.content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${content.title}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
   };
 
@@ -342,8 +374,112 @@ export default function CreatorPage() {
           </motion.div>
         )}
 
-        {/* 결과 표시 */}
-        {result && (
+        {/* 생성된 콘텐츠 미리보기 (6개) */}
+        {generatedContents.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8"
+          >
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <Sparkles size={24} />
+              생성된 콘텐츠 미리보기 ({generatedContents.length}개)
+            </h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {generatedContents.map((content, index) => (
+                <motion.div
+                  key={content.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`bg-white rounded-2xl p-4 sm:p-6 border-2 shadow-lg transition-all cursor-pointer ${
+                    selectedContent === content.id
+                      ? 'border-purple-500 bg-purple-50'
+                      : 'border-gray-200 hover:border-purple-300'
+                  }`}
+                  onClick={() => setSelectedContent(content.id)}
+                >
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
+                    <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate flex-1">{content.title}</h3>
+                    {selectedContent === content.id && (
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* 미리보기 영역 */}
+                  <div className="mb-3 sm:mb-4 rounded-lg overflow-hidden bg-gray-100 min-h-[150px] sm:min-h-[200px] flex items-center justify-center">
+                    {content.data?.url ? (
+                      selectedType === 'image' ? (
+                        <img src={content.data.url} alt={content.title} className="w-full h-full object-cover" />
+                      ) : selectedType === 'video' || selectedType === 'short-video' ? (
+                        <video src={content.data.url} controls className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="p-4 text-center">
+                          <FileText size={40} className="sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
+                          <p className="text-xs sm:text-sm text-gray-600">미리보기</p>
+                        </div>
+                      )
+                    ) : content.data?.content ? (
+                      <div className="p-3 sm:p-4 text-xs sm:text-sm text-gray-700 max-h-[150px] sm:max-h-[200px] overflow-y-auto">
+                        {content.data.content.substring(0, 150)}...
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center">
+                        <Sparkles size={40} className="sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
+                        <p className="text-xs sm:text-sm text-gray-600">콘텐츠 생성됨</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 다운로드 버튼 */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownload(content);
+                    }}
+                    className="w-full px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
+                  >
+                    <Download size={16} className="sm:w-5 sm:h-5" />
+                    다운로드
+                  </button>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* 선택된 콘텐츠 일괄 다운로드 */}
+            {selectedContent && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 p-4 sm:p-6 bg-purple-50 rounded-2xl border-2 border-purple-200"
+              >
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 mb-1 text-sm sm:text-base">선택된 콘텐츠</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 truncate">
+                      {generatedContents.find(c => c.id === selectedContent)?.title}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const content = generatedContents.find(c => c.id === selectedContent);
+                      if (content) handleDownload(content);
+                    }}
+                    className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2 text-xs sm:text-sm whitespace-nowrap w-full sm:w-auto justify-center"
+                  >
+                    <Download size={18} className="sm:w-5 sm:h-5" />
+                    선택한 콘텐츠 다운로드
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+
+        {/* 결과 표시 (기존 단일 결과 - 하위 호환성) */}
+        {result && !generatedContents.length && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
