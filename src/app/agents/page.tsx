@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Bot, Play, CheckCircle, XCircle, Loader2, Zap, Search, Image, Code, Clock, Calendar, Workflow, Repeat, Settings, BarChart3, FileText, Cloud } from 'lucide-react';
+import { Bot, Play, CheckCircle, XCircle, Loader2, Zap, Search, Image, Code, Clock, Calendar, Workflow, Repeat, Settings, BarChart3, FileText, Cloud, Video, Music, BookOpen, Mic, Type, FileEdit } from 'lucide-react';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
 import { agentManager, type Agent, type AgentTask } from '@/lib/ai/agents';
@@ -14,14 +14,26 @@ export default function AgentsPage() {
   const [tasks, setTasks] = useState<AgentTask[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [taskInput, setTaskInput] = useState('');
-  const [activeTab, setActiveTab] = useState<'agents' | 'workflows' | 'scheduled' | 'history'>('agents');
+  const [activeTab, setActiveTab] = useState<'create' | 'agents' | 'workflows' | 'scheduled' | 'history'>('create');
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [scheduledTasks, setScheduledTasks] = useState<any[]>([]);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [selectedContentType, setSelectedContentType] = useState<string | null>(null);
 
   useEffect(() => {
     loadAgents();
     loadTasks();
   }, []);
+
+  // 작업 실행 중 상태 업데이트를 위한 주기적 새로고침
+  useEffect(() => {
+    if (isExecuting) {
+      const interval = setInterval(() => {
+        loadTasks();
+      }, 1000); // 1초마다 업데이트
+      return () => clearInterval(interval);
+    }
+  }, [isExecuting]);
 
   const loadAgents = () => {
     const allAgents = agentManager.getAllAgents();
@@ -30,7 +42,11 @@ export default function AgentsPage() {
 
   const loadTasks = () => {
     const allTasks = agentManager.getAllTasks();
-    setTasks(allTasks);
+    // 최신 작업이 먼저 오도록 정렬
+    const sortedTasks = [...allTasks].sort((a, b) => 
+      b.createdAt.getTime() - a.createdAt.getTime()
+    );
+    setTasks(sortedTasks);
   };
 
   const handleCreateTask = async () => {
@@ -39,6 +55,8 @@ export default function AgentsPage() {
       return;
     }
 
+    setIsExecuting(true);
+    
     try {
       const task = agentManager.createTask({
         agentId: selectedAgent.id,
@@ -46,24 +64,34 @@ export default function AgentsPage() {
         input: { prompt: taskInput },
       });
 
-      setTasks([...tasks, task]);
+      // 작업을 즉시 목록에 추가 (pending 상태)
+      const newTasks = [...tasks, task];
+      setTasks(newTasks);
       const currentInput = taskInput;
       setTaskInput('');
 
-      // 작업 실행
-      try {
-        await agentManager.executeTask(task.id);
-        loadTasks();
-        // 성공 메시지 (선택사항)
-        console.log('작업이 성공적으로 실행되었습니다.');
-      } catch (error: any) {
-        console.error('작업 실행 오류:', error);
-        alert(`작업 실행 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`);
-        loadTasks(); // 상태 업데이트를 위해 다시 로드
-      }
+      // 히스토리 탭으로 자동 전환
+      setActiveTab('history');
+      
+      // 작업 실행 (비동기로 실행하여 UI 블로킹 방지)
+      agentManager.executeTask(task.id)
+        .then((result) => {
+          console.log('작업 실행 완료:', result);
+          // 작업 목록 새로고침
+          loadTasks();
+          setIsExecuting(false);
+        })
+        .catch((error: any) => {
+          console.error('작업 실행 오류:', error);
+          alert(`작업 실행 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`);
+          // 오류가 발생해도 작업 목록은 업데이트
+          loadTasks();
+          setIsExecuting(false);
+        });
     } catch (error: any) {
       console.error('작업 생성 오류:', error);
       alert(`작업 생성 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`);
+      setIsExecuting(false);
     }
   };
 
@@ -98,8 +126,9 @@ export default function AgentsPage() {
         </div>
 
         {/* 탭 메뉴 */}
-        <div className="flex gap-2 border-b border-gray-200 mb-8">
+        <div className="flex gap-2 border-b border-gray-200 mb-8 overflow-x-auto">
           {[
+            { id: 'create', label: '콘텐츠 생성', icon: Sparkles },
             { id: 'agents', label: '에이전트', icon: Bot },
             { id: 'workflows', label: '워크플로우', icon: Workflow },
             { id: 'scheduled', label: '스케줄', icon: Calendar },
@@ -287,11 +316,20 @@ export default function AgentsPage() {
               </div>
               <button
                 onClick={handleCreateTask}
-                disabled={!taskInput.trim()}
+                disabled={!taskInput.trim() || isExecuting || !selectedAgent}
                 className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                <Play size={20} />
-                작업 실행
+                {isExecuting ? (
+                  <>
+                    <Loader2 className="animate-spin" size={20} />
+                    작업 실행 중...
+                  </>
+                ) : (
+                  <>
+                    <Play size={20} />
+                    작업 실행
+                  </>
+                )}
               </button>
             </div>
           </motion.div>
@@ -304,11 +342,21 @@ export default function AgentsPage() {
           <>
             {/* 작업 목록 */}
         <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">작업 히스토리</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">작업 히스토리</h2>
+            <button
+              onClick={loadTasks}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all flex items-center gap-2"
+            >
+              <Repeat size={16} />
+              새로고침
+            </button>
+          </div>
           {tasks.length === 0 ? (
             <div className="text-center py-12">
               <Bot className="text-gray-400 mx-auto mb-4" size={64} />
               <p className="text-gray-600">아직 생성된 작업이 없습니다</p>
+              <p className="text-sm text-gray-500 mt-2">에이전트를 선택하고 작업을 생성해보세요</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -330,23 +378,33 @@ export default function AgentsPage() {
                             {task.type}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-medium text-gray-700 mb-1">입력:</p>
+                        <p className="text-sm text-gray-600 mb-3">
                           {typeof task.input === 'string'
                             ? task.input
-                            : JSON.stringify(task.input)}
+                            : task.input?.prompt || JSON.stringify(task.input)}
                         </p>
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 whitespace-nowrap ml-4">
                         {task.createdAt.toLocaleString('ko-KR')}
                       </div>
                     </div>
                     {task.output && (
                       <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
-                        <p className="text-sm text-gray-700">
+                        <p className="text-sm font-medium text-gray-700 mb-2">결과:</p>
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap break-words">
                           {typeof task.output === 'string'
                             ? task.output
-                            : JSON.stringify(task.output, null, 2)}
-                        </p>
+                            : task.output.content || task.output.data || JSON.stringify(task.output, null, 2)}
+                        </div>
+                      </div>
+                    )}
+                    {task.status === 'processing' && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center gap-2 text-blue-700">
+                          <Loader2 className="animate-spin" size={16} />
+                          <span className="text-sm font-medium">작업 실행 중...</span>
+                        </div>
                       </div>
                     )}
                   </div>

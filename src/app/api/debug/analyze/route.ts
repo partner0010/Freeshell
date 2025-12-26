@@ -59,13 +59,16 @@ export async function POST(request: NextRequest) {
       suggestion?: string;
     }> = [];
 
-    // 기본 검사
-    if (code.includes('console.log')) {
+    // 기본 검사 (개발 환경에서는 console.log 허용)
+    const consoleLogCount = (code.match(/console\.log/g) || []).length;
+    const isDevelopmentCode = code.includes('NODE_ENV') || code.includes('development') || code.includes('process.env');
+    
+    if (consoleLogCount > 0 && !isDevelopmentCode && consoleLogCount > 5) {
       results.push({
         type: 'warning',
-        message: '프로덕션 코드에서 console.log 사용을 피하세요.',
+        message: `프로덕션 코드에서 console.log가 ${consoleLogCount}개 발견되었습니다.`,
         location: fileName || '코드',
-        suggestion: 'console.log를 제거하거나 프로덕션 빌드에서 자동 제거되도록 설정하세요.',
+        suggestion: '프로덕션 빌드에서 자동 제거되도록 설정하거나, 개발 환경에서만 사용하도록 조건부로 처리하세요.',
       });
     }
 
