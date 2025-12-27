@@ -135,7 +135,9 @@ export default function CreatorPage() {
       setGeneratedContents(contents);
       setResult(null); // 단일 결과 대신 여러 결과 표시
       
-      console.log('생성 결과:', contents);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('생성 결과:', contents);
+      }
     } catch (error: any) {
       const errorMessage = error?.message || error?.toString() || '알 수 없는 오류가 발생했습니다';
       setError(`생성 중 오류가 발생했습니다: ${errorMessage}`);
@@ -237,7 +239,9 @@ export default function CreatorPage() {
         message: `${content.title} 다운로드가 시작되었습니다.`,
       });
     } catch (error: any) {
-      console.error('다운로드 오류:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('다운로드 오류:', error);
+      }
       showToast({
         type: 'error',
         message: `다운로드 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`,
@@ -249,22 +253,22 @@ export default function CreatorPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <GlobalHeader />
 
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-10 md:mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-gray-900 mb-3 sm:mb-4">
             콘텐츠 생성하기
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 px-4">
             생성하고 싶은 콘텐츠 유형을 선택하고 주제를 입력하세요
           </p>
         </motion.div>
 
-        {/* 콘텐츠 유형 선택 */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        {/* 콘텐츠 유형 선택 - 반응형 개선 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-8 sm:mb-10 md:mb-12">
           {contentTypes.map((type) => {
             const Icon = type.icon;
             const isSelected = selectedType === type.id;
@@ -274,17 +278,20 @@ export default function CreatorPage() {
                 onClick={() => setSelectedType(type.id)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`relative p-6 rounded-2xl border-2 transition-all text-left ${
+                className={`relative p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border-2 transition-all text-left focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
                   isSelected
                     ? 'border-purple-500 bg-purple-50 shadow-lg'
                     : 'border-gray-200 bg-white hover:border-purple-300 hover:shadow-md'
                 }`}
+                aria-label={`${type.name} 선택`}
+                role="button"
+                tabIndex={0}
               >
-                <div className={`w-14 h-14 bg-gradient-to-br ${type.color} rounded-xl flex items-center justify-center mb-4`}>
-                  <Icon className="text-white" size={28} />
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-gradient-to-br ${type.color} rounded-lg sm:rounded-xl flex items-center justify-center mb-3 sm:mb-4`}>
+                  <Icon className="text-white w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{type.name}</h3>
-                <p className="text-sm text-gray-600">{type.description}</p>
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">{type.name}</h3>
+                <p className="text-xs sm:text-sm text-gray-600">{type.description}</p>
                 {isSelected && (
                   <div className="absolute top-4 right-4 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
                     <div className="w-2 h-2 bg-white rounded-full" />
@@ -300,14 +307,15 @@ export default function CreatorPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl p-8 shadow-xl border border-gray-200 mb-8"
+            className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl border border-gray-200 mb-6 sm:mb-8"
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">주제 입력</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">주제 입력</h2>
             <textarea
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="예: AI로 시작하는 부업, 오늘의 이슈, 요리 레시피 등..."
-              className="w-full h-32 px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none resize-none text-gray-900"
+              className="w-full h-24 sm:h-32 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg sm:rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none resize-none text-gray-900"
+              aria-label="콘텐츠 주제 입력"
             />
             <div className="mt-4 space-y-4">
               {/* 배치 모드 토글 */}
@@ -520,11 +528,13 @@ export default function CreatorPage() {
                       selectedType === 'image' ? (
                         <Image 
                           src={content.data.url} 
-                          alt={content.title} 
+                          alt={content.title || '생성된 콘텐츠'} 
                           width={400}
                           height={300}
                           className="w-full h-full object-cover"
                           loading="lazy"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+                          quality={85}
                           unoptimized={content.data.url.startsWith('http') && !content.data.url.includes('localhost')}
                         />
                       ) : selectedType === 'video' || selectedType === 'short-video' ? (

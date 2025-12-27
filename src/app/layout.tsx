@@ -78,6 +78,17 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
         <link rel="robots" href="/robots.txt" />
+        
+        {/* 성능 최적화: DNS 프리페치 */}
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+        <link rel="dns-prefetch" href="https://api.openai.com" />
+        <link rel="dns-prefetch" href="https://api-inference.huggingface.co" />
+        
+        {/* 성능 최적화: 프리커넥트 */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        
         {/* 구조화된 데이터 */}
         <StructuredData type="Organization" data={{}} />
         <StructuredData type="WebSite" data={{}} />
@@ -98,6 +109,7 @@ export default function RootLayout({
                   navigator.serviceWorker.register('/sw.js').then(
                     function(registration) {
                       // ServiceWorker 등록 성공
+                      // 프로덕션에서는 로그 제거
                       if (process.env.NODE_ENV === 'development') {
                         console.log('ServiceWorker 등록 성공:', registration.scope);
                       }

@@ -8,6 +8,7 @@ import { ContentSecurityManager } from '@/lib/security/content-security';
 import { ContentOptimizer } from '@/lib/performance/content-optimizer';
 import { cacheManager, createCacheKey } from '@/lib/performance/cache-manager';
 import { validateCSRFRequest } from '@/lib/security/csrf-protection';
+import { validateUserInput, sanitizeJson } from '@/lib/security/xss-protection';
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,7 +30,25 @@ export async function POST(request: NextRequest) {
 
     const { contentType, topic, options } = await request.json();
 
-    if (!contentType || !topic) {
+    // XSS 방어: 입력값 검증
+    const topicValidation = validateUserInput(topic, {
+      maxLength: 2000,
+      allowHtml: false,
+      required: true,
+    });
+
+    if (!topicValidation.valid) {
+      return NextResponse.json(
+        { error: topicValidation.error || '주제 검증 실패' },
+        { status: 400 }
+      );
+    }
+
+    const sanitizedTopic = topicValidation.sanitized;
+    const sanitizedContentType = validateUserInput(contentType, { maxLength: 50 }).sanitized;
+    const sanitizedOptions = sanitizeJson(options || {});
+
+    if (!sanitizedContentType || !sanitizedTopic) {
       return NextResponse.json(
         { error: '콘텐츠 유형과 주제를 입력하세요.' },
         { status: 400 }
@@ -37,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 캐시 키 생성
-    const cacheKey = createCacheKey('content', contentType, topic, JSON.stringify(options));
+    const cacheKey = createCacheKey('content', sanitizedContentType, sanitizedTopic, JSON.stringify(sanitizedOptions));
     
     // 캐시에서 확인 (5분 TTL)
     const cached = cacheManager.get(cacheKey);
@@ -54,15 +73,15 @@ export async function POST(request: NextRequest) {
     const optimizer = new ContentOptimizer();
     let result: any;
 
-    switch (contentType) {
+    switch (sanitizedContentType) {
       case 'short-video':
       case 'shortform': {
         const creator = new ShortFormCreator();
-        const content = await creator.createShortForm(topic, {
+        const content = await creator.createShortForm(sanitizedTopic, {
           duration: options?.duration || 30,
           aspectRatio: '9:16',
           platform: options?.platform || 'all',
-          hashtags: creator.getTrendingHashtags(topic),
+          hashtags: creator.getTrendingHashtags(sanitizedTopic),
         });
         result = {
           type: 'shortform',
@@ -76,9 +95,9 @@ export async function POST(request: NextRequest) {
 
       case 'blog': {
         const writer = new BlogWriter();
-        const keywords = writer.getTrendingKeywords(topic);
+        const keywords = writer.getTrendingKeywords(sanitizedTopic);
         const post = await writer.generateBlogPost({
-          topic,
+          topic: sanitizedTopic,
           targetKeywords: keywords,
           tone: options?.tone || 'professional',
           length: options?.length || 'medium',
@@ -101,9 +120,9 @@ export async function POST(request: NextRequest) {
 
       case 'ebook': {
         const generator = new EbookGenerator();
-        const chapters = generator.generateStructure(topic, 10);
+        const chapters = generator.generateStructure(sanitizedTopic, 10);
         const ebook = await generator.generateEbook({
-          title: `${topic} 가이드`,
+          title: `${sanitizedTopic} 가이드`,
           author: 'Freeshell 사용자',
           chapters,
           coverDesign: {
@@ -115,8 +134,8 @@ export async function POST(request: NextRequest) {
           includeIndex: true,
           metadata: {
             category: '가이드',
-            tags: [topic, 'AI', '자동화'],
-            description: `${topic}에 대한 완벽한 가이드`,
+            tags: [sanitizedTopic, 'AI', '자동화'],
+            description: `${sanitizedTopic}에 대한 완벽한 가이드`,
           },
         });
         result = {
@@ -134,7 +153,7 @@ export async function POST(request: NextRequest) {
         result = {
           type: 'audio',
           message: '음성 생성은 별도 API를 사용하세요.',
-          prompt: topic,
+          prompt: sanitizedTopic,
         };
         break;
       }
@@ -142,7 +161,7 @@ export async function POST(request: NextRequest) {
       case 'music': {
         const musicGen = new MusicGenerator();
         const track = await musicGen.generateMusic({
-          topic,
+          topic: sanitizedTopic,
           genre: options?.genre || 'electronic',
           mood: options?.mood || 'energetic',
           duration: options?.duration || 60,
@@ -167,8 +186,8 @@ export async function POST(request: NextRequest) {
       case 'song': {
         const musicGen = new MusicGenerator();
         const song = await musicGen.generateSong({
-          topic,
-          lyrics: options?.lyrics || topic,
+          topic: sanitizedTopic,
+          lyrics: options?.lyrics || sanitizedTopic,
           genre: options?.genre || 'pop',
           mood: options?.mood || 'happy',
           duration: options?.duration || 180,
@@ -194,7 +213,7 @@ export async function POST(request: NextRequest) {
         result = {
           type: 'image',
           message: '이미지 생성은 별도 API를 사용하세요.',
-          prompt: topic,
+          prompt: sanitizedTopic,
         };
         break;
       }
@@ -204,7 +223,7 @@ export async function POST(request: NextRequest) {
         result = {
           type: 'video',
           message: '비디오 생성은 별도 API를 사용하세요.',
-          prompt: topic,
+          prompt: sanitizedTopic,
         };
         break;
       }
@@ -227,8 +246,8 @@ export async function POST(request: NextRequest) {
     });
 
     securityManager.logSecurityEvent('content_created', contentId, userId, {
-      contentType,
-      topic,
+      contentType: sanitizedContentType,
+      topic: sanitizedTopic,
     });
 
     // 성능 최적화 적용
@@ -255,7 +274,7 @@ export async function POST(request: NextRequest) {
       const { domainLearningSystem } = await import('@/lib/ai/domain-specific-learning');
       domainLearningSystem.recordInteraction('content', {
         action: 'generate-content',
-        input: `${contentType}: ${topic}`,
+        input: `${sanitizedContentType}: ${sanitizedTopic}`,
         output: JSON.stringify(responseData),
         feedback: undefined,
       });
@@ -275,7 +294,9 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error('콘텐츠 생성 오류:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('콘텐츠 생성 오류:', error);
+    }
     return NextResponse.json(
       { error: `콘텐츠 생성 중 오류가 발생했습니다: ${error.message}` },
       { status: 500 }

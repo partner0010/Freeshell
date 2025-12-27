@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Bot, Play, CheckCircle, XCircle, Loader2, Zap, Search, Image, Code, Clock, Calendar, Workflow as WorkflowIcon, Repeat, Settings, BarChart3, FileText, Cloud, Video, Music, BookOpen, Mic, Type, FileEdit, Sparkles, Brain } from 'lucide-react';
+import { Bot, Play, CheckCircle, XCircle, Loader2, Zap, Search, Image, Code, Clock, Calendar, Workflow as WorkflowIcon, Repeat, Settings, BarChart3, FileText, Cloud, Video, Music, BookOpen, Mic, Type, FileEdit, Sparkles, Brain, Download, Eye, X } from 'lucide-react';
 import Link from 'next/link';
 import { agentManager, type Agent, type AgentTask } from '@/lib/ai/agents';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
@@ -13,8 +13,7 @@ import { WorkflowCreateModal } from '@/components/agents/WorkflowCreateModal';
 import { WorkflowEditModal } from '@/components/agents/WorkflowEditModal';
 import { ScheduleCreateModal } from '@/components/agents/ScheduleCreateModal';
 import { contentScheduler, type ScheduleConfig } from '@/lib/scheduling/scheduler';
-import { AutonomousAgentPanel } from '@/components/ai/AutonomousAgentPanel';
-import { LearningSystemsDashboard } from '@/components/ai/LearningSystemsDashboard';
+// 자율AI와 학습시스템은 관리자 전용으로 이동 (일반 사용자에게는 불필요)
 import { getCSRFToken } from '@/lib/utils/csrf-client';
 
 export default function AgentsPage() {
@@ -23,7 +22,7 @@ export default function AgentsPage() {
   const [tasks, setTasks] = useState<AgentTask[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [taskInput, setTaskInput] = useState('');
-        const [activeTab, setActiveTab] = useState<'create' | 'agents' | 'workflows' | 'scheduled' | 'history' | 'autonomous' | 'learning'>('create');
+        const [activeTab, setActiveTab] = useState<'create' | 'agents' | 'workflows' | 'scheduled' | 'history'>('create');
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [scheduledTasks, setScheduledTasks] = useState<any[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -32,6 +31,8 @@ export default function AgentsPage() {
   const [isEditingWorkflow, setIsEditingWorkflow] = useState(false);
   const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
   const [isCreatingSchedule, setIsCreatingSchedule] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState<any>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     loadAgents();
@@ -77,7 +78,9 @@ export default function AgentsPage() {
         }
       } catch (error) {
         // 조용히 실패 (로그만 출력)
-        console.debug('스케줄 자동 체크 실패:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('스케줄 자동 체크 실패:', error);
+        }
       }
     };
 
@@ -125,7 +128,9 @@ export default function AgentsPage() {
         }
       }
     } catch (error) {
-      console.error('워크플로우 로드 실패:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('워크플로우 로드 실패:', error);
+      }
     }
 
     // 폴백: 로컬 워크플로우 매니저 사용
@@ -246,7 +251,9 @@ export default function AgentsPage() {
         }
       }
     } catch (error) {
-      console.error('스케줄 로드 실패:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('스케줄 로드 실패:', error);
+      }
       // 기본 스케줄 예시
       setScheduledTasks([
         {
@@ -318,7 +325,9 @@ export default function AgentsPage() {
         setIsExecuting(false);
       }
     } catch (error: any) {
-      console.error('작업 실행 오류:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('작업 실행 오류:', error);
+      }
       showToast({
         type: 'error',
         message: `작업 실행 실패: ${error.message}`,
@@ -344,25 +353,23 @@ export default function AgentsPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <GlobalHeader />
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <Bot className="text-purple-600" size={32} />
-            <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-900">
+          <div className="inline-flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <Bot className="text-purple-600 w-6 h-6 sm:w-8 sm:h-8" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-gray-900">
               AI 에이전트
             </h1>
           </div>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-4">
             자동화된 AI 에이전트로 복잡한 작업을 자동으로 처리하세요
           </p>
         </div>
 
-        {/* 탭 메뉴 */}
-        <div className="flex gap-2 border-b border-gray-200 mb-8 overflow-x-auto">
+        {/* 탭 메뉴 - 반응형 디자인 개선 */}
+        <div className="flex gap-1 sm:gap-2 border-b border-gray-200 mb-6 sm:mb-8 overflow-x-auto scrollbar-hide">
           {[
             { id: 'create', label: '콘텐츠 생성', icon: Sparkles },
-            { id: 'autonomous', label: '자율 AI', icon: Brain },
-            { id: 'learning', label: '학습 시스템', icon: BarChart3 },
             { id: 'agents', label: '에이전트', icon: Bot },
             { id: 'workflows', label: '워크플로우', icon: WorkflowIcon },
             { id: 'scheduled', label: '스케줄', icon: Calendar },
@@ -373,14 +380,15 @@ export default function AgentsPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+                className={`px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'border-purple-600 text-purple-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
-                <Icon size={18} className="inline mr-2" />
-                {tab.label}
+                <Icon size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] inline mr-1 sm:mr-2" />
+                <span className="hidden xs:inline">{tab.label}</span>
+                <span className="xs:hidden">{tab.label.split(' ')[0]}</span>
               </button>
             );
           })}
@@ -389,9 +397,9 @@ export default function AgentsPage() {
         {/* 콘텐츠 생성 탭 */}
         {activeTab === 'create' && (
           <div className="space-y-6 mb-12">
-            <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">콘텐츠 생성</h2>
-              <p className="text-gray-600 mb-8">원하는 콘텐츠 타입을 선택하고 생성하세요</p>
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl border border-gray-200">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">콘텐츠 생성</h2>
+              <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">원하는 콘텐츠 타입을 선택하고 생성하세요</p>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 {[
@@ -459,17 +467,17 @@ export default function AgentsPage() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setSelectedContentType(contentType.id)}
-                      className={`p-6 rounded-2xl border-2 transition-all ${
+                      className={`p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl border-2 transition-all ${
                         selectedContentType === contentType.id
                           ? 'border-purple-500 shadow-lg'
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
                     >
-                      <div className={`w-12 h-12 bg-gradient-to-br ${contentType.color} rounded-xl flex items-center justify-center mb-4 mx-auto`}>
-                        <Icon className="text-white" size={24} />
+                      <div className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br ${contentType.color} rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 md:mb-4 mx-auto`}>
+                        <Icon className="text-white w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                       </div>
-                      <h3 className="font-bold text-gray-900 mb-1 text-center">{contentType.name}</h3>
-                      <p className="text-xs text-gray-500 text-center">{contentType.description}</p>
+                      <h3 className="font-bold text-gray-900 mb-1 text-center text-xs sm:text-sm md:text-base">{contentType.name}</h3>
+                      <p className="text-[10px] sm:text-xs text-gray-500 text-center">{contentType.description}</p>
                     </motion.button>
                   );
                 })}
@@ -480,9 +488,9 @@ export default function AgentsPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-8 p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200"
+                  className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl sm:rounded-2xl border-2 border-purple-200"
                 >
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">
                     {selectedContentType === 'video' && '영상 생성'}
                     {selectedContentType === 'image' && '이미지 생성'}
                     {selectedContentType === 'text' && '텍스트 생성'}
@@ -598,18 +606,27 @@ export default function AgentsPage() {
 
                             if (response.ok) {
                               const data = await response.json();
+                              // 생성된 콘텐츠 저장
+                              setGeneratedContent({
+                                ...data.data,
+                                contentType: apiContentType,
+                                topic: taskInput,
+                                createdAt: new Date(),
+                              });
                               showToast({
                                 type: 'success',
                                 message: '콘텐츠가 성공적으로 생성되었습니다.',
                               });
                               setTaskInput('');
                               setSelectedContentType(null);
-                              setActiveTab('history');
+                              setShowPreview(true);
                               loadTasks();
                               setIsExecuting(false);
                             } else {
                               const errorData = await response.json().catch(() => ({ error: '알 수 없는 오류' }));
-                              console.error('콘텐츠 생성 오류:', errorData);
+                              if (process.env.NODE_ENV === 'development') {
+                                console.error('콘텐츠 생성 오류:', errorData);
+                              }
                               showToast({
                                 type: 'error',
                                 message: errorData.error || errorData.message || '콘텐츠 생성에 실패했습니다.',
@@ -617,7 +634,9 @@ export default function AgentsPage() {
                               setIsExecuting(false);
                             }
                           } catch (error: any) {
-                            console.error('작업 생성 오류:', error);
+                            if (process.env.NODE_ENV === 'development') {
+                              console.error('작업 생성 오류:', error);
+                            }
                             showToast({
                               type: 'error',
                               message: `작업 생성 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`,
@@ -626,7 +645,7 @@ export default function AgentsPage() {
                           }
                         }}
                         disabled={!taskInput.trim() || isExecuting}
-                        className="flex-1 px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="flex-1 px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg sm:rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       >
                         {isExecuting ? (
                           <>
@@ -654,6 +673,155 @@ export default function AgentsPage() {
                 </motion.div>
               )}
             </div>
+
+            {/* 생성된 콘텐츠 미리보기 */}
+            {showPreview && generatedContent && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 sm:mt-8 bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl border-2 border-purple-200"
+              >
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
+                    생성된 콘텐츠 미리보기
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowPreview(false);
+                      setGeneratedContent(null);
+                    }}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    aria-label="미리보기 닫기"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="space-y-4 sm:space-y-6">
+                  {/* 콘텐츠 타입별 미리보기 */}
+                  {generatedContent.type === 'blog' && (
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="text-lg font-bold text-gray-900 mb-2">{generatedContent.title || generatedContent.post?.title}</h4>
+                        <p className="text-sm text-gray-600 mb-4">{generatedContent.excerpt || generatedContent.post?.excerpt}</p>
+                        <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: generatedContent.content || generatedContent.post?.content || '' }} />
+                      </div>
+                      {generatedContent.keywords && (
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700 mb-2">키워드:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {generatedContent.keywords.map((keyword: string, i: number) => (
+                              <span key={i} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                                {keyword}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {generatedContent.type === 'ebook' && (
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-bold text-gray-900">{generatedContent.title || generatedContent.ebook?.title}</h4>
+                      {generatedContent.coverUrl && (
+                        <img src={generatedContent.coverUrl} alt="표지" className="w-full max-w-xs mx-auto rounded-lg shadow-lg" />
+                      )}
+                      <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: generatedContent.content || generatedContent.ebook?.content || '' }} />
+                    </div>
+                  )}
+
+                  {generatedContent.type === 'shortform' && (
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-bold text-gray-900">숏폼 콘텐츠</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <p className="text-gray-700 whitespace-pre-wrap">{generatedContent.script || generatedContent.content?.description}</p>
+                      </div>
+                      {generatedContent.hashtags && (
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700 mb-2">해시태그:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {generatedContent.hashtags.map((tag: string, i: number) => (
+                              <span key={i} className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-sm">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {generatedContent.type === 'music' && (
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-bold text-gray-900">{generatedContent.title || generatedContent.track?.title}</h4>
+                      <p className="text-gray-600">장르: {generatedContent.genre || generatedContent.track?.genre}</p>
+                      <p className="text-gray-600">분위기: {generatedContent.mood || generatedContent.track?.mood}</p>
+                      {generatedContent.url && (
+                        <audio controls className="w-full">
+                          <source src={generatedContent.url} type="audio/mpeg" />
+                          브라우저가 오디오 태그를 지원하지 않습니다.
+                        </audio>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 다운로드 버튼 */}
+                  <div className="flex gap-3 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={() => {
+                        let content = '';
+                        let filename = '';
+
+                        if (generatedContent.type === 'blog') {
+                          content = `# ${generatedContent.title || generatedContent.post?.title}\n\n${generatedContent.excerpt || generatedContent.post?.excerpt}\n\n${generatedContent.content || generatedContent.post?.content || ''}`;
+                          filename = `${generatedContent.title || 'blog-post'}.md`;
+                        } else if (generatedContent.type === 'ebook') {
+                          content = `# ${generatedContent.title || generatedContent.ebook?.title}\n\n${generatedContent.content || generatedContent.ebook?.content || ''}`;
+                          filename = `${generatedContent.title || 'ebook'}.md`;
+                        } else if (generatedContent.type === 'shortform') {
+                          content = `${generatedContent.script || generatedContent.content?.description || ''}\n\n해시태그: ${generatedContent.hashtags?.join(' ') || ''}`;
+                          filename = 'shortform-content.md';
+                        } else if (generatedContent.type === 'music') {
+                          content = JSON.stringify(generatedContent, null, 2);
+                          filename = `${generatedContent.title || 'music'}.json`;
+                        } else {
+                          content = JSON.stringify(generatedContent, null, 2);
+                          filename = 'content.json';
+                        }
+
+                        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        a.click();
+                        URL.revokeObjectURL(url);
+
+                        showToast({
+                          type: 'success',
+                          message: '콘텐츠가 다운로드되었습니다.',
+                        });
+                      }}
+                      className="flex-1 px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg sm:rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <Download size={20} />
+                      다운로드
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowPreview(false);
+                        setGeneratedContent(null);
+                        setSelectedContentType(null);
+                      }}
+                      className="px-4 sm:px-6 py-3 sm:py-4 bg-gray-200 text-gray-700 rounded-lg sm:rounded-xl font-semibold hover:bg-gray-300 transition-all"
+                    >
+                      닫기
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </div>
         )}
 
@@ -1032,27 +1200,7 @@ export default function AgentsPage() {
           </>
         )}
 
-        {/* 자율 AI 탭 */}
-        {activeTab === 'autonomous' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <AutonomousAgentPanel />
-          </motion.div>
-        )}
-
-        {/* 학습 시스템 대시보드 탭 */}
-        {activeTab === 'learning' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <LearningSystemsDashboard />
-          </motion.div>
-        )}
+        {/* 자율AI와 학습시스템은 관리자 페이지(/admin/learning)로 이동 */}
 
         {/* 히스토리 탭 */}
         {activeTab === 'history' && (

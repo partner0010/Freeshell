@@ -23,7 +23,11 @@ interface Post {
 }
 
 export function CommunityForum() {
-  const [posts] = useState<Post[]>([
+  const [isWritingPost, setIsWritingPost] = useState(false);
+  const [newPostTitle, setNewPostTitle] = useState('');
+  const [newPostContent, setNewPostContent] = useState('');
+  const [newPostCategory, setNewPostCategory] = useState('자유');
+  const [posts, setPosts] = useState<Post[]>([
     {
       id: '1',
       title: 'AI 코드 생성 팁 공유',
@@ -69,17 +73,21 @@ export function CommunityForum() {
 
   return (
     <div className="space-y-6">
-      {/* 카테고리 필터 */}
+      {/* 카테고리 필터 - 반응형 개선 */}
       <div className="flex gap-2 flex-wrap">
         {categories.map((category) => (
           <button
             key={category}
             onClick={() => setSelectedCategory(category)}
-            className={`px-4 py-2 rounded-lg border-2 transition-all ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
               selectedCategory === category
                 ? 'border-purple-500 bg-purple-50 text-purple-700'
                 : 'border-gray-200 text-gray-700 hover:border-gray-300'
             }`}
+            aria-label={`${category === 'all' ? '전체' : category} 카테고리 필터`}
+            aria-pressed={selectedCategory === category}
+            role="tab"
+            tabIndex={0}
           >
             {category === 'all' ? '전체' : category}
           </button>
@@ -111,7 +119,7 @@ export function CommunityForum() {
         {filteredPosts.map((post) => (
           <div key={post.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-2xl flex-shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center text-xl sm:text-2xl flex-shrink-0" role="img" aria-label={`${post.author}의 아바타`}>
                 {post.avatar}
               </div>
               <div className="flex-1">
@@ -164,10 +172,94 @@ export function CommunityForum() {
       </div>
 
       {/* 새 게시글 작성 */}
-      <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-6 text-center hover:border-purple-500 transition-colors cursor-pointer">
-        <MessageSquare className="mx-auto mb-2 text-gray-400" size={32} />
-        <p className="text-gray-600 font-medium">새 게시글 작성하기</p>
-      </div>
+      {!isWritingPost ? (
+        <button
+          onClick={() => setIsWritingPost(true)}
+          className="w-full bg-white rounded-xl border-2 border-dashed border-gray-300 p-6 text-center hover:border-purple-500 transition-colors cursor-pointer"
+        >
+          <MessageSquare className="mx-auto mb-2 text-gray-400" size={32} />
+          <p className="text-gray-600 font-medium">새 게시글 작성하기</p>
+        </button>
+      ) : (
+        <div className="bg-white rounded-lg sm:rounded-xl border-2 border-purple-500 p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">새 게시글 작성</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">제목</label>
+              <input
+                type="text"
+                value={newPostTitle}
+                onChange={(e) => setNewPostTitle(e.target.value)}
+                placeholder="게시글 제목을 입력하세요"
+                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+                aria-label="게시글 제목"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">카테고리</label>
+              <select
+                value={newPostCategory}
+                onChange={(e) => setNewPostCategory(e.target.value)}
+                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+                aria-label="게시글 카테고리"
+              >
+                {categories.filter(c => c !== 'all').map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">내용</label>
+              <textarea
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                placeholder="게시글 내용을 입력하세요"
+                rows={6}
+                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none resize-none"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  if (newPostTitle.trim() && newPostContent.trim()) {
+                    const newPost: Post = {
+                      id: Date.now().toString(),
+                      title: newPostTitle,
+                      content: newPostContent,
+                      author: '나',
+                      avatar: '👤',
+                      likes: 0,
+                      comments: 0,
+                      views: 0,
+                      category: newPostCategory,
+                      createdAt: new Date(),
+                      tags: [],
+                    };
+                    setPosts([newPost, ...posts]);
+                    setNewPostTitle('');
+                    setNewPostContent('');
+                    setNewPostCategory('자유');
+                    setIsWritingPost(false);
+                  }
+                }}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+              >
+                게시하기
+              </button>
+              <button
+                onClick={() => {
+                  setIsWritingPost(false);
+                  setNewPostTitle('');
+                  setNewPostContent('');
+                }}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

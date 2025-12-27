@@ -18,7 +18,21 @@ const nextConfig = {
   // 코드 분할 및 최적화
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
+    optimizePackageImports: [
+      'lucide-react', 
+      'framer-motion', 
+      '@radix-ui/react-dialog', 
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-popover',
+    ],
+  },
+  
+  // 성능 최적화
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
   },
 
   // 압축
@@ -33,19 +47,32 @@ const nextConfig = {
   poweredByHeader: false,
   
   // 빌드 최적화
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     // 프로덕션에서 console.log 제거
-    if (!isServer && process.env.NODE_ENV === 'production') {
-      config.optimization.minimizer.forEach((minimizer) => {
-        if (minimizer.constructor.name === 'TerserPlugin') {
-          minimizer.options.terserOptions.compress.drop_console = true;
-        }
-      });
+    if (!dev && !isServer) {
+      config.optimization = {
+        ...config.optimization,
+        minimize: true,
+      };
+      
+      // Terser 플러그인 설정
+      const TerserPlugin = require('terser-webpack-plugin');
+      config.optimization.minimizer = [
+        new TerserPlugin({
+          terserOptions: {
+            compress: {
+              drop_console: true, // console.* 제거
+              drop_debugger: true, // debugger 제거
+              pure_funcs: ['console.log', 'console.info', 'console.debug'], // 특정 함수 제거
+            },
+          },
+        }),
+      ];
     }
     return config;
   },
 
-  // 헤더 설정 (추가 보안 헤더는 middleware에서 처리)
+  // 헤더 설정 - 보안 강화
   async headers() {
     return [
       {
@@ -58,6 +85,42 @@ const nextConfig = {
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' data: https://fonts.gstatic.com",
+              "img-src 'self' data: https: blob:",
+              "connect-src 'self' https://api.openai.com https://api-inference.huggingface.co https://api.cohere.ai https://api.together.xyz https://*.supabase.co",
+              "frame-src 'self' https://www.google.com",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "upgrade-insecure-requests",
+            ].join('; '),
           },
           {
             key: 'Cache-Control',

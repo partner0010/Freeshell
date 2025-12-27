@@ -83,31 +83,37 @@ export function GlobalHeader() {
   };
 
   // 사용자 편의성에 맞게 메뉴 재설계
-  // 논리적 그룹: 생성/편집 → AI 자동화 → 비즈니스 → 정보/소통 → 지원
+  // 요청된 순서: AI 에이전트 > 최신 > 회의록 > 전자사명 > 원격 솔루션 > 디버깅 > 사이트 검증
   const mainMenu = [
-    // 생성/편집 도구
-    { href: '/editor', labelKey: 'menu.editor', icon: FileText, category: '생성' },
-    { href: '/creator', labelKey: 'menu.creator', icon: Video, category: '생성' },
     // AI 자동화
     { href: '/agents', labelKey: 'menu.agents', icon: Zap, category: '자동화' },
+    // 정보 및 소통
+    { href: '/trends', labelKey: 'menu.trends', icon: Sparkles, category: '정보' },
+    // AI 자동화
     { href: '/meeting-notes', labelKey: 'menu.meetingNotes', icon: Mic, category: '자동화' },
     // 비즈니스 도구
     { href: '/signature', labelKey: 'menu.signature', icon: FileSignature, category: '비즈니스' },
     { href: '/remote', labelKey: 'menu.remote', icon: Monitor, category: '비즈니스' },
-    // 정보 및 소통
-    { href: '/trends', labelKey: 'menu.trends', icon: Sparkles, category: '정보' },
+    // 유틸리티 메뉴 (메인 메뉴로 이동)
+    { href: '/debug', labelKey: 'menu.debugging', icon: Bug, category: '유틸리티' },
+    { href: '/validate', labelKey: 'menu.validation', icon: Shield, category: '유틸리티' },
+    // 기타 (뒤로 이동)
+    { href: '/editor', labelKey: 'menu.editor', icon: FileText, category: '생성' },
+    { href: '/creator', labelKey: 'menu.creator', icon: Video, category: '생성' },
     { href: '/community', labelKey: 'menu.community', icon: Users, category: '소통' },
     // 지원
     { href: '/help', labelKey: 'menu.help', icon: HelpCircle, category: '지원' },
   ].map(item => ({ ...item, label: t(item.labelKey) }));
 
-  // 유틸리티 메뉴 (디버깅, 검증 등)
-  const utilityMenu = [
-    { href: '/debug', labelKey: 'menu.debugging', icon: Bug },
-    { href: '/validate', labelKey: 'menu.validation', icon: Shield },
-  ].map(item => ({ ...item, label: t(item.labelKey) }));
-
   return (
+      <>
+      {/* 스킵 링크 - 접근성 개선 */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-purple-600 focus:text-white focus:rounded-lg focus:shadow-lg"
+      >
+        메인 콘텐츠로 건너뛰기
+      </a>
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/80 dark:border-gray-700/80 shadow-sm supports-[backdrop-filter]:bg-white/80 supports-[backdrop-filter]:dark:bg-gray-900/80">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 md:h-18 min-h-[56px]">
@@ -149,7 +155,10 @@ export function GlobalHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="group flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 transition-all duration-200 font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+                className="group flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 transition-all duration-200 font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus-visible:ring-2"
+                aria-label={item.label}
+                role="menuitem"
+                tabIndex={0}
               >
                 <item.icon size={16} className="sm:w-5 sm:h-5 flex-shrink-0" />
                 <span className="hidden xl:inline">{item.label}</span>
@@ -159,20 +168,6 @@ export function GlobalHeader() {
 
           {/* 우측 액션 */}
           <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-            {/* 유틸리티 메뉴 (데스크톱) */}
-            <div className="hidden xl:flex items-center gap-0.5 border-r border-gray-200 dark:border-gray-700 pr-1.5 mr-1.5">
-              {utilityMenu.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all font-medium text-xs whitespace-nowrap"
-                >
-                  <item.icon size={14} className="flex-shrink-0" />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </div>
-
             {/* 언어 선택 */}
             <div className="hidden lg:block">
               <LanguageSelector />
@@ -249,22 +244,6 @@ export function GlobalHeader() {
                   <span>{item.label}</span>
                 </Link>
               ))}
-              
-              {/* 구분선 */}
-              <div className="border-t border-gray-200 dark:border-gray-700 my-2" />
-              
-              {/* 유틸리티 메뉴 */}
-              {utilityMenu.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all font-medium text-sm sm:text-base"
-                >
-                  <item.icon size={18} className="sm:w-5 sm:h-5 flex-shrink-0" />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
             </nav>
           </motion.div>
         )}
@@ -310,6 +289,7 @@ export function GlobalHeader() {
         )}
       </AnimatePresence>
     </header>
+    </>
   );
 }
 

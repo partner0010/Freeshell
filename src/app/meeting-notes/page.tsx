@@ -197,15 +197,15 @@ ${meetingNote.transcript}
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <GlobalHeader />
 
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <Mic className="text-purple-600" size={32} />
-            <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-900">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12">
+        <div className="text-center mb-8 sm:mb-10 md:mb-12">
+          <div className="inline-flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <Mic className="text-purple-600 w-6 h-6 sm:w-8 sm:h-8" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-gray-900">
               SHELL AI 회의 노트
             </h1>
           </div>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-4">
             회의 음성을 자동으로 전문적인 노트로 변환합니다
           </p>
         </div>
@@ -214,31 +214,35 @@ ${meetingNote.transcript}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl p-8 shadow-xl border border-gray-200 mb-8"
+          className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl border border-gray-200 mb-6 sm:mb-8"
         >
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 회의 오디오 파일 업로드
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-purple-500 transition-colors">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg sm:rounded-xl p-4 sm:p-6 md:p-8 text-center hover:border-purple-500 transition-colors">
                 <input
                   type="file"
                   accept="audio/*"
                   onChange={handleFileUpload}
                   className="hidden"
                   id="audio-upload"
+                  aria-label="오디오 파일 업로드"
                 />
                 <label
                   htmlFor="audio-upload"
-                  className="cursor-pointer flex flex-col items-center gap-4"
+                  className="cursor-pointer flex flex-col items-center gap-3 sm:gap-4 focus:outline-none focus:ring-2 focus:ring-purple-500 rounded"
+                  tabIndex={0}
+                  role="button"
+                  aria-label="오디오 파일 선택"
                 >
-                  <Upload className="text-gray-400" size={48} />
+                  <Upload className="text-gray-400 w-10 h-10 sm:w-12 sm:h-12" />
                   <div>
-                    <p className="text-gray-700 font-semibold">
+                    <p className="text-sm sm:text-base text-gray-700 font-semibold">
                       {audioFile ? audioFile.name : '오디오 파일을 선택하세요'}
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
                       MP3, WAV, M4A 등 오디오 형식 지원
                     </p>
                   </div>
@@ -255,7 +259,8 @@ ${meetingNote.transcript}
             <button
               onClick={handleGenerate}
               disabled={!audioFile || isProcessing}
-              className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg sm:rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              aria-label={isProcessing ? '회의 노트 생성 중' : '회의 노트 생성'}
             >
               {isProcessing ? (
                 <>
@@ -277,7 +282,7 @@ ${meetingNote.transcript}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl p-8 shadow-xl border border-gray-200 space-y-6"
+            className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl border border-gray-200 space-y-4 sm:space-y-6"
           >
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">{meetingNote.title}</h2>
@@ -290,7 +295,7 @@ ${meetingNote.transcript}
               </button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               <div>
                 <p className="text-sm text-gray-500">날짜</p>
                 <p className="font-semibold text-gray-900">

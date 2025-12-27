@@ -60,6 +60,12 @@ const SECURITY_CONFIG = {
     '/schedule',
     '/meeting-notes',
     '/trends',
+    '/signature',
+    '/remote',
+    '/debug',
+    '/validate',
+    '/community',
+    '/help',
   ],
 };
 
@@ -74,10 +80,11 @@ function getSecurityHeaders() {
   return {
     'X-DNS-Prefetch-Control': 'on',
     'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY', // SAMEORIGIN에서 DENY로 강화
+    'X-Frame-Options': 'DENY',
     'X-XSS-Protection': '1; mode=block',
+    'X-Download-Options': 'noopen', // IE8+ 다운로드 보호
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=()',
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
     'Content-Security-Policy': [
       "default-src 'self'",
@@ -91,6 +98,7 @@ function getSecurityHeaders() {
       "base-uri 'self'",
       "form-action 'self'",
       "upgrade-insecure-requests",
+      "block-all-mixed-content", // HTTP 리소스 차단
     ].join('; '),
     'Cross-Origin-Embedder-Policy': 'require-corp',
     'Cross-Origin-Opener-Policy': 'same-origin',
@@ -141,9 +149,9 @@ export async function middleware(request: NextRequest) {
   // 정상적인 페이지 경로는 보안 스캔 완전 제외
   const normalPages = [
     '/editor', '/creator', '/agents', '/signature', 
-    '/trends', '/community', '/help', '/debug', '/validate', '/remote',
+    '/trends', '/community', '/help', '/debug', '/validate', '/remote', '/meeting-notes',
     '/auth/signin', '/auth/signup', '/mypage', '/privacy', '/terms',
-    '/api/ai', '/api/content', '/api/signature', '/api/debug', '/api/validate'
+    '/api/ai', '/api/content', '/api/signature', '/api/debug', '/api/validate', '/api/meeting-notes'
   ];
   
   const isNormalPage = normalPages.some(page => pathname.startsWith(page));

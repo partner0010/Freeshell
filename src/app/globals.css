@@ -29,6 +29,29 @@
     clip: auto;
     white-space: normal;
   }
+
+  /* 키보드 포커스 강화 */
+  .focus-visible-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2;
+  }
+
+  /* 고대비 모드 지원 */
+  @media (prefers-contrast: high) {
+    * {
+      border-color: currentColor !important;
+    }
+  }
+
+  /* 애니메이션 감소 모드 지원 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 /* 반응형 유틸리티 */
@@ -173,9 +196,37 @@ body {
   a:focus-visible,
   input:focus-visible,
   textarea:focus-visible,
-  select:focus-visible {
-    outline: 2px solid rgba(139, 92, 246, 0.5) !important;
+  select:focus-visible,
+  [role="button"]:focus-visible,
+  [role="link"]:focus-visible {
+    outline: 3px solid rgba(139, 92, 246, 0.8) !important;
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  
+  /* 키보드 네비게이션 개선 */
+  *:focus-visible {
+    outline-width: 3px;
+    outline-style: solid;
+    outline-color: rgba(139, 92, 246, 0.8);
     outline-offset: 2px;
+  }
+  
+  /* 스킵 링크 스타일 */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #8B5CF6;
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    z-index: 100;
+    border-radius: 0 0 4px 0;
+  }
+  
+  .skip-link:focus {
+    top: 0;
   }
 }
 

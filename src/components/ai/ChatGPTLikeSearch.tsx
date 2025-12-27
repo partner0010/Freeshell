@@ -336,7 +336,7 @@ export function ChatGPTLikeSearch() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] sm:h-[calc(100vh-180px)] md:h-[calc(100vh-160px)] bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-200 w-full max-w-full mx-auto overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-180px)] sm:h-[calc(100vh-160px)] md:h-[calc(100vh-140px)] bg-white rounded-xl sm:rounded-2xl md:rounded-3xl shadow-xl border border-gray-200 w-full max-w-full mx-auto overflow-hidden" role="main" aria-label="AI 채팅 인터페이스">
       {/* 헤더 */}
       <div className="p-3 sm:p-4 border-b bg-gradient-to-r from-purple-50 to-pink-50 flex-shrink-0">
         <div className="flex items-center justify-between mb-2 sm:mb-3 gap-2">
@@ -540,8 +540,10 @@ export function ChatGPTLikeSearch() {
                 setTimeout(() => setShowSuggestions(false), 200);
               }}
               placeholder="메시지를 입력하세요..."
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-20 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none resize-none max-h-32 text-sm sm:text-base min-w-0"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-20 border-2 border-gray-300 rounded-lg sm:rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none resize-none max-h-32 text-sm sm:text-base min-w-0"
               rows={1}
+              aria-label="메시지 입력"
+              aria-describedby="input-help-text"
             />
             <div className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 flex gap-0.5 sm:gap-1">
               <button
@@ -574,13 +576,14 @@ export function ChatGPTLikeSearch() {
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
+            className="px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg sm:rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+            aria-label="메시지 전송"
           >
             <Send size={18} className="sm:w-5 sm:h-5" />
           </button>
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-2">
-          <p className="text-xs text-gray-500 text-center sm:text-left break-words px-2">
+          <p id="input-help-text" className="text-xs text-gray-500 text-center sm:text-left break-words px-2">
             무료 AI로 질문하고 답변받으세요. 회원가입 없이 사용 가능합니다.
           </p>
           <div className="flex gap-2 text-xs text-gray-500">
