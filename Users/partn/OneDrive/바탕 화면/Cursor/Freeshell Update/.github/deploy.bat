@@ -114,12 +114,36 @@ if "%current_branch%"=="" set current_branch=main
 
 echo Current branch: %current_branch%
 echo.
+
+REM Check if remote exists
+git remote get-url origin >nul 2>&1
+if errorlevel 1 (
+    echo [WARNING] Git remote 'origin' is not configured!
+    echo.
+    echo To connect your repository to GitHub:
+    echo 1. Create a repository on GitHub
+    echo 2. Run: git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+    echo 3. Or: git remote add origin git@github.com:YOUR_USERNAME/YOUR_REPO.git
+    echo.
+    echo After setting up remote, run this script again.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo Checking Git remote configuration...
+git remote -v
+echo.
+
 echo ========================================
-echo IMPORTANT: 배포 확인
+echo IMPORTANT: Netlify 배포 확인
 echo ========================================
-echo 1. netlify.toml 또는 vercel.json이 프로젝트 루트에 있는지 확인하세요
-echo 2. Git 저장소가 GitHub와 연결되어 있는지 확인하세요
-echo 3. 배포 플랫폼이 Git 저장소와 연결되어 있는지 확인하세요
+echo 1. netlify.toml이 프로젝트 루트에 있는지 확인하세요
+echo 2. Git 저장소가 GitHub와 연결되어 있는지 확인하세요 (위 참고)
+echo 3. Netlify 대시보드에서 저장소 연결 확인:
+echo    - Site settings ^> Build ^& deploy ^> Continuous Deployment
+echo    - Repository가 올바르게 연결되어 있는지 확인
+echo    - Production branch가 "%current_branch%"인지 확인
 echo 4. Domain: freeshell.co.kr
 echo.
 echo Push to GitHub? (Y/N)
@@ -137,6 +161,7 @@ if /i "%push_confirm%"=="Y" (
         echo 2. Check remote: git remote -v
         echo 3. Tried to push to: %current_branch%
         echo 4. If branch doesn't exist, create it: git push -u origin %current_branch%
+        echo 5. Check if you have push access to the repository
         echo.
         pause
         exit /b 1
@@ -147,10 +172,16 @@ if /i "%push_confirm%"=="Y" (
     echo ========================================
     echo.
     echo Next steps:
-    echo 1. Check deployment platform dashboard
-    echo 2. Go to Deploys tab
-    echo 3. Wait for automatic deployment (usually 1-2 minutes)
-    echo 4. Check domain: https://freeshell.co.kr
+    echo 1. Go to Netlify dashboard: https://app.netlify.com
+    echo 2. Select your site (freeshell.co.kr)
+    echo 3. Go to "Deploys" tab
+    echo 4. Wait for automatic deployment (usually 1-2 minutes)
+    echo 5. If no deployment appears:
+    echo    - Check Site settings ^> Build ^& deploy ^> Continuous Deployment
+    echo    - Verify repository is connected
+    echo    - Verify production branch is: %current_branch%
+    echo    - Try "Trigger deploy" button manually
+    echo 6. Check domain: https://freeshell.co.kr
     echo.
     echo ========================================
 ) else (
