@@ -278,6 +278,22 @@ if /i "%push_confirm%"=="Y" (
     echo [SUCCESS] Push to GitHub completed!
     echo ========================================
     echo.
+    echo IMPORTANT: GitHub 저장소 확인
+    echo ========================================
+    echo 다음 링크에서 package.json과 netlify.toml 파일이 있는지 확인하세요:
+    echo.
+    if /i "%current_branch%"=="master" (
+        echo Main branch: https://github.com/partner0010/freeshell/blob/main/package.json
+        echo Main branch: https://github.com/partner0010/freeshell/blob/main/netlify.toml
+    ) else (
+        echo %current_branch% branch: https://github.com/partner0010/freeshell/blob/%current_branch%/package.json
+        echo %current_branch% branch: https://github.com/partner0010/freeshell/blob/%current_branch%/netlify.toml
+    )
+    echo.
+    echo 파일이 보이지 않으면:
+    echo 1. 브라우저에서 위 링크를 열어 확인
+    echo 2. 파일이 없으면 다시 배치 파일을 실행
+    echo.
     echo Next steps:
     echo 1. Go to Netlify dashboard: https://app.netlify.com
     echo 2. Select your site (freeshell.co.kr)
