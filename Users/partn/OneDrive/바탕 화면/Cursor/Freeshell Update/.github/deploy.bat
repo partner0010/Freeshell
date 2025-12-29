@@ -114,6 +114,9 @@ if "%current_branch%"=="" set current_branch=master
 
 echo Current branch: %current_branch%
 echo.
+echo [NOTE] Netlify Production branch is set to 'main'
+echo If your current branch is 'master', it will also push to 'main' branch for Netlify deployment.
+echo.
 
 REM Check if remote exists
 git remote get-url origin >nul 2>&1
@@ -188,6 +191,20 @@ if /i "%push_confirm%"=="Y" (
             exit /b 1
         )
     )
+    
+    REM If current branch is master, also push to main for Netlify
+    if /i "%current_branch%"=="master" (
+        echo.
+        echo Also pushing to 'main' branch for Netlify deployment...
+        call git push origin master:main
+        if errorlevel 1 (
+            echo [WARNING] Failed to push to main branch, but master push succeeded.
+            echo You may need to set Netlify Production branch to 'master' or manually push to main.
+        ) else (
+            echo [SUCCESS] Also pushed to 'main' branch successfully!
+        )
+    )
+    
     echo.
     echo ========================================
     echo [SUCCESS] Push to GitHub completed!
