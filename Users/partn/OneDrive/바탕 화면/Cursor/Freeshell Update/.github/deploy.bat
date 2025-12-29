@@ -110,7 +110,7 @@ for /f "tokens=*" %%i in ('git branch --show-current 2^>nul') do set current_bra
 if "%current_branch%"=="" (
     for /f "tokens=*" %%i in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set current_branch=%%i
 )
-if "%current_branch%"=="" set current_branch=main
+if "%current_branch%"=="" set current_branch=master
 
 echo Current branch: %current_branch%
 echo.
@@ -118,17 +118,24 @@ echo.
 REM Check if remote exists
 git remote get-url origin >nul 2>&1
 if errorlevel 1 (
-    echo [WARNING] Git remote 'origin' is not configured!
+    echo [INFO] Git remote 'origin' is not configured.
     echo.
-    echo To connect your repository to GitHub:
-    echo 1. Create a repository on GitHub
-    echo 2. Run: git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
-    echo 3. Or: git remote add origin git@github.com:YOUR_USERNAME/YOUR_REPO.git
+    echo Attempting to set remote to: https://github.com/partner0010/freeshell.git
     echo.
-    echo After setting up remote, run this script again.
+    git remote add origin https://github.com/partner0010/freeshell.git
+    if errorlevel 1 (
+        echo [WARNING] Failed to add remote automatically.
+        echo.
+        echo To connect your repository to GitHub manually:
+        echo Run: git remote add origin https://github.com/partner0010/freeshell.git
+        echo.
+        echo After setting up remote, run this script again.
+        echo.
+        pause
+        exit /b 1
+    )
+    echo [SUCCESS] Remote 'origin' added successfully!
     echo.
-    pause
-    exit /b 1
 )
 
 echo Checking Git remote configuration...
@@ -151,20 +158,35 @@ set /p push_confirm=
 if /i "%push_confirm%"=="Y" (
     echo.
     echo Pushing to origin %current_branch%...
-    git push origin %current_branch%
+    echo.
+    
+    REM Try push with upstream first (for first time push)
+    call git push -u origin %current_branch%
     if errorlevel 1 (
+        REM If upstream push fails, try regular push (if upstream already set)
         echo.
-        echo [ERROR] Push failed!
-        echo.
-        echo Troubleshooting:
-        echo 1. Check branch name: git branch
-        echo 2. Check remote: git remote -v
-        echo 3. Tried to push to: %current_branch%
-        echo 4. If branch doesn't exist, create it: git push -u origin %current_branch%
-        echo 5. Check if you have push access to the repository
-        echo.
-        pause
-        exit /b 1
+        echo First push failed, trying regular push...
+        call git push origin %current_branch%
+        if errorlevel 1 (
+            echo.
+            echo ========================================
+            echo [ERROR] Push failed!
+            echo ========================================
+            echo.
+            echo Troubleshooting:
+            echo 1. Check branch name: git branch
+            echo 2. Check remote: git remote -v
+            echo 3. Tried to push to: %current_branch%
+            echo 4. Check if you have push access to the repository
+            echo 5. Check if authentication is required (GitHub credentials)
+            echo 6. If using SSH, ensure SSH key is set up
+            echo.
+            echo To push manually, run:
+            echo   git push -u origin %current_branch%
+            echo.
+            pause
+            exit /b 1
+        )
     )
     echo.
     echo ========================================
@@ -184,6 +206,7 @@ if /i "%push_confirm%"=="Y" (
     echo 6. Check domain: https://freeshell.co.kr
     echo.
     echo ========================================
+    echo.
 ) else (
     echo Push skipped.
     echo.
