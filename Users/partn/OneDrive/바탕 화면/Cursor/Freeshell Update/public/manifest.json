@@ -1,0 +1,42 @@
+{
+  "name": "Shell - 통합 AI 솔루션",
+  "short_name": "Shell",
+  "description": "AI 검색, 콘텐츠 생성, 동영상 제작까지 모든 것을 하나로 통합한 올인원 AI 솔루션",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["productivity", "search", "ai", "video", "content"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "검색",
+      "short_name": "검색",
+      "description": "AI 검색 시작",
+      "url": "/#search",
+      "icons": [{ "src": "/favicon.ico", "sizes": "any" }]
+    },
+    {
+      "name": "Spark",
+      "short_name": "Spark",
+      "description": "Spark 워크스페이스",
+      "url": "/#spark",
+      "icons": [{ "src": "/favicon.ico", "sizes": "any" }]
+    },
+    {
+      "name": "포켓",
+      "short_name": "포켓",
+      "description": "동영상 제작",
+      "url": "/#pocket",
+      "icons": [{ "src": "/favicon.ico", "sizes": "any" }]
+    }
+  ]
+}
