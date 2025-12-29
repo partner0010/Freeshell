@@ -91,14 +91,31 @@ git status
 echo.
 
 echo [3/4] Commit changes...
+echo.
+echo Checking essential files (package.json, netlify.toml)...
+
+REM Force add essential files to ensure they are tracked
+if exist "package.json" (
+    git add -f package.json
+    echo package.json added to Git
+)
+if exist "netlify.toml" (
+    git add -f netlify.toml
+    echo netlify.toml added to Git
+)
+
+REM Add all other changes
+git add .
+echo.
 echo Enter commit message (default: "Shell updates and improvements"):
 set /p commit_msg=
 if "%commit_msg%"=="" set commit_msg=Shell updates and improvements
 
-git add .
 git commit -m "%commit_msg%"
 if errorlevel 1 (
-    echo [WARNING] Commit failed or no changes.
+    echo [WARNING] Commit failed or no changes to commit.
+    echo Current Git status:
+    git status --short
 ) else (
     echo Commit completed!
 )
