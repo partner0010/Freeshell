@@ -92,21 +92,60 @@ echo.
 
 echo [3/4] Commit changes...
 echo.
-echo Checking essential files (package.json, netlify.toml)...
+echo ========================================
+echo Checking essential files...
+echo ========================================
 
-REM Force add essential files to ensure they are tracked
-if exist "package.json" (
-    git add -f package.json
-    echo package.json added to Git
+REM Verify files exist locally
+if not exist "package.json" (
+    echo [ERROR] package.json not found in current directory!
+    echo Current directory: %CD%
+    pause
+    exit /b 1
+) else (
+    echo [OK] package.json found locally
 )
+
+if not exist "netlify.toml" (
+    echo [WARNING] netlify.toml not found locally
+) else (
+    echo [OK] netlify.toml found locally
+)
+
+echo.
+echo Adding files to Git...
+
+REM Force add essential files
+git add -f package.json
+if errorlevel 1 (
+    echo [ERROR] Failed to add package.json to Git!
+) else (
+    echo [OK] package.json added to Git
+)
+
 if exist "netlify.toml" (
     git add -f netlify.toml
-    echo netlify.toml added to Git
+    if errorlevel 1 (
+        echo [WARNING] Failed to add netlify.toml to Git
+    ) else (
+        echo [OK] netlify.toml added to Git
+    )
 )
 
 REM Add all other changes
 git add .
 echo.
+echo Verifying files are staged...
+git diff --cached --name-only | findstr /C:"package.json" /C:"netlify.toml"
+if errorlevel 1 (
+    echo [WARNING] Essential files may not be staged properly
+    echo Staged files:
+    git diff --cached --name-only
+) else (
+    echo [OK] Essential files are staged
+)
+echo.
+
 echo Enter commit message (default: "Shell updates and improvements"):
 set /p commit_msg=
 if "%commit_msg%"=="" set commit_msg=Shell updates and improvements
@@ -114,10 +153,22 @@ if "%commit_msg%"=="" set commit_msg=Shell updates and improvements
 git commit -m "%commit_msg%"
 if errorlevel 1 (
     echo [WARNING] Commit failed or no changes to commit.
+    echo.
     echo Current Git status:
     git status --short
+    echo.
+    echo Attempting to commit with --allow-empty...
+    git commit --allow-empty -m "%commit_msg% - force commit"
 ) else (
-    echo Commit completed!
+    echo [SUCCESS] Commit completed!
+    echo.
+    echo Verifying commit contains essential files...
+    git show HEAD --name-only --pretty=format: | findstr /C:"package.json" /C:"netlify.toml"
+    if errorlevel 1 (
+        echo [WARNING] Essential files may not be in the commit
+    ) else (
+        echo [OK] Essential files are in the commit
+    )
 )
 echo.
 
