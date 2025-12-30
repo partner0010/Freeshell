@@ -63,14 +63,18 @@ echo.
 REM 필수 파일 존재 확인
 if not exist "package.json" (
     echo [ERROR] package.json을 찾을 수 없습니다.
+    echo [ERROR] package.json을 찾을 수 없습니다. >> "!LOG_FILE!"
     echo 위치: %PROJECT_ROOT%
+    echo 위치: %PROJECT_ROOT% >> "!LOG_FILE!"
     pause
     exit /b 1
 )
 
 if not exist "app" (
     echo [ERROR] app 디렉토리를 찾을 수 없습니다.
+    echo [ERROR] app 디렉토리를 찾을 수 없습니다. >> "!LOG_FILE!"
     echo 위치: %PROJECT_ROOT%
+    echo 위치: %PROJECT_ROOT% >> "!LOG_FILE!"
     pause
     exit /b 1
 )
