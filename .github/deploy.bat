@@ -253,24 +253,20 @@ echo [DEBUG] 원격 저장소 확인 완료
 echo.
 echo [DEBUG] git push -u origin !CURRENT_BRANCH! --force-with-lease 실행 중...
 echo [주의] 이 작업은 몇 초에서 몇 분이 걸릴 수 있습니다...
-call git push -u origin !CURRENT_BRANCH! --force-with-lease 2>&1
-set PUSH_ERROR=!ERRORLEVEL!
-echo.
-echo [DEBUG] git push 명령어 실행 완료, 에러 레벨: !PUSH_ERROR!
-if !PUSH_ERROR! NEQ 0 (
-    echo [DEBUG] force-with-lease 푸시 실패, 에러 레벨: !PUSH_ERROR!
+git push -u origin !CURRENT_BRANCH! --force-with-lease 2>&1
+if errorlevel 1 (
     set PUSH_ERROR=1
+    echo [DEBUG] force-with-lease 푸시 실패
     echo.
     echo [WARNING] force-with-lease 실패
     echo [DEBUG] 일반 푸시 시도 시작...
     echo 일반 푸시를 시도합니다...
-    call git push -u origin !CURRENT_BRANCH! 2>&1
-    set PUSH_ERROR=!ERRORLEVEL!
-    echo [DEBUG] 일반 푸시 실행 완료, 에러 레벨: !PUSH_ERROR!
-    if !PUSH_ERROR! NEQ 0 (
+    git push -u origin !CURRENT_BRANCH! 2>&1
+    if errorlevel 1 (
+        set PUSH_ERROR=1
         set PUSH_ERROR=1
         echo.
-        echo [WARNING] 일반 푸시도 실패했습니다 (에러 레벨: !PUSH_ERROR!)
+        echo [WARNING] 일반 푸시도 실패했습니다
         echo [주의] 원격 저장소의 기존 내용을 덮어쓰기 위해 force push가 필요합니다.
         echo.
         echo 계속하시겠습니까? (Y/N)
@@ -279,12 +275,11 @@ if !PUSH_ERROR! NEQ 0 (
             echo.
             echo [DEBUG] force push 실행 시작...
             echo force push 실행 중...
-            call git push -u origin !CURRENT_BRANCH! --force 2>&1
-            set PUSH_ERROR=!ERRORLEVEL!
-            echo [DEBUG] force push 실행 완료, 에러 레벨: !PUSH_ERROR!
-            if !PUSH_ERROR! NEQ 0 (
+            git push -u origin !CURRENT_BRANCH! --force 2>&1
+            if errorlevel 1 (
+                set PUSH_ERROR=1
                 echo.
-                echo [ERROR] 푸시 실패! (에러 레벨: !PUSH_ERROR!)
+                echo [ERROR] 푸시 실패!
                 echo.
                 echo 문제 해결:
                 echo 1. GitHub 인증 확인
@@ -317,6 +312,7 @@ if !PUSH_ERROR! NEQ 0 (
     echo [DEBUG] force-with-lease 푸시 성공
     echo [DEBUG] 성공 블록 완료
 )
+echo [DEBUG] git push 명령어 실행 완료, 최종 에러 레벨: !PUSH_ERROR!
 echo [DEBUG] 브랜치 푸시 단계 완료 - if 문 이후
 echo.
 
@@ -331,27 +327,20 @@ if /i "!CURRENT_BRANCH!"=="master" (
     echo.
     echo [DEBUG] git push origin master:main --force-with-lease 실행 중...
     echo [주의] 이 작업은 몇 초에서 몇 분이 걸릴 수 있습니다...
-    call git push origin master:main --force-with-lease 2>&1
-    set MAIN_PUSH_ERROR=!ERRORLEVEL!
-    echo.
-    echo [DEBUG] git push 명령어 실행 완료, 에러 레벨: !MAIN_PUSH_ERROR!
-    if !MAIN_PUSH_ERROR! NEQ 0 (
-        echo [WARNING] force-with-lease 실패 (에러 레벨: !MAIN_PUSH_ERROR!)
+    git push origin master:main --force-with-lease 2>&1
+    if errorlevel 1 (
+        echo [WARNING] force-with-lease 실패
         echo [DEBUG] 일반 push 시도 시작...
         echo 일반 push 시도 중...
-        call git push origin master:main 2>&1
-        set MAIN_PUSH_ERROR=!ERRORLEVEL!
-        echo [DEBUG] 일반 push 실행 완료, 에러 레벨: !MAIN_PUSH_ERROR!
-        if !MAIN_PUSH_ERROR! NEQ 0 (
-            echo [WARNING] 일반 push 실패 (에러 레벨: !MAIN_PUSH_ERROR!)
+        git push origin master:main 2>&1
+        if errorlevel 1 (
+            echo [WARNING] 일반 push 실패
             echo [DEBUG] force push 시도 시작...
             echo force push 시도 중...
-            call git push origin master:main --force 2>&1
-            set MAIN_PUSH_ERROR=!ERRORLEVEL!
-            echo [DEBUG] force push 실행 완료, 에러 레벨: !MAIN_PUSH_ERROR!
-            if !MAIN_PUSH_ERROR! NEQ 0 (
+            git push origin master:main --force 2>&1
+            if errorlevel 1 (
                 echo.
-                echo [ERROR] main 브랜치 푸시 실패! (에러 레벨: !MAIN_PUSH_ERROR!)
+                echo [ERROR] main 브랜치 푸시 실패!
                 echo Netlify는 main 브랜치를 모니터링합니다.
                 echo 수동으로 푸시해야 할 수 있습니다.
                 echo 명령어: git push origin master:main --force
