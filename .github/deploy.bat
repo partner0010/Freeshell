@@ -253,20 +253,22 @@ echo [DEBUG] 원격 저장소 확인 완료
 echo.
 echo [DEBUG] git push -u origin !CURRENT_BRANCH! --force-with-lease 실행 중...
 echo [주의] 이 작업은 몇 초에서 몇 분이 걸릴 수 있습니다...
-git push -u origin !CURRENT_BRANCH! --force-with-lease >nul 2>&1
-echo [DEBUG] Git push 명령어 실행 완료
+git push -u origin !CURRENT_BRANCH! --force-with-lease 2>&1
+set PUSH_EXIT_CODE=!ERRORLEVEL!
+echo [DEBUG] Git push 명령어 실행 완료 - 에러 레벨: !PUSH_EXIT_CODE!
 set MASTER_PUSH_SUCCESS=0
 echo [DEBUG] 조건문 확인 시작...
-if errorlevel 1 (
+if !PUSH_EXIT_CODE! NEQ 0 (
     echo [DEBUG] if 블록 진입 - 에러 발생
     echo [DEBUG] force-with-lease 푸시 실패
     echo.
     echo [WARNING] force-with-lease 실패
     echo [DEBUG] 일반 푸시 시도 시작...
     echo 일반 푸시를 시도합니다...
-    git push -u origin !CURRENT_BRANCH! >nul 2>&1
-    echo [DEBUG] 일반 푸시 실행 완료
-    if errorlevel 1 (
+    git push -u origin !CURRENT_BRANCH! 2>&1
+    set PUSH_EXIT_CODE=!ERRORLEVEL!
+    echo [DEBUG] 일반 푸시 실행 완료 - 에러 레벨: !PUSH_EXIT_CODE!
+    if !PUSH_EXIT_CODE! NEQ 0 (
         echo [DEBUG] 일반 푸시도 실패
         echo.
         echo [WARNING] 일반 푸시도 실패했습니다
@@ -278,9 +280,10 @@ if errorlevel 1 (
             echo.
             echo [DEBUG] force push 실행 시작...
             echo force push 실행 중...
-            git push -u origin !CURRENT_BRANCH! --force >nul 2>&1
-            echo [DEBUG] force push 실행 완료
-            if errorlevel 1 (
+            git push -u origin !CURRENT_BRANCH! --force 2>&1
+            set PUSH_EXIT_CODE=!ERRORLEVEL!
+            echo [DEBUG] force push 실행 완료 - 에러 레벨: !PUSH_EXIT_CODE!
+            if !PUSH_EXIT_CODE! NEQ 0 (
                 echo.
                 echo [ERROR] 푸시 실패!
                 echo.
@@ -321,10 +324,11 @@ echo [DEBUG] master 브랜치 푸시 완료
 echo [DEBUG] 브랜치 푸시 단계 완료
 echo [DEBUG] 4-3 단계 완료 확인
 echo.
-echo [DEBUG] 4-3 단계 완료 확인
+echo [DEBUG] 4-3 단계 완료 - 다음 단계로 진행
 echo [DEBUG] 4-4 단계로 이동 전 확인...
 echo [DEBUG] 현재 브랜치 변수 값: "!CURRENT_BRANCH!"
 echo [DEBUG] 4-4 단계 조건 확인 시작...
+pause
 
 REM master 브랜치인 경우 main 브랜치로도 푸시 (Netlify용)
 echo [DEBUG] 4-4 단계: main 브랜치로 푸시 (Netlify용)...
