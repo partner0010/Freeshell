@@ -254,20 +254,16 @@ echo.
 echo [DEBUG] git push -u origin !CURRENT_BRANCH! --force-with-lease 실행 중...
 echo [주의] 이 작업은 몇 초에서 몇 분이 걸릴 수 있습니다...
 git push -u origin !CURRENT_BRANCH! --force-with-lease 2>&1
-set PUSH_RESULT=!ERRORLEVEL!
-echo [DEBUG] Git push 실행 완료, ERRORLEVEL: !PUSH_RESULT!
-if !PUSH_RESULT! NEQ 0 (
-    echo [DEBUG] force-with-lease 푸시 실패 (에러 레벨: !PUSH_RESULT!)
+if errorlevel 1 (
+    echo [DEBUG] force-with-lease 푸시 실패
     set PUSH_ERROR=1
     echo.
     echo [WARNING] force-with-lease 실패
     echo [DEBUG] 일반 푸시 시도 시작...
     echo 일반 푸시를 시도합니다...
     git push -u origin !CURRENT_BRANCH! 2>&1
-    set PUSH_RESULT=!ERRORLEVEL!
-    echo [DEBUG] 일반 푸시 실행 완료, ERRORLEVEL: !PUSH_RESULT!
-    if !PUSH_RESULT! NEQ 0 (
-        echo [DEBUG] 일반 푸시도 실패 (에러 레벨: !PUSH_RESULT!)
+    if errorlevel 1 (
+        echo [DEBUG] 일반 푸시도 실패
         set PUSH_ERROR=1
         echo.
         echo [WARNING] 일반 푸시도 실패했습니다
@@ -280,12 +276,10 @@ if !PUSH_RESULT! NEQ 0 (
             echo [DEBUG] force push 실행 시작...
             echo force push 실행 중...
             git push -u origin !CURRENT_BRANCH! --force 2>&1
-            set PUSH_RESULT=!ERRORLEVEL!
-            echo [DEBUG] force push 실행 완료, ERRORLEVEL: !PUSH_RESULT!
-            if !PUSH_RESULT! NEQ 0 (
+            if errorlevel 1 (
                 set PUSH_ERROR=1
                 echo.
-                echo [ERROR] 푸시 실패! (에러 레벨: !PUSH_RESULT!)
+                echo [ERROR] 푸시 실패!
                 echo.
                 echo 문제 해결:
                 echo 1. GitHub 인증 확인
@@ -319,33 +313,19 @@ if !PUSH_RESULT! NEQ 0 (
     echo [DEBUG] else 블록 완료
 )
 echo [DEBUG] Git push 조건문 완료
-echo [DEBUG] git push 명령어 실행 완료, 최종 에러 레벨: !PUSH_ERROR!
 echo [DEBUG] 브랜치 푸시 단계 완료 - if 문 이후
 echo.
 echo [DEBUG] 4-3 단계 완료, 4-4 단계로 이동 전 확인...
 echo [DEBUG] 현재 브랜치 변수 값: "!CURRENT_BRANCH!"
 
-REM 변수를 명확히 설정
-set "BRANCH_CHECK=!CURRENT_BRANCH!"
-echo [DEBUG] 브랜치 확인 변수: "!BRANCH_CHECK!"
-
 REM master 브랜치인 경우 main 브랜치로도 푸시 (Netlify용)
-echo [DEBUG] master 브랜치 조건 확인 중...
-echo [DEBUG] 조건문 실행 직전...
+echo [DEBUG] 4-4 단계: main 브랜치로 푸시 (Netlify용)...
+echo [DEBUG] Netlify는 main 브랜치를 모니터링하므로 main 브랜치로도 푸시합니다.
+echo.
 
-REM 조건 확인을 별도로 수행
-set "DO_MAIN_PUSH=0"
-echo [DEBUG] 조건 확인 시작...
-if /i "!BRANCH_CHECK!"=="master" (
-    set "DO_MAIN_PUSH=1"
-    echo [DEBUG] 조건 만족: DO_MAIN_PUSH=1
-) else (
-    set "DO_MAIN_PUSH=0"
-    echo [DEBUG] 조건 불만족: DO_MAIN_PUSH=0
-)
-echo [DEBUG] DO_MAIN_PUSH 변수 값: !DO_MAIN_PUSH!
-
-if "!DO_MAIN_PUSH!"=="1" (
+REM master 브랜치인 경우에만 main 브랜치로 푸시
+if /i "!CURRENT_BRANCH!"=="master" (
+    echo [DEBUG] master 브랜치 확인됨 - main 브랜치로 푸시 시작
     echo [DEBUG] 4-4 단계 시작 - master 브랜치 확인됨
     echo.
     echo [DEBUG] 단계 4-4: main 브랜치로 푸시 시작 (Netlify용)...
@@ -396,17 +376,12 @@ if "!DO_MAIN_PUSH!"=="1" (
     echo [DEBUG] main 브랜치 푸시 단계 완료
     echo.
     echo [DEBUG] 4-4 단계 완료
-    echo [DEBUG] if 블록 종료
 ) else (
-    echo [DEBUG] else 블록 실행
-    echo [DEBUG] master 브랜치가 아니므로 main 브랜치 푸시를 건너뜁니다.
-    echo [DEBUG] 현재 브랜치: "!BRANCH_CHECK!"
-    echo [DEBUG] DO_MAIN_PUSH 값: "!DO_MAIN_PUSH!"
-    echo [DEBUG] master가 아니므로 4-4 단계 건너뜀
+    echo [DEBUG] 현재 브랜치가 master가 아니므로 main 브랜치 푸시를 건너뜁니다.
+    echo [DEBUG] 현재 브랜치: "!CURRENT_BRANCH!"
     echo.
 )
-echo [DEBUG] 조건문 완료
-echo [DEBUG] 4-4 단계 처리 완료 (성공 또는 건너뜀)
+echo [DEBUG] 4-4 단계 처리 완료
 echo.
 
 echo [DEBUG] 모든 단계 완료!
@@ -418,10 +393,24 @@ echo GitHub 저장소 확인:
 echo https://github.com/partner0010/freeshell/blob/main/package.json
 echo https://github.com/partner0010/freeshell/blob/main/netlify.toml
 echo.
-echo Netlify:
-echo - 대시보드: https://app.netlify.com
-echo - 자동 배포 시작 (1-2분 소요)
-echo - 도메인: https://freeshell.co.kr
+echo Netlify 배포 확인:
+echo ========================================
+echo 1. Netlify 대시보드: https://app.netlify.com
+echo 2. 저장소 연결 확인:
+echo    - Site settings ^> Build ^& deploy ^> Continuous Deployment
+echo    - Repository가 올바르게 연결되어 있는지 확인
+echo    - Production branch가 "main"인지 확인
+echo 3. 최근 빌드 확인:
+echo    - Deploys 탭에서 최근 빌드 상태 확인
+echo    - 자동 배포가 활성화되어 있는지 확인
+echo 4. 수동 배포 트리거:
+echo    - Deploys 탭에서 "Trigger deploy" 버튼 클릭
+echo 5. 도메인: https://freeshell.co.kr
+echo.
+echo 참고: GitHub에 푸시되었지만 Netlify가 반응하지 않으면:
+echo - Netlify 대시보드에서 저장소 연결 확인
+echo - Production branch 설정 확인 (main 브랜치)
+echo - "Trigger deploy" 버튼으로 수동 배포 시도
 echo.
 echo ========================================
 echo.
