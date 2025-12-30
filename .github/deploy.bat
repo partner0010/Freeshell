@@ -325,16 +325,30 @@ echo [DEBUG] 브랜치 확인 변수: "!BRANCH_CHECK!"
 REM master 브랜치인 경우 main 브랜치로도 푸시 (Netlify용)
 echo [DEBUG] master 브랜치 조건 확인 중...
 echo [DEBUG] 조건문 실행 직전...
+
+REM 조건 확인을 별도로 수행
+set "DO_MAIN_PUSH=0"
+echo [DEBUG] 조건 확인 시작...
 if /i "!BRANCH_CHECK!"=="master" (
-    echo [DEBUG] master 브랜치 확인됨 - 4-4 단계 시작
+    set "DO_MAIN_PUSH=1"
+    echo [DEBUG] 조건 만족: DO_MAIN_PUSH=1
+) else (
+    set "DO_MAIN_PUSH=0"
+    echo [DEBUG] 조건 불만족: DO_MAIN_PUSH=0
+)
+echo [DEBUG] DO_MAIN_PUSH 변수 값: !DO_MAIN_PUSH!
+
+if "!DO_MAIN_PUSH!"=="1" (
+    echo [DEBUG] 4-4 단계 시작 - master 브랜치 확인됨
     echo.
     echo [DEBUG] 단계 4-4: main 브랜치로 푸시 시작 (Netlify용)...
     echo main 브랜치로도 푸시 중 (Netlify용)...
     echo [DEBUG] 원격 저장소 확인 시작...
-    git remote -v
+    git remote -v >nul 2>&1
     if errorlevel 1 (
         echo [WARNING] git remote -v 실행 실패
     ) else (
+        git remote -v
         echo [DEBUG] 원격 저장소 확인 완료
     )
     echo.
@@ -375,12 +389,16 @@ if /i "!BRANCH_CHECK!"=="master" (
     echo [DEBUG] main 브랜치 푸시 단계 완료
     echo.
     echo [DEBUG] 4-4 단계 완료
+    echo [DEBUG] if 블록 종료
 ) else (
+    echo [DEBUG] else 블록 실행
     echo [DEBUG] master 브랜치가 아니므로 main 브랜치 푸시를 건너뜁니다.
     echo [DEBUG] 현재 브랜치: "!BRANCH_CHECK!"
+    echo [DEBUG] DO_MAIN_PUSH 값: "!DO_MAIN_PUSH!"
     echo [DEBUG] master가 아니므로 4-4 단계 건너뜀
     echo.
 )
+echo [DEBUG] 조건문 완료
 echo [DEBUG] 4-4 단계 처리 완료 (성공 또는 건너뜀)
 echo.
 
