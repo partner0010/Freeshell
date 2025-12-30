@@ -247,30 +247,44 @@ echo.
 REM master 브랜치로 푸시 (force-with-lease 사용)
 echo [DEBUG] 단계 4-3: 브랜치 푸시 시작 (!CURRENT_BRANCH!)...
 echo !CURRENT_BRANCH! 브랜치로 푸시 중...
+echo [DEBUG] 원격 저장소 확인 중...
+git remote -v
+echo [DEBUG] 원격 저장소 확인 완료
+echo.
+echo [DEBUG] git push -u origin !CURRENT_BRANCH! --force-with-lease 실행 중...
+echo [주의] 이 작업은 몇 초에서 몇 분이 걸릴 수 있습니다...
 call git push -u origin !CURRENT_BRANCH! --force-with-lease 2>&1
-set PUSH_ERROR=0
-if errorlevel 1 (
-    echo [DEBUG] force-with-lease 푸시 실패, 에러 레벨: %ERRORLEVEL%
+set PUSH_ERROR=%ERRORLEVEL%
+echo.
+echo [DEBUG] git push 명령어 실행 완료, 에러 레벨: !PUSH_ERROR!
+if !PUSH_ERROR! NEQ 0 (
+    echo [DEBUG] force-with-lease 푸시 실패, 에러 레벨: !PUSH_ERROR!
     set PUSH_ERROR=1
     echo.
     echo [WARNING] force-with-lease 실패
+    echo [DEBUG] 일반 푸시 시도 시작...
     echo 일반 푸시를 시도합니다...
     call git push -u origin !CURRENT_BRANCH! 2>&1
-    if errorlevel 1 (
+    set PUSH_ERROR=%ERRORLEVEL%
+    echo [DEBUG] 일반 푸시 실행 완료, 에러 레벨: !PUSH_ERROR!
+    if !PUSH_ERROR! NEQ 0 (
         set PUSH_ERROR=1
         echo.
-        echo [WARNING] 일반 푸시도 실패했습니다
+        echo [WARNING] 일반 푸시도 실패했습니다 (에러 레벨: !PUSH_ERROR!)
         echo [주의] 원격 저장소의 기존 내용을 덮어쓰기 위해 force push가 필요합니다.
         echo.
         echo 계속하시겠습니까? (Y/N)
         set /p "FORCE_CONFIRM="
         if /i "!FORCE_CONFIRM!"=="Y" (
             echo.
+            echo [DEBUG] force push 실행 시작...
             echo force push 실행 중...
             call git push -u origin !CURRENT_BRANCH! --force 2>&1
-            if errorlevel 1 (
+            set PUSH_ERROR=%ERRORLEVEL%
+            echo [DEBUG] force push 실행 완료, 에러 레벨: !PUSH_ERROR!
+            if !PUSH_ERROR! NEQ 0 (
                 echo.
-                echo [ERROR] 푸시 실패!
+                echo [ERROR] 푸시 실패! (에러 레벨: !PUSH_ERROR!)
                 echo.
                 echo 문제 해결:
                 echo 1. GitHub 인증 확인
@@ -278,11 +292,12 @@ if errorlevel 1 (
                 echo 3. 브랜치 이름 확인: !CURRENT_BRANCH!
                 echo 4. 네트워크 연결 확인
                 echo.
+                echo [DEBUG] 에러가 발생했지만 계속 진행합니다...
                 pause
-                exit /b 1
             ) else (
                 set PUSH_ERROR=0
                 echo [OK] force push 성공!
+                echo [DEBUG] force push 성공
             )
         ) else (
             echo.
@@ -293,10 +308,12 @@ if errorlevel 1 (
     ) else (
         set PUSH_ERROR=0
         echo [OK] 일반 푸시 성공!
+        echo [DEBUG] 일반 푸시 성공
     )
 ) else (
     set PUSH_ERROR=0
     echo [OK] force-with-lease 푸시 성공!
+    echo [DEBUG] force-with-lease 푸시 성공
 )
 echo [DEBUG] 브랜치 푸시 단계 완료
 echo.
