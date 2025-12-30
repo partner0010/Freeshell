@@ -131,13 +131,15 @@ echo.
 
 echo [3/4] Git 커밋...
 echo.
-
+echo [DEBUG] 단계 3 시작: 브랜치 확인 중...
 REM 현재 브랜치 확인
 for /f "tokens=*" %%i in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "CURRENT_BRANCH=%%i"
 if "!CURRENT_BRANCH!"=="" (
+    echo [DEBUG] HEAD 브랜치 이름을 가져올 수 없음, 다른 방법 시도...
     REM 아직 커밋이 없는 경우
     for /f "tokens=*" %%i in ('git branch --show-current 2^>nul') do set "CURRENT_BRANCH=%%i"
     if "!CURRENT_BRANCH!"=="" (
+        echo [DEBUG] 브랜치 이름을 찾을 수 없음, master 브랜치 생성 중...
         REM master 브랜치 생성
         git checkout -b master 2>nul
         if errorlevel 1 (
@@ -148,10 +150,12 @@ if "!CURRENT_BRANCH!"=="" (
 )
 if "!CURRENT_BRANCH!"=="HEAD" set "CURRENT_BRANCH=master"
 
+echo [DEBUG] 브랜치 확인 완료
 echo 현재 브랜치: !CURRENT_BRANCH!
 echo.
 
 REM 필수 파일 강제 추가
+echo [DEBUG] 단계 3-1: 필수 파일 추가 시작...
 echo 필수 파일 추가 중...
 git add -f package.json
 if errorlevel 1 (
@@ -167,8 +171,10 @@ if exist "netlify.toml" (
         echo [OK] netlify.toml 추가 완료
     )
 )
+echo [DEBUG] 필수 파일 추가 완료
 
 REM 모든 변경사항 추가
+echo [DEBUG] 단계 3-2: 모든 변경사항 추가 시작...
 echo 모든 변경사항 추가 중...
 git add -A
 if errorlevel 1 (
@@ -176,17 +182,21 @@ if errorlevel 1 (
 ) else (
     echo [OK] 파일 추가 완료
 )
+echo [DEBUG] 모든 변경사항 추가 완료
 echo.
 
 REM 커밋 메시지 입력
+echo [DEBUG] 단계 3-3: 커밋 메시지 입력 시작...
 echo 커밋 메시지를 입력하세요 (Enter: 기본값 사용):
 set /p "COMMIT_MSG="
 if "!COMMIT_MSG!"=="" set "COMMIT_MSG=Shell updates and improvements"
 echo.
 echo 커밋 메시지: !COMMIT_MSG!
+echo [DEBUG] 커밋 메시지 입력 완료
 echo.
 
 REM 커밋
+echo [DEBUG] 단계 3-4: Git 커밋 실행 시작...
 echo 커밋 중...
 git commit -m "!COMMIT_MSG!"
 if errorlevel 1 (
@@ -199,12 +209,16 @@ if errorlevel 1 (
 ) else (
     echo [OK] 커밋 완료!
 )
+echo [DEBUG] Git 커밋 단계 완료
 echo.
 
 echo [4/4] GitHub로 푸시...
 echo.
+echo [DEBUG] 단계 4 시작: GitHub 푸시 준비...
+echo.
 
 REM 원격 저장소 내용 가져오기 (먼저 시도)
+echo [DEBUG] 단계 4-1: 원격 저장소 fetch 시작...
 echo 원격 저장소 정보 가져오는 중...
 git fetch origin 2>&1 | findstr /V "fatal:" >nul
 if errorlevel 1 (
@@ -213,9 +227,11 @@ if errorlevel 1 (
 ) else (
     echo [OK] 원격 저장소 정보 가져오기 완료
 )
+echo [DEBUG] 원격 저장소 fetch 완료
 echo.
 
 REM 로컬 커밋이 있는지 확인
+echo [DEBUG] 단계 4-2: 로컬 커밋 확인 시작...
 git rev-parse --verify HEAD >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] 로컬 커밋이 없습니다!
@@ -225,13 +241,16 @@ if errorlevel 1 (
 ) else (
     echo [OK] 로컬 커밋 확인됨
 )
+echo [DEBUG] 로컬 커밋 확인 완료
 echo.
 
 REM master 브랜치로 푸시 (force-with-lease 사용)
+echo [DEBUG] 단계 4-3: 브랜치 푸시 시작 (!CURRENT_BRANCH!)...
 echo !CURRENT_BRANCH! 브랜치로 푸시 중...
 call git push -u origin !CURRENT_BRANCH! --force-with-lease 2>&1
 set PUSH_ERROR=0
 if errorlevel 1 (
+    echo [DEBUG] force-with-lease 푸시 실패, 에러 레벨: %ERRORLEVEL%
     set PUSH_ERROR=1
     echo.
     echo [WARNING] force-with-lease 실패
@@ -279,11 +298,13 @@ if errorlevel 1 (
     set PUSH_ERROR=0
     echo [OK] force-with-lease 푸시 성공!
 )
+echo [DEBUG] 브랜치 푸시 단계 완료
 echo.
 
 REM master 브랜치인 경우 main 브랜치로도 푸시 (Netlify용)
 if /i "!CURRENT_BRANCH!"=="master" (
     echo.
+    echo [DEBUG] 단계 4-4: main 브랜치로 푸시 시작 (Netlify용)...
     echo main 브랜치로도 푸시 중 (Netlify용)...
     call git push origin master:main --force-with-lease 2>&1
     if errorlevel 1 (
@@ -311,9 +332,11 @@ if /i "!CURRENT_BRANCH!"=="master" (
     ) else (
         echo [OK] main 브랜치 푸시 완료!
     )
+    echo [DEBUG] main 브랜치 푸시 단계 완료
     echo.
 )
 
+echo [DEBUG] 모든 단계 완료!
 echo ========================================
 echo [SUCCESS] 배포 준비 완료!
 echo ========================================
@@ -329,5 +352,6 @@ echo - 도메인: https://freeshell.co.kr
 echo.
 echo ========================================
 echo.
-
+echo [DEBUG] 배치 파일 종료 전 마지막 확인 지점입니다.
+echo 아무 키나 누르면 종료됩니다...
 pause
