@@ -35,12 +35,29 @@ REM 프로젝트 루트로 이동
 cd /d "!PROJECT_ROOT!"
 set "PROJECT_ROOT=%CD%"
 
+REM 로그 파일 설정 (프로젝트 루트 기준)
+set "LOG_FILE=!PROJECT_ROOT!\deploy.log"
+
+REM 로그 파일 초기화
+echo ======================================== > "!LOG_FILE!"
+echo Shell Quick Deploy Log >> "!LOG_FILE!"
+echo Started: %DATE% %TIME% >> "!LOG_FILE!"
+echo 프로젝트 루트: %PROJECT_ROOT% >> "!LOG_FILE!"
+echo ======================================== >> "!LOG_FILE!"
+echo. >> "!LOG_FILE!"
+
 cls
 echo ========================================
 echo Shell Quick Deploy
 echo ========================================
 echo.
 echo 프로젝트 루트: %PROJECT_ROOT%
+echo 로그 파일: !LOG_FILE!
+echo.
+echo 실행 중 모든 출력이 로그 파일에 기록됩니다.
+echo 배치 파일 실행 중에는 새 창에서 다음을 실행하여 로그를 확인할 수 있습니다:
+echo   PowerShell: Get-Content deploy.log -Wait -Tail 30
+echo   또는: .github\view-log.bat
 echo.
 
 REM 필수 파일 존재 확인
