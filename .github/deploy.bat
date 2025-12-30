@@ -253,20 +253,23 @@ echo [DEBUG] 원격 저장소 확인 완료
 echo.
 echo [DEBUG] git push -u origin !CURRENT_BRANCH! --force-with-lease 실행 중...
 echo [주의] 이 작업은 몇 초에서 몇 분이 걸릴 수 있습니다...
-git push -u origin !CURRENT_BRANCH! --force-with-lease 2>&1
-echo.
-echo [DEBUG] Git push 명령어 실행 완료 - 조건문 확인 시작
-set MASTER_PUSH_SUCCESS=0
+git push -u origin !CURRENT_BRANCH! --force-with-lease >nul 2>&1
 set PUSH_EXIT_CODE=!ERRORLEVEL!
+echo [DEBUG] Git push 명령어 실행 완료
 echo [DEBUG] ERRORLEVEL 값: !PUSH_EXIT_CODE!
+set MASTER_PUSH_SUCCESS=0
+echo [DEBUG] 조건문 진입 전 확인
 if !PUSH_EXIT_CODE! NEQ 0 (
+    echo [DEBUG] if 블록 진입 - 에러 발생 (코드: !PUSH_EXIT_CODE!)
     echo [DEBUG] force-with-lease 푸시 실패
     echo.
     echo [WARNING] force-with-lease 실패
     echo [DEBUG] 일반 푸시 시도 시작...
     echo 일반 푸시를 시도합니다...
-    git push -u origin !CURRENT_BRANCH! 2>&1
-    if errorlevel 1 (
+    git push -u origin !CURRENT_BRANCH! >nul 2>&1
+    set PUSH_EXIT_CODE=!ERRORLEVEL!
+    echo [DEBUG] 일반 푸시 ERRORLEVEL: !PUSH_EXIT_CODE!
+    if !PUSH_EXIT_CODE! NEQ 0 (
         echo [DEBUG] 일반 푸시도 실패
         echo.
         echo [WARNING] 일반 푸시도 실패했습니다
@@ -278,8 +281,10 @@ if !PUSH_EXIT_CODE! NEQ 0 (
             echo.
             echo [DEBUG] force push 실행 시작...
             echo force push 실행 중...
-            git push -u origin !CURRENT_BRANCH! --force 2>&1
-            if errorlevel 1 (
+            git push -u origin !CURRENT_BRANCH! --force >nul 2>&1
+            set PUSH_EXIT_CODE=!ERRORLEVEL!
+            echo [DEBUG] force push ERRORLEVEL: !PUSH_EXIT_CODE!
+            if !PUSH_EXIT_CODE! NEQ 0 (
                 echo.
                 echo [ERROR] 푸시 실패!
                 echo.
@@ -308,27 +313,30 @@ if !PUSH_EXIT_CODE! NEQ 0 (
         echo [DEBUG] 일반 푸시 성공
     )
 ) else (
-    echo [DEBUG] else 블록 진입 시작
+    echo [DEBUG] else 블록 진입 시작 - 성공
     set MASTER_PUSH_SUCCESS=1
     echo [OK] force-with-lease 푸시 성공!
     echo [DEBUG] force-with-lease 푸시 성공
     echo [DEBUG] else 블록 완료
 )
-echo [DEBUG] 조건문 완료 확인
+echo [DEBUG] 조건문 완료 확인 - 여기까지 도달
 echo [DEBUG] MASTER_PUSH_SUCCESS 값: !MASTER_PUSH_SUCCESS!
 echo [DEBUG] master 브랜치 푸시 완료
 echo [DEBUG] 브랜치 푸시 단계 완료
+echo [DEBUG] 4-3 단계 완료 확인
 echo.
-echo [DEBUG] 4-3 단계 완료, 4-4 단계로 이동 전 확인...
+echo [DEBUG] 4-3 단계 완료 확인
+echo [DEBUG] 4-4 단계로 이동 전 확인...
 echo [DEBUG] 현재 브랜치 변수 값: "!CURRENT_BRANCH!"
+echo [DEBUG] 4-4 단계 조건 확인 시작...
 
 REM master 브랜치인 경우 main 브랜치로도 푸시 (Netlify용)
 echo [DEBUG] 4-4 단계: main 브랜치로 푸시 (Netlify용)...
 echo [DEBUG] Netlify는 main 브랜치를 모니터링하므로 main 브랜치로도 푸시합니다.
 echo.
-
-REM master 브랜치인 경우에만 main 브랜치로 푸시
+echo [DEBUG] master 브랜치 조건 확인 중...
 if /i "!CURRENT_BRANCH!"=="master" (
+    echo [DEBUG] master 브랜치 조건 만족 - 4-4 단계 시작
     echo [DEBUG] master 브랜치 확인됨 - main 브랜치로 푸시 시작
     echo [DEBUG] 4-4 단계 시작 - master 브랜치 확인됨
     echo.
