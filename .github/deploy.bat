@@ -254,22 +254,19 @@ echo.
 echo [DEBUG] git push -u origin !CURRENT_BRANCH! --force-with-lease 실행 중...
 echo [주의] 이 작업은 몇 초에서 몇 분이 걸릴 수 있습니다...
 git push -u origin !CURRENT_BRANCH! --force-with-lease >nul 2>&1
-set PUSH_EXIT_CODE=!ERRORLEVEL!
 echo [DEBUG] Git push 명령어 실행 완료
-echo [DEBUG] ERRORLEVEL 값: !PUSH_EXIT_CODE!
 set MASTER_PUSH_SUCCESS=0
-echo [DEBUG] 조건문 진입 전 확인
-if !PUSH_EXIT_CODE! NEQ 0 (
-    echo [DEBUG] if 블록 진입 - 에러 발생 (코드: !PUSH_EXIT_CODE!)
+echo [DEBUG] 조건문 확인 시작...
+if errorlevel 1 (
+    echo [DEBUG] if 블록 진입 - 에러 발생
     echo [DEBUG] force-with-lease 푸시 실패
     echo.
     echo [WARNING] force-with-lease 실패
     echo [DEBUG] 일반 푸시 시도 시작...
     echo 일반 푸시를 시도합니다...
     git push -u origin !CURRENT_BRANCH! >nul 2>&1
-    set PUSH_EXIT_CODE=!ERRORLEVEL!
-    echo [DEBUG] 일반 푸시 ERRORLEVEL: !PUSH_EXIT_CODE!
-    if !PUSH_EXIT_CODE! NEQ 0 (
+    echo [DEBUG] 일반 푸시 실행 완료
+    if errorlevel 1 (
         echo [DEBUG] 일반 푸시도 실패
         echo.
         echo [WARNING] 일반 푸시도 실패했습니다
@@ -282,9 +279,8 @@ if !PUSH_EXIT_CODE! NEQ 0 (
             echo [DEBUG] force push 실행 시작...
             echo force push 실행 중...
             git push -u origin !CURRENT_BRANCH! --force >nul 2>&1
-            set PUSH_EXIT_CODE=!ERRORLEVEL!
-            echo [DEBUG] force push ERRORLEVEL: !PUSH_EXIT_CODE!
-            if !PUSH_EXIT_CODE! NEQ 0 (
+            echo [DEBUG] force push 실행 완료
+            if errorlevel 1 (
                 echo.
                 echo [ERROR] 푸시 실패!
                 echo.
