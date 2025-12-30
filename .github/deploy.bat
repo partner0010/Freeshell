@@ -254,9 +254,9 @@ echo.
 echo [DEBUG] git push -u origin !CURRENT_BRANCH! --force-with-lease 실행 중...
 echo [주의] 이 작업은 몇 초에서 몇 분이 걸릴 수 있습니다...
 git push -u origin !CURRENT_BRANCH! --force-with-lease 2>&1
+set MASTER_PUSH_SUCCESS=0
 if errorlevel 1 (
     echo [DEBUG] force-with-lease 푸시 실패
-    set PUSH_ERROR=1
     echo.
     echo [WARNING] force-with-lease 실패
     echo [DEBUG] 일반 푸시 시도 시작...
@@ -264,7 +264,6 @@ if errorlevel 1 (
     git push -u origin !CURRENT_BRANCH! 2>&1
     if errorlevel 1 (
         echo [DEBUG] 일반 푸시도 실패
-        set PUSH_ERROR=1
         echo.
         echo [WARNING] 일반 푸시도 실패했습니다
         echo [주의] 원격 저장소의 기존 내용을 덮어쓰기 위해 force push가 필요합니다.
@@ -277,7 +276,6 @@ if errorlevel 1 (
             echo force push 실행 중...
             git push -u origin !CURRENT_BRANCH! --force 2>&1
             if errorlevel 1 (
-                set PUSH_ERROR=1
                 echo.
                 echo [ERROR] 푸시 실패!
                 echo.
@@ -290,7 +288,7 @@ if errorlevel 1 (
                 echo [DEBUG] 에러가 발생했지만 계속 진행합니다...
                 pause
             ) else (
-                set PUSH_ERROR=0
+                set MASTER_PUSH_SUCCESS=1
                 echo [OK] force push 성공!
                 echo [DEBUG] force push 성공
             )
@@ -301,19 +299,17 @@ if errorlevel 1 (
             exit /b 1
         )
     ) else (
-        set PUSH_ERROR=0
+        set MASTER_PUSH_SUCCESS=1
         echo [OK] 일반 푸시 성공!
         echo [DEBUG] 일반 푸시 성공
     )
 ) else (
-    echo [DEBUG] else 블록 시작 - force-with-lease 푸시 성공
-    set PUSH_ERROR=0
+    set MASTER_PUSH_SUCCESS=1
     echo [OK] force-with-lease 푸시 성공!
     echo [DEBUG] force-with-lease 푸시 성공
-    echo [DEBUG] else 블록 완료
 )
-echo [DEBUG] Git push 조건문 완료
-echo [DEBUG] 브랜치 푸시 단계 완료 - if 문 이후
+echo [DEBUG] master 브랜치 푸시 완료
+echo [DEBUG] 브랜치 푸시 단계 완료
 echo.
 echo [DEBUG] 4-3 단계 완료, 4-4 단계로 이동 전 확인...
 echo [DEBUG] 현재 브랜치 변수 값: "!CURRENT_BRANCH!"
