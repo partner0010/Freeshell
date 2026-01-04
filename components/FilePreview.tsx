@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FileText, Image, Video, File, Download, Maximize2 } from 'lucide-react';
+import { X, FileText, Image as ImageIcon, Video, File, Download, Maximize2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface FilePreviewProps {
   file: {
@@ -19,7 +20,7 @@ export default function FilePreview({ file, onClose }: FilePreviewProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const getFileIcon = () => {
-    if (file.type.startsWith('image/')) return Image;
+    if (file.type.startsWith('image/')) return ImageIcon;
     if (file.type.startsWith('video/')) return Video;
     if (file.type.includes('pdf') || file.type.includes('document')) return FileText;
     return File;
@@ -30,11 +31,15 @@ export default function FilePreview({ file, onClose }: FilePreviewProps) {
   const renderPreview = () => {
     if (file.type.startsWith('image/')) {
       return (
-        <img
-          src={file.url}
-          alt={file.name}
-          className="max-w-full max-h-full object-contain"
-        />
+        <div className="relative w-full h-full min-h-[400px]">
+          <Image
+            src={file.url}
+            alt={file.name}
+            fill
+            className="object-contain"
+            unoptimized
+          />
+        </div>
       );
     }
     if (file.type.startsWith('video/')) {

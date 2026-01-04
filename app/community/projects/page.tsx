@@ -14,6 +14,7 @@ import {
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Project {
   id: string;
@@ -265,9 +266,15 @@ export default function ProjectsPage() {
                       className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-shadow"
                     >
                       {/* 썸네일 */}
-                      <div className="w-full h-48 bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center">
+                      <div className="w-full h-48 bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center relative overflow-hidden">
                         {project.thumbnail ? (
-                          <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" />
+                          <Image 
+                            src={project.thumbnail} 
+                            alt={project.title} 
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
                         ) : (
                           <Sparkles className="text-white" size={64} />
                         )}
@@ -352,9 +359,15 @@ export default function ProjectsPage() {
                     >
                       <div className="flex gap-6">
                         {/* 썸네일 */}
-                        <div className="w-32 h-32 bg-gradient-to-br from-orange-400 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-32 h-32 bg-gradient-to-br from-orange-400 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0 relative overflow-hidden">
                           {project.thumbnail ? (
-                            <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover rounded-lg" />
+                            <Image 
+                              src={project.thumbnail} 
+                              alt={project.title} 
+                              fill
+                              className="object-cover rounded-lg"
+                              unoptimized
+                            />
                           ) : (
                             <Sparkles className="text-white" size={48} />
                           )}

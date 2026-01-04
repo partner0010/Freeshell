@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Search, Loader2, Image as ImageIcon, Download, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
 interface ImageResult {
   id: string;
@@ -118,11 +119,13 @@ export default function ImageSearch() {
                       transition={{ delay: index * 0.03 }}
                       className="relative group rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md aspect-square"
                     >
-                      <img
+                      <Image
                         src={item.thumbnail}
                         alt={item.alt}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                         loading="lazy"
+                        unoptimized
                       />
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2">
                         <div className="text-white text-xs text-center mb-2 break-words">

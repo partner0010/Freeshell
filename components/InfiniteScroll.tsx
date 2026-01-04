@@ -26,6 +26,9 @@ export default function InfiniteScroll({
   useEffect(() => {
     if (!hasMore || isLoading) return;
 
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
     observerRef.current = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoading) {
@@ -36,13 +39,11 @@ export default function InfiniteScroll({
       { rootMargin: `${threshold}px` }
     );
 
-    if (sentinelRef.current) {
-      observerRef.current.observe(sentinelRef.current);
-    }
+    observerRef.current.observe(sentinel);
 
     return () => {
-      if (observerRef.current && sentinelRef.current) {
-        observerRef.current.unobserve(sentinelRef.current);
+      if (observerRef.current && sentinel) {
+        observerRef.current.unobserve(sentinel);
       }
     };
   }, [hasMore, isLoading, loadMore, threshold]);

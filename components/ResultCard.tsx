@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { ExternalLink, Star, Calendar } from 'lucide-react';
+import Image from 'next/image';
 
 interface ResultCardProps {
   title: string;
@@ -29,8 +30,14 @@ export default function ResultCard({
       className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-200 dark:border-gray-700"
     >
       {image && (
-        <div className="w-full h-48 rounded-lg mb-4 bg-gray-200 dark:bg-gray-700 overflow-hidden">
-          <img src={image} alt={title} className="w-full h-full object-cover" />
+        <div className="w-full h-48 rounded-lg mb-4 bg-gray-200 dark:bg-gray-700 overflow-hidden relative">
+          <Image 
+            src={image} 
+            alt={title} 
+            fill
+            className="object-cover rounded-lg"
+            unoptimized
+          />
         </div>
       )}
       
