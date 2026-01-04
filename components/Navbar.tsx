@@ -1,149 +1,97 @@
 'use client';
 
-import { useState } from 'react';
-import { Sparkles, Menu, X, Moon, Sun } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useTheme } from './ThemeProvider';
+import { Menu, X, Settings } from 'lucide-react';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navLinks = [
+    { href: '/', label: '홈' },
+    { href: '/content-guide', label: '콘텐츠 제작 가이드' },
+    { href: '/community', label: '커뮤니티' },
+    { href: '/signature', label: '전자결재' },
+    { href: '/diagnostics', label: '진단' },
+    { href: '/debug', label: '디버그' },
+    { href: '/site-check', label: '사이트 검사' },
+    { href: '/remote-solution', label: '원격솔루션' },
+  ];
 
   return (
-    <nav className="fixed top-0 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md z-50 border-b border-gray-200 dark:border-gray-800">
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-lg'
+          : 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <Sparkles className="w-8 h-8 text-primary" />
-              <span className="text-xl font-bold gradient-text">Shell</span>
-            </Link>
+        <div className="flex items-center justify-between h-14 md:h-16">
+          {/* 로고 */}
+          <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <Settings className="w-4 h-4 md:w-5 md:h-5 text-white" />
+            </div>
+            <span className="text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">
+              Shell
+            </span>
+          </Link>
+
+          {/* 데스크톱 메뉴 */}
+          <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex items-center gap-1.5 px-3 py-2 lg:px-4 lg:py-2.5 text-sm lg:text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 whitespace-nowrap"
+              >
+                <span>{link.label}</span>
+              </Link>
+            ))}
           </div>
 
-          <div className="hidden md:flex items-center space-x-8">
-            <Link href="#features" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              기능
-            </Link>
-            <Link href="#search" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              검색
-            </Link>
-            <Link href="#spark" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              Spark
-            </Link>
-            <Link href="#drive" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              AI 드라이브
-            </Link>
-            <Link href="/templates" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              템플릿
-            </Link>
-            <Link href="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              대시보드
-            </Link>
-            <Link href="/dashboard/integrations" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              통합
-            </Link>
-            <Link href="/api/docs" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              API
-            </Link>
-            <Link href="/dashboard/team" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              팀
-            </Link>
-            <Link href="/dashboard/webhooks" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              웹훅
-            </Link>
-            <Link href="/debug" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              디버그
-            </Link>
-            <Link href="/site-check" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              사이트 검사
-            </Link>
-            <Link href="/remote-solution" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              원격솔루션
-            </Link>
-            <Link href="/diagnostics" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              진단
-            </Link>
-            <Link href="#pricing" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
-              가격
-            </Link>
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label="테마 전환"
-            >
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-            <Link href="/auth/login" className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
-              시작하기
-            </Link>
-          </div>
-
+          {/* 모바일 메뉴 버튼 */}
           <button
-            className="md:hidden"
             onClick={() => setIsOpen(!isOpen)}
+            className="md:hidden p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="메뉴 토글"
           >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
-
-        {isOpen && (
-          <div className="md:hidden py-4 space-y-4">
-            <Link href="#features" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              기능
-            </Link>
-            <Link href="#search" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              검색
-            </Link>
-            <Link href="#spark" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              Spark
-            </Link>
-            <Link href="#drive" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              AI 드라이브
-            </Link>
-            <Link href="/dashboard" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              대시보드
-            </Link>
-            <Link href="/dashboard/integrations" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              통합
-            </Link>
-            <Link href="/api/docs" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              API
-            </Link>
-            <Link href="/dashboard/team" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              팀
-            </Link>
-            <Link href="/dashboard/webhooks" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              웹훅
-            </Link>
-            <Link href="/debug" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              디버그
-            </Link>
-            <Link href="/site-check" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              사이트 검사
-            </Link>
-            <Link href="/remote-solution" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              원격솔루션
-            </Link>
-            <Link href="/diagnostics" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              진단
-            </Link>
-            <Link href="#pricing" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
-              가격
-            </Link>
-            <button
-              onClick={toggleTheme}
-              className="w-full flex items-center justify-center px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              {theme === 'dark' ? <Sun className="w-5 h-5 mr-2" /> : <Moon className="w-5 h-5 mr-2" />}
-              <span>테마 전환</span>
-            </button>
-            <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark">
-              시작하기
-            </button>
-          </div>
-        )}
       </div>
+
+      {/* 모바일 메뉴 드롭다운 */}
+      {isOpen && (
+        <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <div className="px-4 py-3 space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <span>{link.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
-

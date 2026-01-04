@@ -1,5 +1,5 @@
 // 심층 연구 및 데이터 분석 유틸리티
-import { openai } from './openai';
+import { aiModelManager } from './ai-models';
 
 export interface ResearchQuery {
   topic: string;
@@ -19,17 +19,14 @@ export interface ResearchResult {
 
 export class ResearchEngine {
   async conductResearch(query: ResearchQuery): Promise<ResearchResult> {
-    // OpenAI API를 사용하여 실제 연구 수행
+    // Google Gemini API를 사용하여 실제 연구 수행
     let summary: string;
     let insights: string[];
     let analysis: string;
     
     try {
       const researchPrompt = `${query.topic}에 대한 ${query.depth} 수준의 심층 연구를 수행하고, 요약, 주요 통찰력, 상세 분석을 제공해주세요.`;
-      const aiResponse = await openai.generateText(researchPrompt, {
-        maxTokens: 3000,
-        temperature: 0.7,
-      });
+      const aiResponse = await aiModelManager.generateWithModel('gemini-pro', researchPrompt);
       
       // AI 응답을 파싱하여 구조화
       summary = aiResponse.split('\n\n')[0] || `${query.topic}에 대한 심층 연구 결과입니다.`;

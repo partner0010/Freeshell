@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, Plus, Play, Loader2, CheckCircle, XCircle, Video, FileText, Presentation, Globe, Phone, ExternalLink, Trash2 } from 'lucide-react';
+import { Sparkles, Plus, Loader2, CheckCircle, XCircle, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 
@@ -10,14 +10,8 @@ interface Task {
   prompt: string;
   status: 'pending' | 'running' | 'completed' | 'error';
   result?: {
-    type: 'video' | 'document' | 'presentation' | 'website' | 'call';
+    type: string;
     content: string;
-    url?: string;
-    metadata?: {
-      createdAt?: string;
-      model?: string;
-      tools?: string[];
-    };
   };
 }
 
@@ -41,7 +35,6 @@ export default function SparkWorkspace() {
     setIsProcessing(true);
 
     try {
-      // API 호출
       const response = await fetch('/api/spark', {
         method: 'POST',
         headers: {
@@ -60,7 +53,7 @@ export default function SparkWorkspace() {
         task.id === newTask.id 
           ? { 
               ...task, 
-              status: data.status,
+              status: data.status || 'completed',
               result: data.result
             }
           : task
@@ -76,150 +69,89 @@ export default function SparkWorkspace() {
     }
   };
 
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'video': return Video;
-      case 'document': return FileText;
-      case 'presentation': return Presentation;
-      case 'website': return Globe;
-      case 'call': return Phone;
-      default: return FileText;
-    }
-  };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed': return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case 'running': return <Loader2 className="w-5 h-5 text-primary animate-spin" />;
-      case 'error': return <XCircle className="w-5 h-5 text-red-500" />;
-      default: return <Loader2 className="w-5 h-5 text-gray-400" />;
+      case 'completed': return <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />;
+      case 'running': return <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary animate-spin" />;
+      case 'error': return <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />;
+      default: return <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />;
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-4 mb-6">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-secondary to-pink-500 flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-white" />
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 mb-6">
+        <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
-          <div>
-            <h2 className="text-2xl font-bold">Spark 워크스페이스</h2>
-            <p className="text-gray-600 dark:text-gray-400">노코드 AI 에이전트로 복잡한 작업 자동화</p>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white break-words">Spark 워크스페이스</h2>
+            <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1">노코드 AI 에이전트로 복잡한 작업 자동화</p>
           </div>
         </div>
 
-        <div className="mb-6">
-          <div className="flex space-x-4">
+        <div className="mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <input
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleCreateTask()}
-              placeholder="예: 파리 여행 계획 문서 작성, 제품 소개 비디오 제작, 레스토랑 예약 전화..."
-              className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleCreateTask()}
+              placeholder="예: 파리 여행 계획 문서 작성, 제품 소개 비디오 제작..."
+              className="flex-1 px-4 py-2.5 sm:px-5 sm:py-3 md:px-6 md:py-3.5 text-sm sm:text-base md:text-lg bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:border-primary dark:text-white"
               disabled={isProcessing}
             />
             <button
               onClick={handleCreateTask}
               disabled={isProcessing || !prompt.trim()}
-              className="px-6 py-3 bg-secondary text-white rounded-lg hover:bg-secondary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-5 py-2.5 sm:px-6 sm:py-3 md:px-8 md:py-4 bg-purple-600 text-white rounded-xl font-semibold text-sm sm:text-base md:text-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex items-center justify-center gap-2"
             >
-              <Plus className="w-5 h-5" />
-              <span>작업 생성</span>
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">작업 생성</span>
+              <span className="sm:hidden">생성</span>
             </button>
           </div>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
             자연어로 요구사항을 설명하면 AI가 자동으로 처리합니다
           </p>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold mb-4">작업 목록</h3>
+        <div className="space-y-3 sm:space-y-4">
+          <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">작업 목록</h3>
           <AnimatePresence>
             {tasks.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>아직 작업이 없습니다. 위에서 작업을 생성해보세요.</p>
+              <div className="text-center py-8 sm:py-12 md:py-16 text-gray-500 dark:text-gray-400">
+                <Sparkles className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 mx-auto mb-3 sm:mb-4 opacity-50" />
+                <p className="text-sm sm:text-base md:text-lg">아직 작업이 없습니다. 위에서 작업을 생성해보세요.</p>
               </div>
             ) : (
-              tasks.map((task) => {
-                const Icon = task.result ? getIcon(task.result.type) : FileText;
-                return (
-                  <motion.div
-                    key={task.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          {getStatusIcon(task.status)}
-                          <div className="flex-1">
-                            <p className="font-medium">{task.prompt}</p>
-                            {task.status === 'running' && (
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">처리 중...</p>
-                            )}
-                          </div>
-                        </div>
-                        {task.result && (
-                          <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                            <div className="flex items-center space-x-2 mb-3">
-                              <Icon className="w-5 h-5 text-primary" />
-                              <span className="font-semibold capitalize">{task.result.type}</span>
-                              {task.result.url && (
-                                <a
-                                  href={task.result.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="ml-auto flex items-center space-x-1 text-primary hover:text-primary-dark text-sm"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                  <span>결과 보기</span>
-                                </a>
-                              )}
-                            </div>
-                            <div className="prose dark:prose-invert max-w-none text-sm">
-                              {task.result.content && task.result.content.length > 500 ? (
-                                <>
-                                  <div className="mb-2">
-                                    <ReactMarkdown>{task.result.content.substring(0, 500) + '...'}</ReactMarkdown>
-                                  </div>
-                                  <details>
-                                    <summary className="cursor-pointer text-primary hover:text-primary-dark font-medium">
-                                      전체 내용 보기
-                                    </summary>
-                                    <div className="mt-2">
-                                      <ReactMarkdown>{task.result.content}</ReactMarkdown>
-                                    </div>
-                                  </details>
-                                </>
-                              ) : (
-                                <ReactMarkdown>{task.result.content}</ReactMarkdown>
-                              )}
-                            </div>
-                            {task.result.metadata && (
-                              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
-                                <div>모델: {task.result.metadata.model || 'GPT-4.1'}</div>
-                                {task.result.metadata.createdAt && (
-                                  <div>생성일: {new Date(task.result.metadata.createdAt).toLocaleString('ko-KR')}</div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {task.status === 'error' && (
-                          <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
-                            작업 처리 중 오류가 발생했습니다. 다시 시도해주세요.
-                          </div>
-                        )}
+              tasks.map((task) => (
+                <motion.div
+                  key={task.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3 sm:p-4 md:p-6 border border-gray-200 dark:border-gray-700"
+                >
+                  <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
+                    {getStatusIcon(task.status)}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm sm:text-base md:text-lg font-medium text-gray-900 dark:text-white break-words">{task.prompt}</p>
+                      {task.status === 'running' && (
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">처리 중...</p>
+                      )}
+                    </div>
+                  </div>
+                  {task.result && (
+                    <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div className="prose prose-sm sm:prose-base md:prose-lg dark:prose-invert max-w-none">
+                        <ReactMarkdown className="text-sm sm:text-base md:text-lg break-words">{task.result.content}</ReactMarkdown>
                       </div>
                     </div>
-                  </motion.div>
-                );
-              })
+                  )}
+                </motion.div>
+              ))
             )}
           </AnimatePresence>
         </div>
@@ -227,4 +159,3 @@ export default function SparkWorkspace() {
     </div>
   );
 }
-

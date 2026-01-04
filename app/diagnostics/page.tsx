@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, AlertCircle, RefreshCw, Key, Server, Zap, Info } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, RefreshCw, Key, Server, Zap, Info, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -29,17 +29,18 @@ interface DiagnosticsData {
     platform?: string;
   };
   apiKeys: {
-    openai: APIKeyStatus;
-    anthropic: APIKeyStatus;
     google: APIKeyStatus;
+    pexels: APIKeyStatus;
+    unsplash: APIKeyStatus;
+    pixabay: APIKeyStatus;
   };
   services: {
     search: ServiceStatus;
     spark: ServiceStatus;
     translate: ServiceStatus;
-    imageGeneration: ServiceStatus;
     research: ServiceStatus;
-    aiModels: ServiceStatus;
+    webSearch: ServiceStatus;
+    imageSearch: ServiceStatus;
   };
   recommendations: {
     critical: string[];
@@ -53,269 +54,231 @@ export default function DiagnosticsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStatus = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await fetch('/api/status');
       if (!response.ok) {
-        throw new Error('상태 확인 실패');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const statusData = await response.json();
-      setData(statusData);
-    } catch (err) {
-      setError('상태 정보를 가져올 수 없습니다.');
-      console.error('Diagnostics error:', err);
+      const result: DiagnosticsData = await response.json();
+      setData(result);
+    } catch (e: any) {
+      setError(`진단 정보를 가져오는 데 실패했습니다: ${e.message}`);
+      console.error('Failed to fetch diagnostics:', e);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStatus();
+    fetchData();
   }, []);
 
   const getStatusIcon = (status: string) => {
-    if (status.includes('✅')) return <CheckCircle className="w-5 h-5 text-green-500" />;
-    if (status.includes('❌')) return <XCircle className="w-5 h-5 text-red-500" />;
-    if (status.includes('⚠️')) return <AlertCircle className="w-5 h-5 text-yellow-500" />;
-    return <Info className="w-5 h-5 text-blue-500" />;
+    if (status === '✅ 사용 가능' || status === '✅ 항상 사용 가능') return <CheckCircle className="w-5 h-5 text-green-500" />;
+    if (status.includes('❌') || status.includes('오류')) return <XCircle className="w-5 h-5 text-red-500" />;
+    return <AlertCircle className="w-5 h-5 text-yellow-500" />;
   };
 
-  const getStatusColor = (status: string) => {
-    if (status.includes('✅')) return 'border-green-500 bg-green-50 dark:bg-green-900/20';
-    if (status.includes('❌')) return 'border-red-500 bg-red-50 dark:bg-red-900/20';
-    if (status.includes('⚠️')) return 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20';
-    return 'border-gray-300 dark:border-gray-700';
+  const getApiKeyIcon = (valid: boolean) => {
+    return valid ? <CheckCircle className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-red-500" />;
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      <Navbar />
-      <main className="pt-20 pb-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-4 flex items-center gap-3">
-                <Server className="w-10 h-10 text-primary" />
-                AI 서비스 진단
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                현재 AI 서비스 연결 상태와 필요한 설정을 확인합니다.
-              </p>
-            </div>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col">
+        <Navbar />
+        <main className="flex-grow container mx-auto px-4 py-20 flex items-center justify-center">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <span className="ml-4 text-lg">진단 정보를 불러오는 중...</span>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col">
+        <Navbar />
+        <main className="flex-grow container mx-auto px-4 py-20 flex items-center justify-center">
+          <div className="text-center text-red-500">
+            <XCircle className="w-12 h-12 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-4">오류 발생</h1>
+            <p className="text-lg">{error}</p>
             <button
-              onClick={fetchStatus}
-              disabled={isLoading}
-              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center space-x-2"
+              onClick={fetchData}
+              className="mt-6 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center mx-auto"
             >
-              <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-              <span>새로고침</span>
+              <RefreshCw className="w-5 h-5 mr-2" />
+              다시 시도
             </button>
           </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
-          {isLoading && !data && (
-            <div className="text-center py-12">
-              <RefreshCw className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-400">상태를 확인하는 중...</p>
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col">
+        <Navbar />
+        <main className="flex-grow container mx-auto px-4 py-20 flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <Info className="w-12 h-12 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-4">진단 정보 없음</h1>
+            <p className="text-lg">진단 정보를 불러올 수 없습니다.</p>
+            <button
+              onClick={fetchData}
+              className="mt-6 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center mx-auto"
+            >
+              <RefreshCw className="w-5 h-5 mr-2" />
+              다시 시도
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col">
+      <Navbar />
+      <main className="flex-grow container mx-auto px-4 py-20">
+        <h1 className="text-4xl font-bold mb-8 text-center">AI 서비스 진단 (무료 API만)</h1>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 mb-8">
+          <h2 className="text-2xl font-semibold mb-6 flex items-center space-x-3">
+            <Server className="w-7 h-7 text-blue-500" />
+            <span>환경 및 API 키 상태</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-xl font-medium mb-3">환경 정보</h3>
+              <ul className="space-y-2 text-gray-700 dark:text-gray-300">
+                <li><span className="font-semibold">Node 환경:</span> {data.environment.nodeEnv}</li>
+                <li><span className="font-semibold">프로덕션 모드:</span> {data.environment.isProduction ? '예' : '아니오'}</li>
+                <li><span className="font-semibold">플랫폼:</span> {data.environment.platform || '로컬'}</li>
+                <li><span className="font-semibold">진단 시간:</span> {new Date(data.timestamp).toLocaleString()}</li>
+              </ul>
             </div>
-          )}
-
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-              <p className="text-red-700 dark:text-red-400">{error}</p>
+            <div>
+              <h3 className="text-xl font-medium mb-3">API 키 설정 (무료 API만)</h3>
+              <ul className="space-y-3">
+                {Object.entries(data.apiKeys).map(([key, status]) => (
+                  <li key={key} className="flex items-center space-x-3">
+                    {getApiKeyIcon(status.valid)}
+                    <div>
+                      <span className="font-semibold uppercase">{key}:</span> {status.message}
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
-          )}
+          </div>
+        </div>
 
-          {data && (
-            <>
-              {/* 환경 정보 */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
-                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                  <Zap className="w-6 h-6 text-primary" />
-                  환경 정보
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">환경</div>
-                    <div className="font-semibold">{data.environment.nodeEnv}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">플랫폼</div>
-                    <div className="font-semibold">{data.environment.platform || '로컬/기타'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">확인 시간</div>
-                    <div className="font-semibold text-sm">
-                      {new Date(data.timestamp).toLocaleString('ko-KR')}
-                    </div>
-                  </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 mb-8">
+          <h2 className="text-2xl font-semibold mb-6 flex items-center space-x-3">
+            <Zap className="w-7 h-7 text-purple-500" />
+            <span>AI 서비스 상태</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.entries(data.services).map(([key, service]) => (
+              <div key={key} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-3 mb-2">
+                  {getStatusIcon(service.status)}
+                  <h3 className="font-semibold text-lg">{service.name}</h3>
                 </div>
-              </div>
-
-              {/* API 키 상태 */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
-                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                  <Key className="w-6 h-6 text-primary" />
-                  API 키 상태
-                </h2>
-                <div className="space-y-4">
-                  {Object.entries(data.apiKeys).map(([key, status]) => (
-                    <div
-                      key={key}
-                      className={`p-4 rounded-lg border-2 ${getStatusColor(status.message)}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {getStatusIcon(status.message)}
-                          <div>
-                            <div className="font-semibold uppercase">{key}</div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              {status.prefix}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold">{status.message}</div>
-                          {status.configured && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {status.valid ? '유효한 형식' : '형식 확인 필요'}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 서비스 상태 */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
-                <h2 className="text-2xl font-bold mb-4">서비스 상태</h2>
-                <div className="space-y-4">
-                  {Object.entries(data.services).map(([key, service]) => (
-                    <div
-                      key={key}
-                      className={`p-4 rounded-lg border-2 ${getStatusColor(service.status)}`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            {getStatusIcon(service.status)}
-                            <h3 className="font-semibold">{service.name}</h3>
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            {service.description}
-                          </p>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            <div>필수: {service.required}</div>
-                            <div>폴백: {service.fallback}</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold">{service.status}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 권장사항 */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold mb-4">권장사항</h2>
-                
-                {data.recommendations.critical.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">
-                      🔴 중요 (즉시 조치 필요)
-                    </h3>
-                    <ul className="space-y-2">
-                      {data.recommendations.critical.map((rec, index) => (
-                        <li key={index} className="flex items-start gap-2 text-red-700 dark:text-red-400">
-                          <XCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                          <span>{rec}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{service.description}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500">
+                  <span className="font-medium">필수:</span> {service.required}
+                </p>
+                {service.status !== '✅ 사용 가능' && service.status !== '✅ 항상 사용 가능' && (
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                    <span className="font-medium">폴백:</span> {service.fallback}
+                  </p>
                 )}
-
-                {data.recommendations.important.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-yellow-600 dark:text-yellow-400 mb-2">
-                      🟡 중요 (권장)
-                    </h3>
-                    <ul className="space-y-2">
-                      {data.recommendations.important.map((rec, index) => (
-                        <li key={index} className="flex items-start gap-2 text-yellow-700 dark:text-yellow-400">
-                          <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                          <span>{rec}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {data.recommendations.optional.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-2">
-                      🔵 선택사항
-                    </h3>
-                    <ul className="space-y-2">
-                      {data.recommendations.optional.map((rec, index) => (
-                        <li key={index} className="flex items-start gap-2 text-blue-700 dark:text-blue-400">
-                          <Info className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                          <span>{rec}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {data.recommendations.critical.length === 0 &&
-                  data.recommendations.important.length === 0 &&
-                  data.recommendations.optional.length === 0 && (
-                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                      <p>모든 설정이 완료되었습니다! 🎉</p>
-                    </div>
-                  )}
               </div>
+            ))}
+          </div>
+        </div>
 
-              {/* 설정 가이드 */}
-              <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
-                <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-blue-100">
-                  📖 설정 가이드
-                </h3>
-                <div className="space-y-4 text-blue-800 dark:text-blue-200">
+        {data.recommendations.critical.length > 0 || data.recommendations.important.length > 0 ? (
+          <div className="bg-red-50 dark:bg-red-900/20 rounded-lg shadow-md p-8 mb-8 border border-red-200 dark:border-red-700">
+            <h2 className="text-2xl font-semibold mb-6 flex items-center space-x-3 text-red-600 dark:text-red-400">
+              <AlertCircle className="w-7 h-7" />
+              <span>권장 사항</span>
+            </h2>
+            <ul className="space-y-4 text-red-700 dark:text-red-300">
+              {data.recommendations.critical.map((rec, index) => (
+                <li key={`critical-${index}`} className="flex items-start space-x-3">
+                  <XCircle className="w-5 h-5 flex-shrink-0 mt-1" />
                   <div>
-                    <h4 className="font-semibold mb-2">Netlify 환경 변수 설정:</h4>
-                    <ol className="list-decimal list-inside space-y-1 text-sm">
-                      <li>Netlify 대시보드 접속: https://app.netlify.com</li>
-                      <li>사이트 선택 (freeshell.co.kr)</li>
-                      <li>Site settings → Environment variables</li>
-                      <li>Add a variable 클릭</li>
-                      <li>Key: OPENAI_API_KEY, Value: sk-your-key-here</li>
-                      <li>Save 클릭</li>
-                      <li>Deploys 탭 → Trigger deploy</li>
-                    </ol>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">로컬 개발 환경:</h4>
-                    <p className="text-sm">
-                      프로젝트 루트에 <code className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">.env.local</code> 파일을 생성하고
-                      <code className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">OPENAI_API_KEY=sk-your-key-here</code>를 추가하세요.
+                    <p className="font-medium">필수: {rec}</p>
+                    <p className="text-sm text-red-500 dark:text-red-400 mt-1">
+                      이 문제를 해결하지 않으면 일부 AI 기능이 제대로 작동하지 않습니다.
                     </p>
                   </div>
-                </div>
-              </div>
-            </>
-          )}
+                </li>
+              ))}
+              {data.recommendations.important.map((rec, index) => (
+                <li key={`important-${index}`} className="flex items-start space-x-3">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-1 text-yellow-600 dark:text-yellow-400" />
+                  <div>
+                    <p className="font-medium">중요: {rec}</p>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-500 mt-1">
+                      이 문제를 해결하면 더 많은 기능을 활용할 수 있습니다.
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg shadow-md p-8 mb-8 border border-green-200 dark:border-green-700">
+            <h2 className="text-2xl font-semibold mb-6 flex items-center space-x-3 text-green-600 dark:text-green-400">
+              <CheckCircle className="w-7 h-7" />
+              <span>모든 무료 AI 서비스 정상 작동</span>
+            </h2>
+            <p className="text-green-700 dark:text-green-300">
+              모든 무료 AI 서비스가 정상적으로 작동하고 있습니다.
+            </p>
+          </div>
+        )}
+
+        {data.recommendations.optional.length > 0 && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-md p-8 mb-8 border border-blue-200 dark:border-blue-700">
+            <h2 className="text-2xl font-semibold mb-6 flex items-center space-x-3 text-blue-600 dark:text-blue-400">
+              <Info className="w-7 h-7" />
+              <span>선택 사항</span>
+            </h2>
+            <ul className="space-y-2 text-blue-700 dark:text-blue-300">
+              {data.recommendations.optional.map((rec, index) => (
+                <li key={`optional-${index}`} className="flex items-start space-x-3">
+                  <Info className="w-5 h-5 flex-shrink-0 mt-1" />
+                  <p>{rec}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="text-center mt-8">
+          <button
+            onClick={fetchData}
+            className="px-8 py-4 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-lg font-semibold flex items-center justify-center mx-auto"
+          >
+            <RefreshCw className="w-6 h-6 mr-3" />
+            <span>상태 새로고침</span>
+          </button>
         </div>
       </main>
       <Footer />
     </div>
   );
 }
-

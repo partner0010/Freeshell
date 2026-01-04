@@ -1,6 +1,6 @@
 /**
  * 환경 변수 보안
- * 안전한 환경 변수 접근 및 검증
+ * 안전한 환경 변수 접근 및 검증 (무료 API만)
  */
 
 /**
@@ -41,7 +41,7 @@ export function maskSensitiveValue(value: string): string {
 }
 
 /**
- * 환경 변수 검증
+ * 환경 변수 검증 (무료 API만)
  */
 export function validateEnv(): {
   valid: boolean;
@@ -53,22 +53,12 @@ export function validateEnv(): {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // 필수 환경 변수 검증
-  const required = [
-    'NODE_ENV',
-  ];
-
-  for (const key of required) {
-    if (!process.env[key]) {
-      errors.push(`Required environment variable '${key}' is not set`);
-    }
-  }
+  // 필수 환경 변수는 없음 (모두 선택적)
+  // Google Gemini는 필수지만, 없어도 시뮬레이션 모드로 작동
 
   // 권장 환경 변수 검증
   const recommended = [
-    'OPENAI_API_KEY',
-    'NEXTAUTH_SECRET',
-    'NEXTAUTH_URL',
+    'GOOGLE_API_KEY', // AI 기능을 위해 권장
   ];
 
   for (const key of recommended) {
@@ -77,19 +67,11 @@ export function validateEnv(): {
     }
   }
 
-  // API 키 형식 검증
-  if (process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.startsWith('sk-')) {
-    warnings.push('OPENAI_API_KEY format may be incorrect (should start with "sk-")');
-  }
+  // API 키 형식 검증 (Google API 키는 특정 형식이 없음)
 
   // 보안 경고
-  if (process.env.NODE_ENV === 'production') {
-    if (!process.env.NEXTAUTH_SECRET) {
-      errors.push('NEXTAUTH_SECRET is required in production');
-    }
-    if (process.env.NEXTAUTH_SECRET && process.env.NEXTAUTH_SECRET.length < 32) {
-      errors.push('NEXTAUTH_SECRET must be at least 32 characters long');
-    }
+  if (process.env.GOOGLE_API_KEY && process.env.GOOGLE_API_KEY.length < 20) {
+    warnings.push('GOOGLE_API_KEY seems too short, may be incorrect');
   }
 
   return {
@@ -98,12 +80,3 @@ export function validateEnv(): {
     warnings,
   };
 }
-
-/**
- * 환경 변수 존재 확인
- */
-export function hasEnv(key: string): boolean {
-  assertServerSide();
-  return !!process.env[key];
-}
-

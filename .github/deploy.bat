@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 chcp 65001 >nul
 cls
 echo ========================================
@@ -133,14 +134,21 @@ if exist "netlify.toml" (
 )
 
 REM Add all other changes
-git add .
+echo Adding all changes to Git...
+git add . 2>&1
+if errorlevel 1 (
+    echo [WARNING] git add . encountered an issue, but continuing...
+) else (
+    echo [OK] All changes added to Git
+)
 echo.
+
 echo Verifying files are staged...
-git diff --cached --name-only | findstr /C:"package.json" /C:"netlify.toml"
+git --no-pager diff --cached --name-only 2>nul | findstr /C:"package.json" /C:"netlify.toml" >nul 2>&1
 if errorlevel 1 (
     echo [WARNING] Essential files may not be staged properly
-    echo Staged files:
-    git diff --cached --name-only
+    echo Checking staged files count...
+    git --no-pager diff --cached --name-only 2>nul | find /C /V "" >nul 2>&1
 ) else (
     echo [OK] Essential files are staged
 )
@@ -148,9 +156,12 @@ echo.
 
 echo Enter commit message (default: "Shell updates and improvements"):
 set /p commit_msg=
-if "%commit_msg%"=="" set commit_msg=Shell updates and improvements
+if "!commit_msg!"=="" set commit_msg=Shell updates and improvements
+echo.
+echo Committing with message: !commit_msg!
+echo.
 
-git commit -m "%commit_msg%"
+git commit -m "!commit_msg!" 2>&1
 if errorlevel 1 (
     echo [WARNING] Commit failed or no changes to commit.
     echo.
@@ -158,7 +169,7 @@ if errorlevel 1 (
     git status --short
     echo.
     echo Attempting to commit with --allow-empty...
-    git commit --allow-empty -m "%commit_msg% - force commit"
+    git commit --allow-empty -m "!commit_msg! - force commit" 2>&1
 ) else (
     echo [SUCCESS] Commit completed!
     echo.

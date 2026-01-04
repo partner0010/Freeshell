@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { openai } from '@/lib/openai';
+import { aiModelManager } from '@/lib/ai-models';
 import { validateInput } from '@/lib/security/input-validation';
 import { rateLimitCheck } from '@/lib/security/rate-limit';
 
@@ -44,17 +44,14 @@ export async function POST(request: NextRequest) {
 
     const type = detectType(prompt);
 
-    // OpenAI API를 사용하여 실제 콘텐츠 생성
+    // Google Gemini API를 사용하여 실제 콘텐츠 생성
     const sanitizedPrompt = validation.sanitized;
     let content: string;
     try {
       const aiPrompt = `${sanitizedPrompt}에 대한 작업을 수행하고 결과를 생성해주세요. ${type} 형식으로 상세하게 작성해주세요.`;
-      content = await openai.generateText(aiPrompt, {
-        maxTokens: 2000,
-        temperature: 0.7,
-      });
+      content = await aiModelManager.generateWithModel('gemini-pro', aiPrompt);
     } catch (error) {
-      console.error('OpenAI API error, using fallback:', error);
+      console.error('Google Gemini API error, using fallback:', error);
       // API 키가 없거나 오류 발생 시 시뮬레이션된 응답
       content = `${prompt}에 대한 작업이 성공적으로 완료되었습니다.`;
     }
@@ -69,7 +66,7 @@ export async function POST(request: NextRequest) {
         url: `https://example.com/spark/${Date.now()}`,
         metadata: {
           createdAt: new Date().toISOString(),
-          model: process.env.OPENAI_API_KEY ? 'GPT-4.1' : 'Simulation',
+          model: process.env.GOOGLE_API_KEY ? 'Gemini Pro' : 'Simulation',
           tools: ['web-search', 'content-generation', 'data-analysis'],
         },
       },

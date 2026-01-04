@@ -2,10 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * AI 서비스 상태 및 API 키 진단 엔드포인트
- * 실제 연결 상태와 필요한 설정을 확인합니다
+ * 실제 연결 상태와 필요한 설정을 확인합니다 (무료 API만)
  */
 export async function GET(request: NextRequest) {
   try {
+    const getApiKeyStatus = (key: string, prefix: string = '') => {
+      const hasValue = !!process.env[key];
+      const startsWithPrefix = hasValue && prefix ? process.env[key]?.startsWith(prefix) : false;
+      return {
+        configured: hasValue,
+        hasValue: hasValue,
+        prefix: prefix,
+        valid: hasValue ? (prefix ? startsWithPrefix : true) : false,
+        message: hasValue
+          ? (prefix && startsWithPrefix ? '✅ API 키가 올바르게 설정되었습니다.' : prefix ? `⚠️ API 키 형식이 올바르지 않을 수 있습니다 (시작: ${prefix}).` : '✅ 설정됨')
+          : '❌ API 키가 설정되지 않았습니다.',
+      };
+    };
+
     const status = {
       timestamp: new Date().toISOString(),
       environment: {
@@ -14,76 +28,53 @@ export async function GET(request: NextRequest) {
         platform: process.env.NETLIFY ? 'Netlify' : undefined,
       },
       apiKeys: {
-        openai: {
-          configured: !!process.env.OPENAI_API_KEY,
-          hasValue: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length > 0 : false,
-          prefix: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 7) + '...' : 'not set',
-          valid: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.startsWith('sk-') : false,
-          message: process.env.OPENAI_API_KEY 
-            ? (process.env.OPENAI_API_KEY.startsWith('sk-') ? '✅ 유효한 형식' : '⚠️ 형식이 올바르지 않을 수 있습니다 (sk-로 시작해야 함)')
-            : '❌ 설정되지 않음',
-        },
-        anthropic: {
-          configured: !!process.env.ANTHROPIC_API_KEY,
-          hasValue: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.length > 0 : false,
-          prefix: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.substring(0, 10) + '...' : 'not set',
-          valid: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.length > 20 : false,
-          message: process.env.ANTHROPIC_API_KEY 
-            ? '✅ 설정됨' 
-            : '⚠️ 선택사항 (Claude 모델 사용 시 필요)',
-        },
-        google: {
-          configured: !!process.env.GOOGLE_API_KEY,
-          hasValue: process.env.GOOGLE_API_KEY ? process.env.GOOGLE_API_KEY.length > 0 : false,
-          prefix: process.env.GOOGLE_API_KEY ? process.env.GOOGLE_API_KEY.substring(0, 10) + '...' : 'not set',
-          valid: process.env.GOOGLE_API_KEY ? process.env.GOOGLE_API_KEY.length > 20 : false,
-          message: process.env.GOOGLE_API_KEY 
-            ? '✅ 설정됨' 
-            : '⚠️ 선택사항 (Gemini 모델 사용 시 필요)',
-        },
+        google: getApiKeyStatus('GOOGLE_API_KEY', ''),
+        pexels: getApiKeyStatus('PEXELS_API_KEY', ''),
+        unsplash: getApiKeyStatus('UNSPLASH_ACCESS_KEY', ''),
+        pixabay: getApiKeyStatus('PIXABAY_API_KEY', ''),
       },
       services: {
         search: {
           name: 'AI 검색 엔진',
-          required: 'OPENAI_API_KEY',
-          status: process.env.OPENAI_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
+          required: 'GOOGLE_API_KEY',
+          status: process.env.GOOGLE_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
           fallback: '시뮬레이션된 응답 제공',
-          description: 'OpenAI GPT-4를 사용하여 검색 결과 생성',
+          description: 'Google Gemini API를 사용하여 검색 결과 생성',
         },
         spark: {
           name: 'Spark 워크스페이스',
-          required: 'OPENAI_API_KEY',
-          status: process.env.OPENAI_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
+          required: 'GOOGLE_API_KEY',
+          status: process.env.GOOGLE_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
           fallback: '시뮬레이션된 응답 제공',
-          description: 'OpenAI GPT-4를 사용하여 작업 자동화',
+          description: 'Google Gemini API를 사용하여 작업 자동화',
         },
         translate: {
           name: 'AI 번역',
-          required: 'OPENAI_API_KEY',
-          status: process.env.OPENAI_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
+          required: 'GOOGLE_API_KEY',
+          status: process.env.GOOGLE_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
           fallback: '원문 반환',
-          description: 'OpenAI GPT-4를 사용하여 번역',
-        },
-        imageGeneration: {
-          name: '이미지 생성',
-          required: 'OPENAI_API_KEY',
-          status: process.env.OPENAI_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
-          fallback: '플레이스홀더 이미지',
-          description: 'DALL-E 3를 사용하여 이미지 생성',
+          description: 'Google Gemini API를 사용하여 번역',
         },
         research: {
           name: '심층 연구',
-          required: 'OPENAI_API_KEY',
-          status: process.env.OPENAI_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
+          required: 'GOOGLE_API_KEY',
+          status: process.env.GOOGLE_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
           fallback: '시뮬레이션된 연구 결과',
-          description: 'OpenAI GPT-4를 사용하여 심층 분석',
+          description: 'Google Gemini API를 사용하여 심층 분석',
         },
-        aiModels: {
-          name: 'AI 모델 관리',
-          required: 'OPENAI_API_KEY (필수), ANTHROPIC_API_KEY (선택), GOOGLE_API_KEY (선택)',
-          status: process.env.OPENAI_API_KEY ? '✅ 기본 모델 사용 가능' : '❌ 최소 1개 API 키 필요',
-          fallback: '시뮬레이션된 응답',
-          description: '다중 AI 모델 지원 (GPT-4, Claude, Gemini)',
+        webSearch: {
+          name: '웹 검색',
+          required: '없음 (완전 무료)',
+          status: '✅ 항상 사용 가능',
+          fallback: '없음',
+          description: 'DuckDuckGo + Wikipedia (API 키 불필요)',
+        },
+        imageSearch: {
+          name: '이미지 검색',
+          required: 'PEXELS_API_KEY, UNSPLASH_ACCESS_KEY, PIXABAY_API_KEY (하나 이상 권장)',
+          status: (process.env.PEXELS_API_KEY || process.env.UNSPLASH_ACCESS_KEY || process.env.PIXABAY_API_KEY) ? '✅ 사용 가능' : '⚠️ API 키 없으면 결과 없음',
+          fallback: '검색 결과 없음',
+          description: 'Pexels + Unsplash + Pixabay (무료)',
         },
       },
       recommendations: {
@@ -94,18 +85,22 @@ export async function GET(request: NextRequest) {
     };
 
     // 권장사항 생성
-    if (!process.env.OPENAI_API_KEY) {
-      status.recommendations.critical.push('OPENAI_API_KEY를 설정해야 대부분의 AI 기능이 실제로 작동합니다.');
-    } else if (!process.env.OPENAI_API_KEY.startsWith('sk-')) {
-      status.recommendations.critical.push('OPENAI_API_KEY 형식이 올바르지 않습니다. "sk-"로 시작해야 합니다.');
-    }
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      status.recommendations.important.push('ANTHROPIC_API_KEY를 설정하면 Claude 모델을 사용할 수 있습니다.');
-    }
-
     if (!process.env.GOOGLE_API_KEY) {
-      status.recommendations.optional.push('GOOGLE_API_KEY를 설정하면 Gemini 모델을 사용할 수 있습니다.');
+      status.recommendations.critical.push('GOOGLE_API_KEY를 설정해야 대부분의 AI 기능이 실제로 작동합니다. (무료 티어 제공)');
+    }
+
+    if (!process.env.PEXELS_API_KEY && !process.env.UNSPLASH_ACCESS_KEY && !process.env.PIXABAY_API_KEY) {
+      status.recommendations.important.push('이미지 검색을 사용하려면 PEXELS_API_KEY, UNSPLASH_ACCESS_KEY, 또는 PIXABAY_API_KEY 중 하나 이상을 설정하세요. (모두 무료)');
+    }
+
+    if (!process.env.PEXELS_API_KEY) {
+      status.recommendations.optional.push('PEXELS_API_KEY를 설정하면 Pexels 이미지 검색을 사용할 수 있습니다. (무료)');
+    }
+    if (!process.env.UNSPLASH_ACCESS_KEY) {
+      status.recommendations.optional.push('UNSPLASH_ACCESS_KEY를 설정하면 Unsplash 이미지 검색을 사용할 수 있습니다. (무료 티어)');
+    }
+    if (!process.env.PIXABAY_API_KEY) {
+      status.recommendations.optional.push('PIXABAY_API_KEY를 설정하면 Pixabay 이미지 검색을 사용할 수 있습니다. (무료 티어)');
     }
 
     // Netlify 환경 확인
@@ -130,4 +125,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

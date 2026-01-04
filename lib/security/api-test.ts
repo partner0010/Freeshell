@@ -1,6 +1,6 @@
 /**
  * API 실제 동작 테스트 유틸리티
- * 실제 API 호출이 이루어지는지 확인
+ * 실제 API 호출이 이루어지는지 확인 (무료 API만)
  */
 
 export interface APITestResult {
@@ -14,46 +14,46 @@ export interface APITestResult {
 }
 
 /**
- * OpenAI API 실제 호출 테스트
+ * Google Gemini API 실제 호출 테스트
  */
-export async function testOpenAIAPI(): Promise<APITestResult> {
+export async function testGoogleGeminiAPI(): Promise<APITestResult> {
   const startTime = Date.now();
-  const hasAPIKey = !!process.env.OPENAI_API_KEY;
+  const hasAPIKey = !!process.env.GOOGLE_API_KEY;
 
   try {
     if (!hasAPIKey) {
       return {
-        endpoint: 'OpenAI API',
+        endpoint: 'Google Gemini API',
         method: 'POST',
         realAPICall: false,
         hasAPIKey: false,
         success: false,
-        error: 'OPENAI_API_KEY가 설정되지 않았습니다.',
+        error: 'GOOGLE_API_KEY가 설정되지 않았습니다.',
       };
     }
 
-    // 실제 OpenAI API 호출 테스트
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'user', content: 'Hello, this is a test. Please respond with "API test successful".' },
-        ],
-        max_tokens: 10,
-      }),
-    });
+    // 실제 Google Gemini API 호출 테스트
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GOOGLE_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: 'Hello, this is a test. Please respond with "API test successful".' }],
+          }],
+        }),
+      }
+    );
 
     const responseTime = Date.now() - startTime;
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorText = await response.text();
       return {
-        endpoint: 'OpenAI API',
+        endpoint: 'Google Gemini API',
         method: 'POST',
         realAPICall: true,
         hasAPIKey: true,
@@ -65,7 +65,7 @@ export async function testOpenAIAPI(): Promise<APITestResult> {
 
     const data = await response.json();
     return {
-      endpoint: 'OpenAI API',
+      endpoint: 'Google Gemini API',
       method: 'POST',
       realAPICall: true,
       hasAPIKey: true,
@@ -75,7 +75,7 @@ export async function testOpenAIAPI(): Promise<APITestResult> {
   } catch (error: any) {
     const responseTime = Date.now() - startTime;
     return {
-      endpoint: 'OpenAI API',
+      endpoint: 'Google Gemini API',
       method: 'POST',
       realAPICall: true,
       hasAPIKey: true,
@@ -87,14 +87,13 @@ export async function testOpenAIAPI(): Promise<APITestResult> {
 }
 
 /**
- * 모든 API 엔드포인트 테스트
+ * 모든 API 엔드포인트 테스트 (무료 API만)
  */
 export async function testAllAPIs(): Promise<APITestResult[]> {
   const results: APITestResult[] = [];
 
-  // OpenAI API 테스트
-  results.push(await testOpenAIAPI());
+  // Google Gemini API 테스트
+  results.push(await testGoogleGeminiAPI());
 
   return results;
 }
-

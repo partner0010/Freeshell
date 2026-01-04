@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { openai } from '@/lib/openai';
+import { aiModelManager } from '@/lib/ai-models';
 import { validateInput } from '@/lib/security/input-validation';
 import { rateLimitCheck } from '@/lib/security/rate-limit';
 
@@ -32,18 +32,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // OpenAI API를 사용하여 실제 AI 응답 생성
+    // Google Gemini API를 사용하여 실제 AI 응답 생성
     const aiPrompt = `${query}에 대한 포괄적이고 상세한 정보를 제공하는 검색 결과 페이지를 생성해주세요. 마크다운 형식으로 작성하고, 개요, 주요 내용, 상세 분석, 결론 섹션을 포함해주세요.`;
     
     let content: string;
     try {
-      // 실제 OpenAI API 호출 시도
-      content = await openai.generateText(aiPrompt, {
-        maxTokens: 2000,
-        temperature: 0.7,
-      });
+      // Google Gemini API 호출
+      content = await aiModelManager.generateWithModel('gemini-pro', aiPrompt);
     } catch (error) {
-      console.error('OpenAI API error, using fallback:', error);
+      console.error('Google Gemini API error, using fallback:', error);
       // API 키가 없거나 오류 발생 시 시뮬레이션된 응답
       content = `# ${query}에 대한 종합 정보
 
