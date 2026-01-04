@@ -50,7 +50,14 @@ export class AIModelManager {
   async generateWithModel(modelId: string, prompt: string): Promise<string> {
     const model = this.getModel(modelId);
     if (!model) {
-      throw new Error(`Model ${modelId} not found`);
+      // 모델을 찾을 수 없어도 폴백 메시지 반환 (throw 하지 않음)
+      console.error(`Model ${modelId} not found`);
+      if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
+        const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
+        const textToTranslate = match ? match[1].trim() : prompt;
+        return textToTranslate;
+      }
+      return `모델 ${modelId}을(를) 찾을 수 없습니다. 프롬프트: ${prompt.substring(0, 200)}...`;
     }
 
     try {
@@ -63,18 +70,36 @@ export class AIModelManager {
         case 'Google':
           return await this.callGoogle(model, prompt);
         default:
-          throw new Error(`Unsupported provider: ${model.provider}`);
+          console.error(`Unsupported provider: ${model.provider}`);
+          // 지원하지 않는 provider여도 폴백 메시지 반환
+          if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
+            const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
+            const textToTranslate = match ? match[1].trim() : prompt;
+            return textToTranslate;
+          }
+          return `지원하지 않는 제공자입니다: ${model.provider}. 프롬프트: ${prompt.substring(0, 200)}...`;
       }
     } catch (error) {
       console.error(`Error generating with model ${modelId}:`, error);
-      // 오류 발생 시 폴백 메시지 반환
-      return `AI 모델 실행 중 오류가 발생했습니다. API 키를 확인하거나 나중에 다시 시도해주세요.`;
+      // 오류 발생 시에도 폴백 메시지 반환 (이미 각 call 메서드에서 처리되지만 이중 안전장치)
+      if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
+        const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
+        const textToTranslate = match ? match[1].trim() : prompt;
+        return textToTranslate;
+      }
+      return `AI 모델 실행 중 오류가 발생했습니다. 프롬프트: ${prompt.substring(0, 200)}...`;
     }
   }
 
   private async callOpenAI(model: AIModel, prompt: string): Promise<string> {
     // API 키가 없으면 폴백
     if (!model.apiKey) {
+      // 번역 요청인지 확인
+      if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
+        const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
+        const textToTranslate = match ? match[1].trim() : prompt;
+        return textToTranslate; // 원문 반환 (간단한 폴백)
+      }
       return `이것은 시뮬레이션된 응답입니다. 실제 OpenAI API 키를 설정하면 실제 AI 응답을 받을 수 있습니다.\n\n프롬프트: ${prompt.substring(0, 200)}...`;
     }
 
@@ -95,20 +120,39 @@ export class AIModelManager {
       });
 
       if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('OpenAI API error:', response.statusText, errorText);
+        // API 호출 실패 시에도 폴백 메시지 반환 (throw 하지 않음)
+        if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
+          const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
+          const textToTranslate = match ? match[1].trim() : prompt;
+          return textToTranslate;
+        }
+        return `API 호출에 실패했습니다. 잠시 후 다시 시도해주세요. 프롬프트: ${prompt.substring(0, 200)}...`;
       }
 
       const data = await response.json();
       return data.choices[0]?.message?.content || '';
     } catch (error) {
       console.error('OpenAI API call error:', error);
-      throw error;
+      // 에러 발생 시에도 폴백 메시지 반환 (throw 하지 않음)
+      if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
+        const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
+        const textToTranslate = match ? match[1].trim() : prompt;
+        return textToTranslate;
+      }
+      return `API 호출 중 오류가 발생했습니다. 프롬프트: ${prompt.substring(0, 200)}...`;
     }
   }
 
   private async callAnthropic(model: AIModel, prompt: string): Promise<string> {
     // API 키가 없으면 폴백
     if (!model.apiKey) {
+      if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
+        const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
+        const textToTranslate = match ? match[1].trim() : prompt;
+        return textToTranslate;
+      }
       return `이것은 시뮬레이션된 응답입니다. 실제 Anthropic API 키를 설정하면 실제 Claude 응답을 받을 수 있습니다.\n\n프롬프트: ${prompt.substring(0, 200)}...`;
     }
 
@@ -129,20 +173,37 @@ export class AIModelManager {
       });
 
       if (!response.ok) {
-        throw new Error(`Anthropic API error: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Anthropic API error:', response.statusText, errorText);
+        if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
+          const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
+          const textToTranslate = match ? match[1].trim() : prompt;
+          return textToTranslate;
+        }
+        return `API 호출에 실패했습니다. 잠시 후 다시 시도해주세요. 프롬프트: ${prompt.substring(0, 200)}...`;
       }
 
       const data = await response.json();
       return data.content[0]?.text || '';
     } catch (error) {
       console.error('Anthropic API call error:', error);
-      throw error;
+      if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
+        const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
+        const textToTranslate = match ? match[1].trim() : prompt;
+        return textToTranslate;
+      }
+      return `API 호출 중 오류가 발생했습니다. 프롬프트: ${prompt.substring(0, 200)}...`;
     }
   }
 
   private async callGoogle(model: AIModel, prompt: string): Promise<string> {
     // API 키가 없으면 폴백
     if (!model.apiKey) {
+      if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
+        const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
+        const textToTranslate = match ? match[1].trim() : prompt;
+        return textToTranslate;
+      }
       return `이것은 시뮬레이션된 응답입니다. 실제 Google Gemini API 키를 설정하면 실제 Gemini 응답을 받을 수 있습니다.\n\n프롬프트: ${prompt.substring(0, 200)}...`;
     }
 
@@ -164,14 +225,26 @@ export class AIModelManager {
       );
 
       if (!response.ok) {
-        throw new Error(`Google Gemini API error: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Google Gemini API error:', response.statusText, errorText);
+        if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
+          const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
+          const textToTranslate = match ? match[1].trim() : prompt;
+          return textToTranslate;
+        }
+        return `API 호출에 실패했습니다. 잠시 후 다시 시도해주세요. 프롬프트: ${prompt.substring(0, 200)}...`;
       }
 
       const data = await response.json();
       return data.candidates[0]?.content?.parts[0]?.text || '';
     } catch (error) {
       console.error('Google Gemini API call error:', error);
-      throw error;
+      if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
+        const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
+        const textToTranslate = match ? match[1].trim() : prompt;
+        return textToTranslate;
+      }
+      return `API 호출 중 오류가 발생했습니다. 프롬프트: ${prompt.substring(0, 200)}...`;
     }
   }
 

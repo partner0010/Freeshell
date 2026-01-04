@@ -28,6 +28,7 @@ export default function Translator() {
     if (!sourceText.trim()) return;
 
     setIsTranslating(true);
+    setTargetText(''); // 이전 결과 초기화
     try {
       // OpenAI API를 사용한 번역
       const response = await fetch('/api/models', {
@@ -43,14 +44,25 @@ export default function Translator() {
 
       if (response.ok) {
         const data = await response.json();
-        setTargetText(data.result || `[${targetLang.toUpperCase()}] ${sourceText}`);
+        // API에서 반환된 결과를 그대로 사용 (fallback이 이미 처리됨)
+        setTargetText(data.result || sourceText);
       } else {
-        // API 오류 시 폴백
-        setTargetText(`[${targetLang.toUpperCase()}] ${sourceText}`);
+        // API 오류 시에도 응답 본문을 확인
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            console.error('번역 API 오류:', errorData.error);
+          }
+        } catch (e) {
+          // JSON 파싱 실패 시 무시
+        }
+        // API 키가 없거나 오류 발생 시 원문 표시 (사용자가 API 키 설정을 알 수 있도록)
+        setTargetText(sourceText);
       }
     } catch (error) {
       console.error('번역 실패:', error);
-      setTargetText(`[${targetLang.toUpperCase()}] ${sourceText}`);
+      // 네트워크 오류 등 예외 발생 시 원문 표시
+      setTargetText(sourceText);
     } finally {
       setIsTranslating(false);
     }

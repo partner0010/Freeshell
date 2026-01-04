@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, Plus, Play, Loader2, CheckCircle, XCircle, Video, FileText, Presentation, Globe, Phone } from 'lucide-react';
+import { Sparkles, Plus, Play, Loader2, CheckCircle, XCircle, Video, FileText, Presentation, Globe, Phone, ExternalLink, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 
 interface Task {
   id: string;
@@ -12,6 +13,11 @@ interface Task {
     type: 'video' | 'document' | 'presentation' | 'website' | 'call';
     content: string;
     url?: string;
+    metadata?: {
+      createdAt?: string;
+      model?: string;
+      tools?: string[];
+    };
   };
 }
 
@@ -151,22 +157,62 @@ export default function SparkWorkspace() {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           {getStatusIcon(task.status)}
-                          <p className="font-medium">{task.prompt}</p>
+                          <div className="flex-1">
+                            <p className="font-medium">{task.prompt}</p>
+                            {task.status === 'running' && (
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">처리 중...</p>
+                            )}
+                          </div>
                         </div>
                         {task.result && (
-                          <div className="mt-3 flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                            <Icon className="w-4 h-4" />
-                            <span>{task.result.content}</span>
-                            {task.result.url && (
-                              <a
-                                href={task.result.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline ml-2"
-                              >
-                                결과 보기
-                              </a>
+                          <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <div className="flex items-center space-x-2 mb-3">
+                              <Icon className="w-5 h-5 text-primary" />
+                              <span className="font-semibold capitalize">{task.result.type}</span>
+                              {task.result.url && (
+                                <a
+                                  href={task.result.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="ml-auto flex items-center space-x-1 text-primary hover:text-primary-dark text-sm"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                  <span>결과 보기</span>
+                                </a>
+                              )}
+                            </div>
+                            <div className="prose dark:prose-invert max-w-none text-sm">
+                              {task.result.content && task.result.content.length > 500 ? (
+                                <>
+                                  <div className="mb-2">
+                                    <ReactMarkdown>{task.result.content.substring(0, 500) + '...'}</ReactMarkdown>
+                                  </div>
+                                  <details>
+                                    <summary className="cursor-pointer text-primary hover:text-primary-dark font-medium">
+                                      전체 내용 보기
+                                    </summary>
+                                    <div className="mt-2">
+                                      <ReactMarkdown>{task.result.content}</ReactMarkdown>
+                                    </div>
+                                  </details>
+                                </>
+                              ) : (
+                                <ReactMarkdown>{task.result.content}</ReactMarkdown>
+                              )}
+                            </div>
+                            {task.result.metadata && (
+                              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+                                <div>모델: {task.result.metadata.model || 'GPT-4.1'}</div>
+                                {task.result.metadata.createdAt && (
+                                  <div>생성일: {new Date(task.result.metadata.createdAt).toLocaleString('ko-KR')}</div>
+                                )}
+                              </div>
                             )}
+                          </div>
+                        )}
+                        {task.status === 'error' && (
+                          <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+                            작업 처리 중 오류가 발생했습니다. 다시 시도해주세요.
                           </div>
                         )}
                       </div>

@@ -51,6 +51,18 @@ export default function Navbar() {
             <Link href="/dashboard/webhooks" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
               웹훅
             </Link>
+            <Link href="/debug" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
+              디버그
+            </Link>
+            <Link href="/site-check" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
+              사이트 검사
+            </Link>
+            <Link href="/remote-solution" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
+              원격솔루션
+            </Link>
+            <Link href="/diagnostics" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
+              진단
+            </Link>
             <Link href="#pricing" className="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors">
               가격
             </Link>
@@ -87,6 +99,33 @@ export default function Navbar() {
             </Link>
             <Link href="#drive" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
               AI 드라이브
+            </Link>
+            <Link href="/dashboard" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
+              대시보드
+            </Link>
+            <Link href="/dashboard/integrations" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
+              통합
+            </Link>
+            <Link href="/api/docs" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
+              API
+            </Link>
+            <Link href="/dashboard/team" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
+              팀
+            </Link>
+            <Link href="/dashboard/webhooks" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
+              웹훅
+            </Link>
+            <Link href="/debug" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
+              디버그
+            </Link>
+            <Link href="/site-check" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
+              사이트 검사
+            </Link>
+            <Link href="/remote-solution" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
+              원격솔루션
+            </Link>
+            <Link href="/diagnostics" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
+              진단
             </Link>
             <Link href="#pricing" className="block text-gray-700 dark:text-gray-300 hover:text-primary">
               가격
