@@ -332,7 +332,6 @@ echo [DEBUG] git push -u origin !CURRENT_BRANCH! --force-with-lease 실행 중..
 echo [주의] 이 작업은 몇 초에서 몇 분이 걸릴 수 있습니다...
 echo [주의] 이 작업은 몇 초에서 몇 분이 걸릴 수 있습니다... >> "!LOG_FILE!"
 call git push -u origin !CURRENT_BRANCH! --force-with-lease >> "!LOG_FILE!" 2>&1
-call git push -u origin !CURRENT_BRANCH! --force-with-lease
 set PUSH_EXIT_CODE=!ERRORLEVEL!
 echo.
 echo [DEBUG] ======================================== >> "!LOG_FILE!"
@@ -345,6 +344,9 @@ echo [DEBUG] ERRORLEVEL 값: !PUSH_EXIT_CODE!
 echo [DEBUG] ========================================
 set MASTER_PUSH_SUCCESS=0
 echo [DEBUG] 조건문 확인 시작... >> "!LOG_FILE!"
+echo [DEBUG] 조건문 확인 시작...
+echo [DEBUG] PUSH_EXIT_CODE 값: !PUSH_EXIT_CODE! >> "!LOG_FILE!"
+echo [DEBUG] PUSH_EXIT_CODE 값: !PUSH_EXIT_CODE!
 if !PUSH_EXIT_CODE! NEQ 0 (
     echo [DEBUG] if 블록 진입 - 에러 발생 >> "!LOG_FILE!"
     echo [DEBUG] force-with-lease 푸시 실패 >> "!LOG_FILE!"
@@ -357,7 +359,6 @@ if !PUSH_EXIT_CODE! NEQ 0 (
     echo 일반 푸시를 시도합니다...
     echo 일반 푸시를 시도합니다... >> "!LOG_FILE!"
     call git push -u origin !CURRENT_BRANCH! >> "!LOG_FILE!" 2>&1
-    call git push -u origin !CURRENT_BRANCH!
     set PUSH_EXIT_CODE=!ERRORLEVEL!
     echo.
     echo [DEBUG] ======================================== >> "!LOG_FILE!"
@@ -387,7 +388,6 @@ if !PUSH_EXIT_CODE! NEQ 0 (
             echo force push 실행 중...
             echo force push 실행 중... >> "!LOG_FILE!"
             call git push -u origin !CURRENT_BRANCH! --force >> "!LOG_FILE!" 2>&1
-            call git push -u origin !CURRENT_BRANCH! --force
             set PUSH_EXIT_CODE=!ERRORLEVEL!
             echo.
             echo [DEBUG] ======================================== >> "!LOG_FILE!"
@@ -437,11 +437,13 @@ if !PUSH_EXIT_CODE! NEQ 0 (
     )
 ) else (
     echo [DEBUG] else 블록 진입 시작 - 성공 >> "!LOG_FILE!"
+    echo [DEBUG] else 블록 진입 시작 - 성공
     set MASTER_PUSH_SUCCESS=1
     echo [OK] force-with-lease 푸시 성공!
     echo [OK] force-with-lease 푸시 성공! >> "!LOG_FILE!"
     echo [DEBUG] force-with-lease 푸시 성공 >> "!LOG_FILE!"
     echo [DEBUG] else 블록 완료 >> "!LOG_FILE!"
+    echo [DEBUG] else 블록 완료
 )
 echo [DEBUG] 조건문 완료 확인 - 여기까지 도달 >> "!LOG_FILE!"
 echo [DEBUG] MASTER_PUSH_SUCCESS 값: !MASTER_PUSH_SUCCESS! >> "!LOG_FILE!"
