@@ -54,57 +54,57 @@ export default function DebugPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
       <Navbar />
       <main className="pt-20 pb-12 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-4 flex items-center gap-3">
-              <Bug className="w-10 h-10 text-primary" />
+            <h1 className="text-4xl font-bold mb-4 flex items-center gap-3 text-white">
+              <Bug className="w-10 h-10 text-blue-400" />
               디버그 도구
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-300">
               시스템 상태를 진단하고 문제를 해결하는 도구입니다.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-              <Code className="w-8 h-8 text-blue-500 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">API 상태</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+              <Code className="w-8 h-8 text-blue-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-white">API 상태</h3>
+              <p className="text-sm text-gray-300">
                 API 연결 상태를 확인합니다
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-              <Database className="w-8 h-8 text-green-500 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">데이터베이스</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+              <Database className="w-8 h-8 text-green-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-white">데이터베이스</h3>
+              <p className="text-sm text-gray-300">
                 DB 연결 상태를 검사합니다
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-              <Server className="w-8 h-8 text-purple-500 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">서버 상태</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+              <Server className="w-8 h-8 text-purple-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-white">서버 상태</h3>
+              <p className="text-sm text-gray-300">
                 서버 상태를 모니터링합니다
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-              <Activity className="w-8 h-8 text-orange-500 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">성능 모니터</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+              <Activity className="w-8 h-8 text-orange-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-white">성능 모니터</h3>
+              <p className="text-sm text-gray-300">
                 시스템 성능을 분석합니다
               </p>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+          <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">시스템 진단</h2>
+              <h2 className="text-2xl font-bold text-white">시스템 진단</h2>
               <button
                 onClick={runDiagnostics}
                 disabled={isRunning}
@@ -116,7 +116,7 @@ export default function DebugPage() {
 
             <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm h-96 overflow-y-auto">
               {logs.length === 0 ? (
-                <div className="text-gray-500">진단을 실행하면 로그가 여기에 표시됩니다...</div>
+                <div className="text-gray-400">진단을 실행하면 로그가 여기에 표시됩니다...</div>
               ) : (
                 logs.map((log, index) => (
                   <div key={index} className="mb-1">

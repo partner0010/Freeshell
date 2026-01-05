@@ -36,9 +36,24 @@ export async function POST(request: NextRequest) {
     const aiPrompt = `${query}에 대한 포괄적이고 상세한 정보를 제공하는 검색 결과 페이지를 생성해주세요. 마크다운 형식으로 작성하고, 개요, 주요 내용, 상세 분석, 결론 섹션을 포함해주세요.`;
     
     let content: string;
+    let isRealApiCall = false;
+    let apiResponseTime = 0;
+    
     try {
       // Google Gemini API 호출
+      const startTime = Date.now();
       content = await aiModelManager.generateWithModel('gemini-pro', aiPrompt);
+      const endTime = Date.now();
+      apiResponseTime = endTime - startTime;
+      
+      // 실제 API 호출 여부 확인 (응답 시간이 100ms 이상이면 실제 API 호출로 간주)
+      // 시뮬레이션된 응답은 즉시 반환되므로 100ms 미만
+      isRealApiCall = apiResponseTime > 100 && !content.includes('시뮬레이션');
+      
+      // 시뮬레이션 응답인지 확인
+      if (content.includes('시뮬레이션') || content.includes('API 키를 설정')) {
+        isRealApiCall = false;
+      }
     } catch (error) {
       console.error('Google Gemini API error, using fallback:', error);
       // API 키가 없거나 오류 발생 시 시뮬레이션된 응답
@@ -86,6 +101,15 @@ ${query}는 현재 빠르게 발전하고 있는 분야로, 앞으로 더욱 중
         `https://example.com/${encodeURIComponent(query)}/source3`,
       ],
       generatedAt: new Date().toISOString(),
+      // API 호출 정보 추가
+      apiInfo: {
+        isRealApiCall: isRealApiCall,
+        responseTime: apiResponseTime,
+        hasApiKey: !!process.env.GOOGLE_API_KEY,
+        message: isRealApiCall 
+          ? '✅ 실제 Google Gemini API를 사용하여 생성된 응답입니다.' 
+          : '⚠️ 시뮬레이션된 응답입니다. GOOGLE_API_KEY를 설정하면 실제 AI 응답을 받을 수 있습니다.',
+      },
     };
 
     return NextResponse.json(response);

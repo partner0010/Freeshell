@@ -9,9 +9,17 @@ Netlify에서 설정한 환경 변수 이름이 코드에서 사용하는 이름
 다음 이름을 **정확히** 사용하세요 (대소문자 구분):
 
 1. **GOOGLE_API_KEY** (Google Gemini API)
+   - 값: `AIzaSyBwagcHisy2dkVBW6jOqLSJtP5PEH4XXGo`
+
 2. **PEXELS_API_KEY** (Pexels 이미지 검색)
+   - 값: `V2FLO9FxTgLACN1lzxpa9sXLDgoHu6bxWgAQZBayywMrb2lU9VRLKkqZ`
+   - ⚠️ 중요: Authorization 헤더에 직접 사용 (Bearer 없음)
+
 3. **UNSPLASH_ACCESS_KEY** (Unsplash 이미지 검색)
+   - ⚠️ 주의: `UNSPLASH_API_KEY`가 아닌 `UNSPLASH_ACCESS_KEY`
+
 4. **PIXABAY_API_KEY** (Pixabay 이미지 검색)
+   - 값: `54061391-2926562974110f7fde2b392a0`
 
 ## ❌ 잘못된 예시
 

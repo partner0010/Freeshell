@@ -12,9 +12,9 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary/10 text-primary mb-6">
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-green-100 text-green-700 mb-6">
             <Sparkles className="w-4 h-4 mr-2" />
-            <span className="text-sm font-medium">통합 AI 솔루션</span>
+            <span className="text-sm font-medium">완전 무료 - 모든 기능 무료 제공</span>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold mb-6">
@@ -24,17 +24,17 @@ export default function Hero() {
           </h1>
 
           <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-3xl mx-auto">
-            AI 검색, 콘텐츠 생성, 동영상 제작까지 모든 것을 하나로 통합한 올인원 AI 솔루션
+            AI 검색, 콘텐츠 생성, 동영상 제작까지 모든 것을 하나로 통합한 완전 무료 AI 솔루션
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button className="px-8 py-4 bg-primary text-white rounded-lg text-lg font-semibold hover:bg-primary-dark transition-all transform hover:scale-105 flex items-center">
-              무료로 시작하기
+              지금 바로 시작하기
               <ArrowRight className="ml-2 w-5 h-5" />
             </button>
-            <button className="px-8 py-4 bg-white text-gray-900 rounded-lg text-lg font-semibold border-2 border-gray-200 hover:border-primary transition-all shadow-sm hover:shadow-md">
-              데모 보기
-            </button>
+            <div className="px-6 py-3 bg-green-50 text-green-700 rounded-lg text-base font-semibold border-2 border-green-200">
+              💯 완전 무료
+            </div>
           </div>
 
           <motion.div

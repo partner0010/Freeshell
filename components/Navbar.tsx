@@ -20,11 +20,7 @@ export default function Navbar() {
     { href: '/', label: '홈' },
     { href: '/content-guide', label: '콘텐츠 제작 가이드' },
     { href: '/community', label: '커뮤니티' },
-    { href: '/signature', label: '전자결재' },
-    { href: '/diagnostics', label: '진단' },
-    { href: '/debug', label: '디버그' },
-    { href: '/site-check', label: '사이트 검사' },
-    { href: '/remote-solution', label: '원격솔루션' },
+    { href: '/admin', label: '관리자' },
   ];
 
   return (

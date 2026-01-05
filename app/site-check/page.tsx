@@ -86,35 +86,36 @@ export default function SiteCheckPage() {
     }
   };
 
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'success':
-        return 'border-green-500 bg-green-50 dark:bg-green-900/20';
+        return 'border-green-500 bg-green-900/30';
       case 'error':
-        return 'border-red-500 bg-red-50 dark:bg-red-900/20';
+        return 'border-red-500 bg-red-900/30';
       case 'warning':
-        return 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20';
+        return 'border-yellow-500 bg-yellow-900/30';
       default:
-        return 'border-gray-300 dark:border-gray-700';
+        return 'border-gray-600 bg-gray-800';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
       <Navbar />
       <main className="pt-20 pb-12 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-4 flex items-center gap-3">
-              <Search className="w-10 h-10 text-primary" />
+            <h1 className="text-4xl font-bold mb-4 flex items-center gap-3 text-white">
+              <Search className="w-10 h-10 text-blue-400" />
               사이트 검사
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-300">
               웹사이트의 상태, 성능, 보안을 종합적으로 검사합니다.
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-8">
+          <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 mb-8">
             <div className="flex gap-4 mb-6">
               <div className="flex-1">
                 <input
@@ -122,7 +123,7 @@ export default function SiteCheckPage() {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://example.com"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-4 py-3 bg-gray-900 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary placeholder-gray-500"
                 />
               </div>
               <button
@@ -146,7 +147,7 @@ export default function SiteCheckPage() {
 
             {results.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-lg font-semibold mb-4">검사 결과</h3>
+                <h3 className="text-lg font-semibold mb-4 text-white">검사 결과</h3>
                 {results.map((result, index) => (
                   <div
                     key={index}
@@ -154,8 +155,8 @@ export default function SiteCheckPage() {
                   >
                     {getStatusIcon(result.status)}
                     <div className="flex-1">
-                      <div className="font-semibold mb-1">{result.name}</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">{result.message}</div>
+                      <div className="font-semibold mb-1 text-white">{result.name}</div>
+                      <div className="text-sm text-gray-300">{result.message}</div>
                     </div>
                   </div>
                 ))}
@@ -164,26 +165,26 @@ export default function SiteCheckPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-              <Globe className="w-8 h-8 text-blue-500 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">접근성 검사</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+              <Globe className="w-8 h-8 text-blue-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-white">접근성 검사</h3>
+              <p className="text-sm text-gray-300">
                 사이트 접근 가능 여부와 응답 상태를 확인합니다
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-              <Shield className="w-8 h-8 text-green-500 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">보안 검사</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+              <Shield className="w-8 h-8 text-green-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-white">보안 검사</h3>
+              <p className="text-sm text-gray-300">
                 SSL 인증서와 보안 설정을 확인합니다
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-              <Zap className="w-8 h-8 text-yellow-500 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">성능 검사</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+              <Zap className="w-8 h-8 text-yellow-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-white">성능 검사</h3>
+              <p className="text-sm text-gray-300">
                 페이지 로딩 속도와 최적화 상태를 확인합니다
               </p>
             </div>

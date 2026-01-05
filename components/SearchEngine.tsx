@@ -119,6 +119,38 @@ export default function SearchEngine() {
 
       {result && (
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8">
+          {/* API 사용 여부 표시 */}
+          {result.apiInfo && (
+            <div className={`mb-4 p-3 rounded-lg border ${
+              result.apiInfo.isRealApiCall 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-yellow-50 border-yellow-200'
+            }`}>
+              <div className="flex items-center gap-2 text-sm">
+                {result.apiInfo.isRealApiCall ? (
+                  <>
+                    <span className="text-green-600 font-semibold">✅ 실제 AI API 사용</span>
+                    <span className="text-gray-500">({result.apiInfo.responseTime}ms)</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-yellow-600 font-semibold">⚠️ 시뮬레이션 모드</span>
+                    <span className="text-gray-500 text-xs ml-2">
+                      {result.apiInfo.hasApiKey 
+                        ? 'API 키가 올바르지 않거나 오류가 발생했습니다.' 
+                        : 'GOOGLE_API_KEY를 설정하세요.'}
+                    </span>
+                  </>
+                )}
+              </div>
+              {!result.apiInfo.isRealApiCall && (
+                <p className="text-xs text-gray-600 mt-1">
+                  {result.apiInfo.message}
+                </p>
+              )}
+            </div>
+          )}
+          
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-gray-900 break-words">
             {result.title || query}
           </h2>

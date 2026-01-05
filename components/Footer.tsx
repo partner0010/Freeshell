@@ -13,9 +13,12 @@ export default function Footer() {
               <Sparkles className="w-6 h-6 text-primary" />
               <span className="text-xl font-bold text-gray-900">Shell</span>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 mb-2">
               혁신적인 AI 기반 검색 엔진으로 실시간 맞춤형 정보를 제공합니다.
             </p>
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+              💯 완전 무료
+            </div>
           </div>
 
           <div>
@@ -24,7 +27,7 @@ export default function Footer() {
               <li><Link href="#features" className="text-gray-600 hover:text-primary transition-colors">기능</Link></li>
               <li><Link href="#search" className="text-gray-600 hover:text-primary transition-colors">AI 검색</Link></li>
               <li><Link href="#spark" className="text-gray-600 hover:text-primary transition-colors">Spark 워크스페이스</Link></li>
-              <li><Link href="#pricing" className="text-gray-600 hover:text-primary transition-colors">가격</Link></li>
+              <li><Link href="/content-guide" className="text-gray-600 hover:text-primary transition-colors">콘텐츠 제작</Link></li>
             </ul>
           </div>
 

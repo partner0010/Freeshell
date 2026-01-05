@@ -14,7 +14,7 @@ export class GeminiClient {
 
   constructor(config: GeminiConfig = {}) {
     this.apiKey = config.apiKey || process.env.GOOGLE_API_KEY || '';
-    this.model = config.model || 'gemini-pro';
+    this.model = config.model || 'gemini-1.5-flash'; // 최신 모델 사용
   }
 
   async generateText(prompt: string, options?: {
@@ -26,35 +26,81 @@ export class GeminiClient {
     }
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+      // 최신 v1 API 사용
+      const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${this.model}:generateContent?key=${this.apiKey}`;
+      
+      console.log('Google Gemini API 호출:', {
+        model: this.model,
+        hasApiKey: !!this.apiKey,
+        apiKeyPrefix: this.apiKey?.substring(0, 10) + '...',
+      });
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: prompt }],
+          }],
+          generationConfig: {
+            maxOutputTokens: options?.maxTokens || 8192,
+            temperature: options?.temperature || 0.7,
+            topK: 40,
+            topP: 0.95,
           },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }],
-            }],
-            generationConfig: {
-              maxOutputTokens: options?.maxTokens || 2000,
-              temperature: options?.temperature || 0.7,
-            },
-          }),
-        }
-      );
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Google Gemini API error:', response.statusText, errorText);
+        let errorMessage = `API 호출 실패 (${response.status}): ${response.statusText}`;
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.error?.message) {
+            errorMessage = errorData.error.message;
+          }
+        } catch (e) {
+          // JSON 파싱 실패 시 원본 텍스트 사용
+        }
+        
+        console.error('Google Gemini API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          apiKeyPrefix: this.apiKey?.substring(0, 10) + '...',
+        });
+        
+        // 401/403: 인증 오류
+        if (response.status === 401 || response.status === 403) {
+          return `❌ API 키 인증 실패: ${errorMessage}\n\nNetlify 환경 변수에서 GOOGLE_API_KEY를 확인하세요.`;
+        }
+        
         return this.simulateResponse(prompt);
       }
 
       const data = await response.json();
-      return data.candidates[0]?.content?.parts[0]?.text || this.simulateResponse(prompt);
-    } catch (error) {
-      console.error('Google Gemini API error:', error);
+      const generatedText = data.candidates[0]?.content?.parts[0]?.text;
+      
+      if (!generatedText) {
+        console.error('Google Gemini API 빈 응답:', data);
+        return this.simulateResponse(prompt);
+      }
+      
+      console.log('Google Gemini API 성공:', {
+        model: this.model,
+        responseLength: generatedText.length,
+      });
+      
+      return generatedText;
+    } catch (error: any) {
+      console.error('Google Gemini API error:', {
+        error: error.message,
+        stack: error.stack,
+        apiKeyPrefix: this.apiKey?.substring(0, 10) + '...',
+      });
       return this.simulateResponse(prompt);
     }
   }

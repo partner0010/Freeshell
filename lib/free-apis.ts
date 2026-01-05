@@ -95,8 +95,46 @@ export async function searchWikipedia(query: string): Promise<Array<{ title: str
 
 /**
  * Pixabay 이미지 검색 API (무료 티어, API 키 필요 - 환경 변수: PIXABAY_API_KEY)
+ * API 문서: https://pixabay.com/api/docs/
  */
-export async function searchPixabayImages(query: string, perPage: number = 20): Promise<Array<{ id: number; pageURL: string; tags: string; previewURL: string; webformatURL: string; user: string }>> {
+export async function searchPixabayImages(
+  query: string, 
+  perPage: number = 20,
+  options?: {
+    imageType?: 'all' | 'photo' | 'illustration' | 'vector';
+    orientation?: 'all' | 'horizontal' | 'vertical';
+    category?: string;
+    minWidth?: number;
+    minHeight?: number;
+    colors?: string;
+    safesearch?: boolean;
+    order?: 'popular' | 'latest';
+  }
+): Promise<Array<{
+  id: number;
+  pageURL: string;
+  type: string;
+  tags: string;
+  previewURL: string;
+  previewWidth: number;
+  previewHeight: number;
+  webformatURL: string;
+  webformatWidth: number;
+  webformatHeight: number;
+  largeImageURL: string;
+  fullHDURL?: string;
+  imageURL?: string;
+  imageWidth: number;
+  imageHeight: number;
+  imageSize: number;
+  views: number;
+  downloads: number;
+  likes: number;
+  comments: number;
+  user_id: number;
+  user: string;
+  userImageURL: string;
+}>> {
   const apiKey = process.env.PIXABAY_API_KEY;
   if (!apiKey) {
     console.warn('PIXABAY_API_KEY가 설정되지 않았습니다.');
@@ -104,17 +142,69 @@ export async function searchPixabayImages(query: string, perPage: number = 20): 
   }
   
   try {
-    const response = await fetch(
-      `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=photo&per_page=${Math.min(perPage, 200)}&safesearch=true`
-    );
+    // API 파라미터 구성
+    const params = new URLSearchParams({
+      key: apiKey,
+      q: query.substring(0, 100), // 최대 100자
+      lang: 'ko', // 한국어
+      image_type: options?.imageType || 'photo',
+      orientation: options?.orientation || 'all',
+      safesearch: options?.safesearch !== false ? 'true' : 'false',
+      order: options?.order || 'popular',
+      per_page: Math.min(perPage, 200).toString(),
+    });
+    
+    if (options?.category) params.append('category', options.category);
+    if (options?.minWidth) params.append('min_width', options.minWidth.toString());
+    if (options?.minHeight) params.append('min_height', options.minHeight.toString());
+    if (options?.colors) params.append('colors', options.colors);
+    
+    const response = await fetch(`https://pixabay.com/api/?${params.toString()}`);
     
     if (!response.ok) {
-      console.error('Pixabay API error:', response.statusText);
+      const errorText = await response.text();
+      console.error('Pixabay API error:', response.status, response.statusText, errorText);
+      
+      // Rate limit 확인
+      if (response.status === 429) {
+        console.warn('Pixabay API rate limit exceeded. 60초에 최대 100회 요청 가능합니다.');
+      }
+      
       return [];
     }
     
     const data = await response.json();
-    return data.hits || [];
+    
+    // 응답 형식: { total, totalHits, hits: [...] }
+    if (data.hits && Array.isArray(data.hits)) {
+      return data.hits.map((hit: any) => ({
+        id: hit.id,
+        pageURL: hit.pageURL,
+        type: hit.type,
+        tags: hit.tags,
+        previewURL: hit.previewURL,
+        previewWidth: hit.previewWidth,
+        previewHeight: hit.previewHeight,
+        webformatURL: hit.webformatURL,
+        webformatWidth: hit.webformatWidth,
+        webformatHeight: hit.webformatHeight,
+        largeImageURL: hit.largeImageURL,
+        fullHDURL: hit.fullHDURL,
+        imageURL: hit.imageURL,
+        imageWidth: hit.imageWidth,
+        imageHeight: hit.imageHeight,
+        imageSize: hit.imageSize,
+        views: hit.views,
+        downloads: hit.downloads,
+        likes: hit.likes,
+        comments: hit.comments,
+        user_id: hit.user_id,
+        user: hit.user,
+        userImageURL: hit.userImageURL,
+      }));
+    }
+    
+    return [];
   } catch (error) {
     console.error('Pixabay search error:', error);
     return [];
@@ -122,9 +212,125 @@ export async function searchPixabayImages(query: string, perPage: number = 20): 
 }
 
 /**
+ * Pixabay 비디오 검색 API (무료 티어, API 키 필요 - 환경 변수: PIXABAY_API_KEY)
+ * API 문서: https://pixabay.com/api/docs/#search_videos
+ */
+export async function searchPixabayVideos(
+  query: string,
+  perPage: number = 20,
+  options?: {
+    videoType?: 'all' | 'film' | 'animation';
+    category?: string;
+    minWidth?: number;
+    minHeight?: number;
+    safesearch?: boolean;
+    order?: 'popular' | 'latest';
+  }
+): Promise<Array<{
+  id: number;
+  pageURL: string;
+  type: string;
+  tags: string;
+  duration: number;
+  videos: {
+    large: { url: string; width: number; height: number; size: number; thumbnail: string };
+    medium: { url: string; width: number; height: number; size: number; thumbnail: string };
+    small: { url: string; width: number; height: number; size: number; thumbnail: string };
+    tiny: { url: string; width: number; height: number; size: number; thumbnail: string };
+  };
+  views: number;
+  downloads: number;
+  likes: number;
+  comments: number;
+  user_id: number;
+  user: string;
+  userImageURL: string;
+}>> {
+  const apiKey = process.env.PIXABAY_API_KEY;
+  if (!apiKey) {
+    console.warn('PIXABAY_API_KEY가 설정되지 않았습니다.');
+    return [];
+  }
+  
+  try {
+    // API 파라미터 구성
+    const params = new URLSearchParams({
+      key: apiKey,
+      q: query.substring(0, 100), // 최대 100자
+      lang: 'ko', // 한국어
+      video_type: options?.videoType || 'all',
+      safesearch: options?.safesearch !== false ? 'true' : 'false',
+      order: options?.order || 'popular',
+      per_page: Math.min(perPage, 200).toString(),
+    });
+    
+    if (options?.category) params.append('category', options.category);
+    if (options?.minWidth) params.append('min_width', options.minWidth.toString());
+    if (options?.minHeight) params.append('min_height', options.minHeight.toString());
+    
+    const response = await fetch(`https://pixabay.com/api/videos/?${params.toString()}`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Pixabay Video API error:', response.status, response.statusText, errorText);
+      
+      // Rate limit 확인
+      if (response.status === 429) {
+        console.warn('Pixabay API rate limit exceeded. 60초에 최대 100회 요청 가능합니다.');
+      }
+      
+      return [];
+    }
+    
+    const data = await response.json();
+    
+    // 응답 형식: { total, totalHits, hits: [...] }
+    if (data.hits && Array.isArray(data.hits)) {
+      return data.hits.map((hit: any) => ({
+        id: hit.id,
+        pageURL: hit.pageURL,
+        type: hit.type,
+        tags: hit.tags,
+        duration: hit.duration,
+        videos: hit.videos,
+        views: hit.views,
+        downloads: hit.downloads,
+        likes: hit.likes,
+        comments: hit.comments,
+        user_id: hit.user_id,
+        user: hit.user,
+        userImageURL: hit.userImageURL,
+      }));
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Pixabay Video search error:', error);
+    return [];
+  }
+}
+
+/**
  * Pexels 이미지 검색 API (무료, API 키 필요 - 환경 변수: PEXELS_API_KEY)
  */
-export async function searchPexelsImages(query: string, perPage: number = 20): Promise<Array<{ id: number; url: string; photographer: string; src: { original: string; large: string } }>> {
+export async function searchPexelsImages(query: string, perPage: number = 20): Promise<Array<{
+  id: number;
+  url: string;
+  photographer: string;
+  photographer_url: string;
+  src: {
+    original: string;
+    large: string;
+    medium: string;
+    small: string;
+    portrait: string;
+    landscape: string;
+    tiny: string;
+  };
+  alt: string;
+  width: number;
+  height: number;
+}>> {
   const apiKey = process.env.PEXELS_API_KEY;
   if (!apiKey) {
     console.warn('PEXELS_API_KEY가 설정되지 않았습니다.');
@@ -133,7 +339,7 @@ export async function searchPexelsImages(query: string, perPage: number = 20): P
   
   try {
     const response = await fetch(
-      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${perPage}`,
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${Math.min(perPage, 80)}`,
       {
         headers: {
           'Authorization': apiKey,
@@ -142,12 +348,47 @@ export async function searchPexelsImages(query: string, perPage: number = 20): P
     );
     
     if (!response.ok) {
-      console.error('Pexels API error:', response.statusText);
+      const errorText = await response.text();
+      console.error('Pexels API error:', response.status, response.statusText, errorText);
+      
+      // Rate limit 확인
+      if (response.status === 429) {
+        console.warn('Pexels API rate limit exceeded. 시간당 최대 200회 요청 가능합니다.');
+      }
+      
+      // 인증 오류
+      if (response.status === 401 || response.status === 403) {
+        console.error('Pexels API 인증 실패. API 키를 확인하세요.');
+      }
+      
       return [];
     }
     
     const data = await response.json();
-    return data.photos || [];
+    
+    // 응답 형식: { page, per_page, photos: [...], total_results, next_page }
+    if (data.photos && Array.isArray(data.photos)) {
+      return data.photos.map((photo: any) => ({
+        id: photo.id,
+        url: photo.url,
+        photographer: photo.photographer,
+        photographer_url: photo.photographer_url,
+        src: {
+          original: photo.src.original,
+          large: photo.src.large,
+          medium: photo.src.medium,
+          small: photo.src.small,
+          portrait: photo.src.portrait,
+          landscape: photo.src.landscape,
+          tiny: photo.src.tiny,
+        },
+        alt: photo.alt || '',
+        width: photo.width,
+        height: photo.height,
+      }));
+    }
+    
+    return [];
   } catch (error) {
     console.error('Pexels search error:', error);
     return [];
