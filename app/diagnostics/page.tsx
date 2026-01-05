@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, AlertCircle, RefreshCw, Key, Server, Zap, Info, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, RefreshCw, Key, Server, Zap, Info, Loader2, Globe, Code, Shield } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import Link from 'next/link';
 
 interface APIKeyStatus {
   configured: boolean;
@@ -172,6 +173,44 @@ export default function DiagnosticsPage() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-purple-50 text-gray-900 flex flex-col">
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-20">
+        {/* 빠른 액션 카드 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <Link
+            href="/diagnostics/analyze"
+            className="bg-white rounded-xl shadow-lg border-2 border-blue-200 p-6 hover:border-blue-400 hover:shadow-xl transition-all group"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  보안 분석 도구
+                </h3>
+                <p className="text-sm text-gray-600">URL 또는 코드 보안 분석</p>
+              </div>
+            </div>
+            <p className="text-gray-700 text-sm">
+              웹사이트 URL이나 코드를 분석하여 보안 취약점, API 키 노출, 코드 품질을 검사합니다.
+            </p>
+          </Link>
+
+          <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <Server className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">시스템 상태</h3>
+                <p className="text-sm text-gray-600">현재 시스템 상태 확인</p>
+              </div>
+            </div>
+            <p className="text-gray-700 text-sm">
+              API 키 상태 및 서비스 가용성을 확인합니다.
+            </p>
+          </div>
+        </div>
+
         <h1 className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           AI 서비스 진단 (무료 API만)
         </h1>

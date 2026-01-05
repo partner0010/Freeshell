@@ -18,8 +18,6 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/', label: '홈' },
-    { href: '/content-guide', label: '콘텐츠 제작 가이드' },
-    { href: '/community', label: '커뮤니티' },
     { href: '/admin', label: '관리자' },
   ];
 
@@ -35,10 +33,10 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-14 md:h-16">
           {/* 로고 */}
           <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Settings className="w-4 h-4 md:w-5 md:h-5 text-white" />
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Settings className="w-4 h-4 text-white" />
             </div>
-            <span className="text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">
+            <span className="text-lg font-bold text-gray-900 whitespace-nowrap">
               Shell
             </span>
           </Link>
@@ -49,7 +47,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center gap-1.5 px-3 py-2 lg:px-4 lg:py-2.5 text-sm lg:text-base font-medium text-gray-700 hover:text-primary transition-colors rounded-lg hover:bg-blue-50 whitespace-nowrap"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-50 whitespace-nowrap"
               >
                 <span>{link.label}</span>
               </Link>

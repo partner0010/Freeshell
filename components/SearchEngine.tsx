@@ -11,8 +11,15 @@ export default function SearchEngine() {
   const [error, setError] = useState<string | null>(null);
   const { addToSearchHistory, searchHistory } = useSearchStore();
 
-  const handleSearch = async () => {
-    if (!query.trim()) return;
+  const handleSearch = async (e?: React.MouseEvent | React.KeyboardEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    
+    if (!query.trim()) {
+      setError('검색어를 입력해주세요.');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -28,14 +35,16 @@ export default function SearchEngine() {
       });
 
       if (!response.ok) {
-        throw new Error('검색 요청 실패');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || '검색 요청 실패');
       }
 
       const data = await response.json();
       setResult(data);
       addToSearchHistory(query);
-    } catch (err) {
-      setError('검색 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } catch (err: any) {
+      console.error('Search error:', err);
+      setError(err.message || '검색 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
     }
@@ -47,15 +56,14 @@ export default function SearchEngine() {
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSearch();
+      handleSearch(e);
     }
   };
 
   return (
     <div className="w-full max-w-4xl mx-auto">
       {/* 검색 입력 영역 */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -65,13 +73,13 @@ export default function SearchEngine() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="검색어를 입력하세요..."
-              className="w-full pl-10 pr-4 py-3 md:py-4 text-sm sm:text-base md:text-lg border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary bg-white text-gray-900"
+              className="w-full pl-10 pr-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
             />
           </div>
           <button
             onClick={handleSearch}
             disabled={isLoading || !query.trim()}
-            className="px-6 py-3 md:px-8 md:py-4 bg-primary text-white rounded-xl font-semibold text-sm sm:text-base md:text-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex items-center justify-center gap-2"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium text-base hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -112,13 +120,13 @@ export default function SearchEngine() {
 
       {/* 결과 표시 영역 */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 sm:p-6 mb-6">
-          <p className="text-sm sm:text-base text-red-700">{error}</p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
       {result && (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8">
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
           {/* API 사용 여부 표시 */}
           {result.apiInfo && (
             <div className={`mb-4 p-3 rounded-lg border ${
@@ -164,13 +172,10 @@ export default function SearchEngine() {
 
       {/* 초기 상태 */}
       {!result && !error && !isLoading && (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 sm:p-12 md:p-16 text-center">
-          <Sparkles className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-primary mx-auto mb-4 sm:mb-6" />
-          <h3 className="text-lg sm:text-xl md:text-2xl font-semibold mb-2 sm:mb-4 text-gray-900">
-            AI 검색 엔진
-          </h3>
-          <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-md mx-auto">
-            검색어를 입력하고 엔터 키를 누르거나 검색 버튼을 클릭하세요.
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <Sparkles className="w-16 h-16 text-blue-600 mx-auto mb-4 opacity-50" />
+          <p className="text-sm text-gray-500">
+            검색어를 입력하고 엔터 키를 누르거나 검색 버튼을 클릭하세요
           </p>
         </div>
       )}

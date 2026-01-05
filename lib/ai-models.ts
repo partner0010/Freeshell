@@ -92,11 +92,14 @@ export class AIModelManager {
     }
 
     // 모델 이름 결정 (endpoint가 있으면 사용, 없으면 기본값)
+    // v1 API에서는 gemini-pro 또는 gemini-1.5-pro 사용
+    // gemini-1.5-flash는 v1beta에서만 사용 가능하므로 v1beta로 변경
     const modelName = model.endpoint || 'gemini-1.5-flash';
+    const apiVersion = 'v1beta'; // v1에서 gemini-1.5-flash 지원 안함, v1beta 사용
     
     try {
-      // Google Gemini API 호출 (최신 v1 API 사용)
-      const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${model.apiKey}`;
+      // Google Gemini API 호출 (v1beta API 사용 - gemini-1.5-flash 지원)
+      const apiUrl = `https://generativelanguage.googleapis.com/${apiVersion}/models/${modelName}:generateContent?key=${model.apiKey}`;
       
       console.log('Google Gemini API 호출:', {
         model: modelName,

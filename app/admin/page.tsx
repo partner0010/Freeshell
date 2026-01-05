@@ -19,7 +19,7 @@ const adminTools = [
   {
     id: 'signature',
     title: '전자결재',
-    description: '전자서명 및 문서 승인 관리',
+    description: '전자서명 및 문서 승인 관리 시스템',
     href: '/signature',
     icon: FileSignature,
     color: 'from-blue-500 to-blue-600',
@@ -27,7 +27,7 @@ const adminTools = [
   {
     id: 'diagnostics',
     title: '시스템 진단',
-    description: 'API 키 상태 및 시스템 진단',
+    description: 'URL/코드 보안 분석, 취약점 검사, API 키 노출 검사',
     href: '/diagnostics',
     icon: Activity,
     color: 'from-green-500 to-green-600',
@@ -35,7 +35,7 @@ const adminTools = [
   {
     id: 'debug',
     title: '디버그 도구',
-    description: '시스템 디버깅 및 로그 확인',
+    description: '코드 분석, 버그 검사, 성능 최적화 제안',
     href: '/debug',
     icon: Bug,
     color: 'from-yellow-500 to-yellow-600',
@@ -43,7 +43,7 @@ const adminTools = [
   {
     id: 'site-check',
     title: '사이트 검사',
-    description: '웹사이트 상태 및 성능 검사',
+    description: '사이트 구성 분석, 모듈 감지, 모의해킹 시나리오',
     href: '/site-check',
     icon: SearchCheck,
     color: 'from-purple-500 to-purple-600',
@@ -51,7 +51,7 @@ const adminTools = [
   {
     id: 'remote-solution',
     title: '원격 솔루션',
-    description: '원격 접속 및 관리 도구',
+    description: '인터넷 전용 원격 접속 (프로그램 설치 불필요)',
     href: '/remote-solution',
     icon: Cloud,
     color: 'from-red-500 to-red-600',

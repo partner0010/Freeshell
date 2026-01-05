@@ -26,8 +26,8 @@ export class GeminiClient {
     }
 
     try {
-      // 최신 v1 API 사용
-      const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${this.model}:generateContent?key=${this.apiKey}`;
+      // v1beta API 사용 (gemini-1.5-flash는 v1beta에서만 지원)
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
       
       console.log('Google Gemini API 호출:', {
         model: this.model,
