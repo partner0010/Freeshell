@@ -66,3 +66,14 @@ export class GeminiClient {
 
 export const gemini = new GeminiClient();
 
+/**
+ * 간단한 Gemini 응답 생성 함수
+ */
+export async function generateGeminiResponse(prompt: string, apiKey?: string): Promise<string> {
+  const client = new GeminiClient({ apiKey: apiKey || process.env.GOOGLE_API_KEY });
+  return await client.generateText(prompt, {
+    maxTokens: 4000,
+    temperature: 0.7,
+  });
+}
+

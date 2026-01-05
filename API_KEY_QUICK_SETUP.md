@@ -2,7 +2,7 @@
 
 ## ✅ Google Gemini API 키 설정 완료
 
-제공하신 API 키: `AIzaSyBwagcHisy2dkVBW6jOqLSJtP5PEH4XXGo`
+제공하신 API 키: `AIzaSyExample1234567890ABCDEFGHIJKLMNOP` (예시)
 
 이 키는 올바른 형식입니다! 이제 환경 변수에 설정하면 됩니다.
 
@@ -13,7 +13,7 @@
 프로젝트 루트에 `.env.local` 파일을 만들고 다음을 추가:
 
 ```env
-GOOGLE_API_KEY=AIzaSyBwagcHisy2dkVBW6jOqLSJtP5PEH4XXGo
+GOOGLE_API_KEY=AIzaSyExample1234567890ABCDEFGHIJKLMNOP
 ```
 
 ### 2단계: 개발 서버 재시작

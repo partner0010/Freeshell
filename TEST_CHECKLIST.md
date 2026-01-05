@@ -20,7 +20,7 @@
 
 **필요한 작업**:
 - [ ] `.env.local` 파일 생성/수정
-- [ ] `GOOGLE_API_KEY=AIzaSyBwagcHisy2dkVBW6jOqLSJtP5PEH4XXGo` 추가
+- [ ] `GOOGLE_API_KEY=AIzaSyExample1234567890ABCDEFGHIJKLMNOP` 추가
 - [ ] 개발 서버 재시작
 
 ### 2. API 엔드포인트 테스트 (필요)
@@ -55,7 +55,7 @@
 
 ```bash
 # .env.local 파일 생성/수정
-echo "GOOGLE_API_KEY=AIzaSyBwagcHisy2dkVBW6jOqLSJtP5PEH4XXGo" > .env.local
+echo "GOOGLE_API_KEY=AIzaSyExample1234567890ABCDEFGHIJKLMNOP" > .env.local
 ```
 
 ### 2단계: 개발 서버 실행

@@ -62,7 +62,7 @@ const features = [
 
 export default function Features() {
   return (
-    <section id="features" className="py-20 px-4 bg-gray-50 dark:bg-gray-900">
+    <section id="features" className="py-20 px-4 bg-gradient-to-b from-white to-blue-50">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -74,7 +74,7 @@ export default function Features() {
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             강력한 <span className="gradient-text">AI 기능</span>
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
             최신 AI 기술을 활용하여 복잡한 작업을 간단하게 만들어드립니다
           </p>
         </motion.div>
@@ -89,13 +89,13 @@ export default function Features() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-2 border border-gray-200 dark:border-gray-700"
+                className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-2 border border-gray-100"
               >
                 <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400">{feature.description}</p>
+                <h3 className="text-xl font-semibold mb-2 text-gray-900">{feature.title}</h3>
+                <p className="text-gray-700">{feature.description}</p>
               </motion.div>
             );
           })}

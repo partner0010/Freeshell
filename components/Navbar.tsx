@@ -31,8 +31,8 @@ export default function Navbar() {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-lg'
-          : 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm'
+          ? 'bg-white/95 backdrop-blur-sm shadow-lg border-b border-gray-100'
+          : 'bg-white/90 backdrop-blur-sm'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -53,7 +53,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center gap-1.5 px-3 py-2 lg:px-4 lg:py-2.5 text-sm lg:text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3 py-2 lg:px-4 lg:py-2.5 text-sm lg:text-base font-medium text-gray-700 hover:text-primary transition-colors rounded-lg hover:bg-blue-50 whitespace-nowrap"
               >
                 <span>{link.label}</span>
               </Link>
@@ -63,7 +63,7 @@ export default function Navbar() {
           {/* 모바일 메뉴 버튼 */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-blue-50 transition-colors"
             aria-label="메뉴 토글"
           >
             {isOpen ? (
@@ -77,14 +77,14 @@ export default function Navbar() {
 
       {/* 모바일 메뉴 드롭다운 */}
       {isOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="md:hidden border-t border-gray-200 bg-white">
           <div className="px-4 py-3 space-y-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:text-primary transition-colors rounded-lg hover:bg-blue-50"
               >
                 <span>{link.label}</span>
               </Link>

@@ -30,7 +30,7 @@ export default function Home() {
   ];
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-purple-50">
       <Navbar />
       <Hero />
       <Features />
@@ -41,7 +41,7 @@ export default function Home() {
           <div className="flex justify-center mb-6 md:mb-8">
             <div className="w-full max-w-4xl">
               {/* 모바일: 가로 스크롤 가능한 탭 */}
-              <div className="inline-flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 overflow-x-auto scrollbar-hide md:overflow-x-visible md:w-full">
+              <div className="inline-flex rounded-lg bg-blue-50 p-1 overflow-x-auto scrollbar-hide md:overflow-x-visible md:w-full border border-blue-100">
                 <div className="flex min-w-max md:flex-wrap md:min-w-0 md:w-full md:justify-center gap-1 md:gap-2">
                   {tabs.map((tab) => {
                     const Icon = tab.icon;
@@ -58,8 +58,8 @@ export default function Home() {
                           flex-shrink-0
                           ${
                             isActive
-                              ? 'bg-white dark:bg-gray-700 text-primary shadow-md'
-                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                              ? 'bg-white text-primary shadow-md border border-blue-200'
+                              : 'text-gray-700 hover:text-primary hover:bg-white/50'
                           }
                         `}
                         aria-label={tab.label}

@@ -79,6 +79,9 @@ if errorlevel 1 (
     set "ERROR_OCCURRED=1"
 )
 echo.
+echo Changed files preview:
+git status --short 2>&1
+echo.
 
 echo [3/4] Commit changes...
 echo.
@@ -140,6 +143,15 @@ if errorlevel 1 (
 )
 echo.
 
+echo.
+echo ========================================
+echo Changed files to be committed:
+echo ========================================
+git --no-pager diff --cached --name-only 2>nul
+if errorlevel 1 (
+    git --no-pager diff --name-only 2>nul
+)
+echo.
 echo Enter commit message (default: "Shell updates and improvements"):
 set /p commit_msg=
 if "!commit_msg!"=="" set commit_msg=Shell updates and improvements

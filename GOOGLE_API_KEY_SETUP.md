@@ -2,7 +2,7 @@
 
 ## ✅ API 키 확인
 
-제공하신 API 키: `AIzaSyBwagcHisy2dkVBW6jOqLSJtP5PEH4XXGo`
+제공하신 API 키: `AIzaSyExample1234567890ABCDEFGHIJKLMNOP` (예시)
 
 이 키는 올바른 Google Gemini API 키 형식입니다 (`AIza...`로 시작).
 
@@ -13,7 +13,7 @@
 프로젝트 루트 디렉토리에 `.env.local` 파일을 생성하고 다음을 추가하세요:
 
 ```env
-GOOGLE_API_KEY=AIzaSyBwagcHisy2dkVBW6jOqLSJtP5PEH4XXGo
+GOOGLE_API_KEY=AIzaSyExample1234567890ABCDEFGHIJKLMNOP
 ```
 
 **중요:**

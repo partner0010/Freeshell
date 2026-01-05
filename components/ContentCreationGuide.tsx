@@ -40,24 +40,24 @@ export default function ContentCreationGuide({ guideId }: ContentCreationGuidePr
         {/* 뒤로 가기 버튼 */}
         <button
           onClick={() => setSelectedGuide(null)}
-          className="mb-6 flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+              className="mb-6 flex items-center gap-2 text-gray-600 hover:text-primary transition-colors"
         >
           <ArrowRight className="w-4 h-4 rotate-180" />
           <span>가이드 목록으로</span>
         </button>
 
         {/* 가이드 상세 */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8 md:p-10">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8 md:p-10">
           {/* 헤더 */}
           <div className="mb-8">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-4">
                 <span className="text-5xl">{selectedGuide.icon}</span>
                 <div>
-                  <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                  <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
                     {selectedGuide.title}
                   </h1>
-                  <p className="text-lg text-gray-600 dark:text-gray-400">
+                  <p className="text-lg text-gray-600">
                     {selectedGuide.description}
                   </p>
                 </div>
@@ -66,10 +66,10 @@ export default function ContentCreationGuide({ guideId }: ContentCreationGuidePr
 
             {/* 메타 정보 */}
             <div className="flex flex-wrap gap-4 mt-6">
-              <div className={`px-4 py-2 rounded-lg ${difficultyColors[selectedGuide.difficulty]}`}>
+              <div className={`px-4 py-2 rounded-lg ${difficultyColors[selectedGuide.difficulty].replace('dark:', '').replace(/dark:\S+/g, '')}`}>
                 난이도: {difficultyLabels[selectedGuide.difficulty]}
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded-lg">
+              <div className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg">
                 <Clock className="w-4 h-4" />
                 <span>소요 시간: {selectedGuide.timeRequired}</span>
               </div>
@@ -78,22 +78,22 @@ export default function ContentCreationGuide({ guideId }: ContentCreationGuidePr
 
           {/* 사용 도구 */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">필요한 도구</h2>
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">필요한 도구</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {selectedGuide.tools.map((tool, index) => (
                 <div
                   key={index}
-                  className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700"
+                  className="p-4 bg-gray-50 rounded-xl border border-gray-200"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">{tool.name}</h3>
+                    <h3 className="font-semibold text-gray-900">{tool.name}</h3>
                     {tool.freeTier && (
-                      <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 px-2 py-1 rounded">
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                         무료
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{tool.description}</p>
+                  <p className="text-sm text-gray-600 mb-3">{tool.description}</p>
                   <a
                     href={tool.url}
                     target="_blank"
@@ -115,38 +115,38 @@ export default function ContentCreationGuide({ guideId }: ContentCreationGuidePr
               {selectedGuide.steps.map((step) => (
                 <div
                   key={step.stepNumber}
-                  className="p-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700"
+                  className="p-6 bg-gray-50 rounded-xl border border-gray-200"
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <div className="flex-shrink-0 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg">
                       {step.stepNumber}
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
                         {step.title}
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-4">{step.description}</p>
+                      <p className="text-gray-600 mb-4">{step.description}</p>
 
                       {/* 상세 내용 */}
                       <div className="space-y-2 mb-4">
                         {step.details.map((detail, idx) => (
                           <div key={idx} className="flex items-start gap-2">
                             <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                            <span className="text-gray-700 dark:text-gray-300">{detail}</span>
+                            <span className="text-gray-700">{detail}</span>
                           </div>
                         ))}
                       </div>
 
                       {/* 팁 */}
                       {step.tips && step.tips.length > 0 && (
-                        <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                        <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                           <div className="flex items-center gap-2 mb-2">
-                            <Lightbulb className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                            <h4 className="font-semibold text-yellow-900 dark:text-yellow-100">팁</h4>
+                            <Lightbulb className="w-5 h-5 text-yellow-600" />
+                            <h4 className="font-semibold text-yellow-900">팁</h4>
                           </div>
                           <ul className="space-y-1">
                             {step.tips.map((tip, idx) => (
-                              <li key={idx} className="text-sm text-yellow-800 dark:text-yellow-200">
+                              <li key={idx} className="text-sm text-yellow-800">
                                 • {tip}
                               </li>
                             ))}
@@ -171,13 +171,13 @@ export default function ContentCreationGuide({ guideId }: ContentCreationGuidePr
                     href={resource.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary transition-colors flex items-center justify-between group"
+                    className="p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-primary transition-colors flex items-center justify-between group"
                   >
                     <div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase">
+                      <div className="text-xs text-gray-500 mb-1 uppercase">
                         {resource.type}
                       </div>
-                      <div className="font-semibold text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                      <div className="font-semibold text-gray-900 group-hover:text-primary transition-colors">
                         {resource.title}
                       </div>
                     </div>
@@ -196,10 +196,10 @@ export default function ContentCreationGuide({ guideId }: ContentCreationGuidePr
     <div className="w-full max-w-7xl mx-auto">
       {/* 헤더 */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-gray-900">
           AI 콘텐츠 제작 가이드
         </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           무료 AI 도구를 활용하여 다양한 콘텐츠를 쉽게 제작하는 방법을 단계별로 안내합니다
         </p>
       </div>
@@ -213,7 +213,7 @@ export default function ContentCreationGuide({ guideId }: ContentCreationGuidePr
               onClick={() => {
                 // 카테고리 필터링 로직 (추후 구현)
               }}
-              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center gap-2"
             >
               <span>{category.icon}</span>
               <span>{category.name}</span>
@@ -228,19 +228,19 @@ export default function ContentCreationGuide({ guideId }: ContentCreationGuidePr
           <button
             key={guide.id}
             onClick={() => setSelectedGuide(guide)}
-            className="text-left p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 hover:border-primary hover:shadow-xl transition-all group"
+            className="text-left p-6 bg-white rounded-2xl shadow-lg border border-gray-200 hover:border-primary hover:shadow-xl transition-all group"
           >
             <div className="text-5xl mb-4">{guide.icon}</div>
-            <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+            <h3 className="text-xl font-bold mb-2 text-gray-900 group-hover:text-primary transition-colors">
               {guide.title}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">{guide.description}</p>
+            <p className="text-gray-600 mb-4 text-sm">{guide.description}</p>
 
             <div className="flex items-center gap-4 text-sm">
-              <div className={`px-3 py-1 rounded-full ${difficultyColors[guide.difficulty]}`}>
+              <div className={`px-3 py-1 rounded-full ${difficultyColors[guide.difficulty].replace('dark:', '').replace(/dark:\S+/g, '')}`}>
                 {difficultyLabels[guide.difficulty]}
               </div>
-              <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-1 text-gray-500">
                 <Clock className="w-4 h-4" />
                 <span>{guide.timeRequired}</span>
               </div>
