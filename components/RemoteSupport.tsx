@@ -52,23 +52,29 @@ export default function RemoteSupport() {
   const [permissionType, setPermissionType] = useState<'screen' | 'microphone' | 'camera' | null>(null);
   const [permissionError, setPermissionError] = useState<string | null>(null);
 
-  // 호스트: 클라이언트 연결 감지 (폴링)
+  // 호스트: 클라이언트 연결 감지 및 권한 동기화 (폴링)
   useEffect(() => {
-    if (mode === 'host' && connectionCode && !isConnected) {
+    if (mode === 'host' && connectionCode) {
       const checkClientConnection = async () => {
         try {
           const response = await fetch(`/api/remote/session?code=${connectionCode}`);
           const data = await response.json();
-          if (data.success && data.session.status === 'connected') {
-            setIsConnected(true);
-            setSession(data.session);
+          if (data.success) {
+            if (!isConnected && data.session.status === 'connected') {
+              setIsConnected(true);
+            }
+            // 권한 동기화: 클라이언트가 설정한 권한을 호스트에 반영
+            if (data.session.permissions) {
+              setPermissions(data.session.permissions);
+              setSession(data.session);
+            }
           }
         } catch (error) {
           console.error('클라이언트 연결 확인 오류:', error);
         }
       };
 
-      // 2초마다 클라이언트 연결 확인
+      // 2초마다 클라이언트 연결 및 권한 확인
       const interval = setInterval(checkClientConnection, 2000);
       return () => clearInterval(interval);
     }
@@ -239,14 +245,65 @@ export default function RemoteSupport() {
     setShowPermissionModal(true);
   };
 
-  // 화면 공유 시작
+  // 화면 공유 시작 (클라이언트가 화면을 공유하고 호스트가 받음)
   const startScreenShare = async () => {
-    if (!webrtcRef.current || !videoRef.current) return;
+    if (mode === 'client') {
+      // 클라이언트: 자신의 화면을 공유
+      if (!webrtcRef.current || !remoteVideoRef.current) return;
+      
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            cursor: 'always',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          } as MediaTrackConstraints,
+          audio: true,
+        });
 
-    // 권한 요청 팝업 표시
-    setPermissionType('screen');
-    setPermissionError(null);
-    setShowPermissionModal(true);
+        localStreamRef.current = stream;
+        
+        // 서버에 화면 공유 시작 알림
+        await fetch('/api/remote/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update',
+            code: connectionCode,
+            permissions: { ...permissions, screenShare: true },
+          }),
+        });
+
+        setPermissions({ ...permissions, screenShare: true });
+        
+        // WebRTC로 스트림 전송 (실제 구현 시)
+        if (webrtcRef.current) {
+          // Offer 생성 및 전송
+          const offer = await webrtcRef.current.createOffer();
+          // 시그널링 서버를 통해 전송
+        }
+
+        // 스트림 종료 감지
+        stream.getVideoTracks()[0].addEventListener('ended', () => {
+          stopScreenShare();
+        });
+      } catch (error) {
+        console.error('화면 공유 오류:', error);
+        alert('화면 공유에 실패했습니다. 브라우저 권한을 확인해주세요.');
+      }
+    } else {
+      // 호스트: 클라이언트에게 화면 공유 요청
+      await fetch('/api/remote/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update',
+          code: connectionCode,
+          permissions: { ...permissions, screenShare: true },
+        }),
+      });
+      setPermissions({ ...permissions, screenShare: true });
+    }
   };
 
   // 실제 권한 요청 실행
@@ -314,7 +371,7 @@ export default function RemoteSupport() {
   };
 
   // 화면 공유 중지
-  const stopScreenShare = () => {
+  const stopScreenShare = async () => {
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => track.stop());
       localStreamRef.current = null;
@@ -322,7 +379,25 @@ export default function RemoteSupport() {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    setPermissions({ ...permissions, screenShare: false });
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+    
+    const newPermissions = { ...permissions, screenShare: false };
+    setPermissions(newPermissions);
+    
+    // 서버에 화면 공유 중지 알림
+    if (connectionCode) {
+      await fetch('/api/remote/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update',
+          code: connectionCode,
+          permissions: newPermissions,
+        }),
+      });
+    }
   };
 
   // 녹화 시작
@@ -485,56 +560,62 @@ export default function RemoteSupport() {
                         )}
                       </div>
                       {permissions.screenShare && (
-                        <video
-                          ref={videoRef}
-                          autoPlay
-                          muted
-                          className="w-full rounded-lg bg-gray-900"
-                          style={{ maxHeight: '400px' }}
-                        />
+                        <div>
+                          <p className="text-sm text-gray-600 mb-2">클라이언트 화면이 표시됩니다.</p>
+                          <video
+                            ref={remoteVideoRef}
+                            autoPlay
+                            className="w-full rounded-lg bg-gray-900"
+                            style={{ maxHeight: '400px' }}
+                          />
+                        </div>
                       )}
                     </div>
 
-                    {/* 권한 요청 */}
+                    {/* 권한 상태 (클라이언트가 설정한 권한 표시) */}
                     <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                      <h4 className="font-semibold text-gray-900 mb-3">원격 제어 권한</h4>
+                      <h4 className="font-semibold text-gray-900 mb-3">원격 제어 권한 상태</h4>
+                      <p className="text-sm text-gray-600 mb-3">클라이언트가 설정한 권한입니다.</p>
                       <div className="space-y-3">
-                        <label className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={permissions.mouseControl}
-                            onChange={(e) => setPermissions({ ...permissions, mouseControl: e.target.checked })}
-                            className="w-5 h-5"
-                          />
+                        <div className="flex items-center gap-3">
+                          {permissions.mouseControl ? (
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          ) : (
+                            <XCircle className="w-5 h-5 text-gray-400" />
+                          )}
                           <div className="flex items-center gap-2">
                             <MousePointer className="w-5 h-5 text-gray-600" />
-                            <span className="text-gray-700">마우스 제어 허용</span>
+                            <span className={`text-gray-700 ${permissions.mouseControl ? 'font-semibold' : ''}`}>
+                              마우스 제어 {permissions.mouseControl ? '허용됨' : '거부됨'}
+                            </span>
                           </div>
-                        </label>
-                        <label className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={permissions.keyboardControl}
-                            onChange={(e) => setPermissions({ ...permissions, keyboardControl: e.target.checked })}
-                            className="w-5 h-5"
-                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {permissions.keyboardControl ? (
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          ) : (
+                            <XCircle className="w-5 h-5 text-gray-400" />
+                          )}
                           <div className="flex items-center gap-2">
                             <Keyboard className="w-5 h-5 text-gray-600" />
-                            <span className="text-gray-700">키보드 제어 허용</span>
+                            <span className={`text-gray-700 ${permissions.keyboardControl ? 'font-semibold' : ''}`}>
+                              키보드 제어 {permissions.keyboardControl ? '허용됨' : '거부됨'}
+                            </span>
                           </div>
-                        </label>
-                        <label className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={permissions.recording}
-                            onChange={(e) => setPermissions({ ...permissions, recording: e.target.checked })}
-                            className="w-5 h-5"
-                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {permissions.recording ? (
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          ) : (
+                            <XCircle className="w-5 h-5 text-gray-400" />
+                          )}
                           <div className="flex items-center gap-2">
                             <Video className="w-5 h-5 text-gray-600" />
-                            <span className="text-gray-700">세션 녹화 허용</span>
+                            <span className={`text-gray-700 ${permissions.recording ? 'font-semibold' : ''}`}>
+                              세션 녹화 {permissions.recording ? '허용됨' : '거부됨'}
+                            </span>
                           </div>
-                        </label>
+                        </div>
                       </div>
                     </div>
 
@@ -711,7 +792,20 @@ export default function RemoteSupport() {
                       <input
                         type="checkbox"
                         checked={permissions.mouseControl}
-                        onChange={(e) => setPermissions({ ...permissions, mouseControl: e.target.checked })}
+                        onChange={async (e) => {
+                          const newPermissions = { ...permissions, mouseControl: e.target.checked };
+                          setPermissions(newPermissions);
+                          // 서버에 권한 업데이트
+                          await fetch('/api/remote/session', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              action: 'update',
+                              code: connectionCode,
+                              permissions: newPermissions,
+                            }),
+                          });
+                        }}
                         className="w-5 h-5"
                       />
                       <div>
@@ -728,7 +822,20 @@ export default function RemoteSupport() {
                       <input
                         type="checkbox"
                         checked={permissions.keyboardControl}
-                        onChange={(e) => setPermissions({ ...permissions, keyboardControl: e.target.checked })}
+                        onChange={async (e) => {
+                          const newPermissions = { ...permissions, keyboardControl: e.target.checked };
+                          setPermissions(newPermissions);
+                          // 서버에 권한 업데이트
+                          await fetch('/api/remote/session', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              action: 'update',
+                              code: connectionCode,
+                              permissions: newPermissions,
+                            }),
+                          });
+                        }}
                         className="w-5 h-5"
                       />
                       <div>
@@ -745,7 +852,20 @@ export default function RemoteSupport() {
                       <input
                         type="checkbox"
                         checked={permissions.recording}
-                        onChange={(e) => setPermissions({ ...permissions, recording: e.target.checked })}
+                        onChange={async (e) => {
+                          const newPermissions = { ...permissions, recording: e.target.checked };
+                          setPermissions(newPermissions);
+                          // 서버에 권한 업데이트
+                          await fetch('/api/remote/session', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              action: 'update',
+                              code: connectionCode,
+                              permissions: newPermissions,
+                            }),
+                          });
+                        }}
                         className="w-5 h-5"
                       />
                       <div>
@@ -761,18 +881,110 @@ export default function RemoteSupport() {
                   </div>
                 </div>
 
+                {/* 화면 공유 시작 버튼 */}
+                {!permissions.screenShare && (
+                  <div className="border border-gray-200 rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-1">화면 공유</h4>
+                        <p className="text-sm text-gray-600">원격 지원을 위해 화면을 공유하세요.</p>
+                      </div>
+                      <button
+                        onClick={startScreenShare}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+                      >
+                        <Monitor className="w-5 h-5" />
+                        <span>화면 공유 시작</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* 원격 화면 표시 */}
                 {permissions.screenShare && (
                   <div className="border border-gray-200 rounded-xl p-4">
-                    <h4 className="font-semibold text-gray-900 mb-3">원격 화면</h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-semibold text-gray-900">공유 중인 화면</h4>
+                      <button
+                        onClick={stopScreenShare}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                      >
+                        중지
+                      </button>
+                    </div>
                     <video
                       ref={remoteVideoRef}
                       autoPlay
+                      muted
                       className="w-full rounded-lg bg-gray-900"
                       style={{ maxHeight: '400px' }}
                     />
                   </div>
                 )}
+
+                {/* 채팅 */}
+                <div className="border border-gray-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5 text-blue-600" />
+                      <span className="font-semibold text-gray-900">보안 채팅</span>
+                    </div>
+                    {!showChatPassword && (
+                      <button
+                        onClick={() => setShowChatPassword(true)}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+                      >
+                        <Lock className="w-4 h-4" />
+                        <span>채팅 활성화</span>
+                      </button>
+                    )}
+                  </div>
+                  {showChatPassword && (
+                    <div className="space-y-3">
+                      <input
+                        type="password"
+                        value={chatPassword}
+                        onChange={(e) => setChatPassword(e.target.value)}
+                        placeholder="비밀번호 입력 (에이전트가 제공)"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                      />
+                      <div className="bg-gray-50 rounded-lg p-4 h-48 overflow-y-auto">
+                        {chatMessages.length === 0 ? (
+                          <p className="text-gray-500 text-center py-8">메시지가 없습니다.</p>
+                        ) : (
+                          chatMessages.map((msg, index) => (
+                            <div key={index} className={`mb-3 ${msg.from === 'host' ? 'text-right' : 'text-left'}`}>
+                              <div className={`inline-block px-3 py-2 rounded-lg ${
+                                msg.from === 'host' ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-900'
+                              }`}>
+                                <p className="text-sm">{msg.message}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {msg.time.toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                          placeholder="메시지 입력..."
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                        />
+                        <button
+                          onClick={sendChatMessage}
+                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          전송
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* 연결 해제 */}
                 <button
