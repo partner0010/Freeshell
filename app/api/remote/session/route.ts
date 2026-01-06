@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// 세션 저장소 (실제로는 데이터베이스 사용)
-const sessions = new Map<string, any>();
+import { sessionStorage } from '@/lib/session-storage';
 
 /**
  * 원격 세션 관리 API
@@ -11,54 +9,60 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, code, permissions } = body;
 
+    console.log('[Remote Session] Action:', action, 'Code:', code, 'Sessions count:', sessionStorage.getSessionCount());
+
     if (action === 'create') {
-      const sessionCode = Math.floor(100000 + Math.random() * 900000).toString();
-      const session = {
-        code: sessionCode,
-        createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-        status: 'pending',
-        permissions: permissions || {
-          screenShare: false,
-          mouseControl: false,
-          keyboardControl: false,
-          recording: false,
-        },
-      };
-      sessions.set(sessionCode, session);
+      const session = sessionStorage.createSession(permissions);
+      console.log('[Remote Session] Created:', session.code, 'Total sessions:', sessionStorage.getSessionCount());
       return NextResponse.json({ success: true, session });
     }
 
     if (action === 'join') {
       if (!code || code.length !== 6) {
+        console.log('[Remote Session] Invalid code format:', code);
         return NextResponse.json(
-          { error: '유효하지 않은 연결 코드입니다.' },
+          { error: '유효하지 않은 연결 코드입니다. 6자리 숫자를 입력해주세요.' },
           { status: 400 }
         );
       }
 
-      const session = sessions.get(code);
+      console.log('[Remote Session] Joining with code:', code);
+      const allSessions = sessionStorage.getAllSessions();
+      console.log('[Remote Session] Available codes:', allSessions.map(s => s.code));
+      
+      const session = sessionStorage.getSession(code);
       if (!session) {
+        console.log('[Remote Session] Session not found for code:', code);
         return NextResponse.json(
-          { error: '연결 코드를 찾을 수 없습니다.' },
+          { 
+            error: '연결 코드를 찾을 수 없습니다.',
+            message: '연결 코드가 만료되었거나 잘못 입력되었습니다. 호스트가 새로 생성한 코드를 확인해주세요.',
+            debug: {
+              requestedCode: code,
+              availableCodes: allSessions.map(s => s.code),
+              totalSessions: sessionStorage.getSessionCount(),
+            },
+          },
           { status: 404 }
         );
       }
 
-      if (new Date(session.expiresAt) < new Date()) {
-        sessions.delete(code);
+      // 세션 상태를 'connected'로 업데이트하여 호스트가 감지할 수 있도록 함
+      const updatedSession = sessionStorage.updateSession(code, {
+        status: 'connected',
+        clientConnectedAt: new Date().toISOString(),
+      });
+      
+      if (!updatedSession) {
         return NextResponse.json(
-          { error: '연결 코드가 만료되었습니다.' },
-          { status: 410 }
+          { error: '세션 업데이트에 실패했습니다.' },
+          { status: 500 }
         );
       }
+      
+      console.log('[Remote Session] Client joined:', code, 'Session status:', updatedSession.status);
 
-      // 세션 상태를 'connected'로 업데이트하여 호스트가 감지할 수 있도록 함
-      session.status = 'connected';
-      session.clientConnectedAt = new Date().toISOString();
-      sessions.set(code, session);
-
-      return NextResponse.json({ success: true, session });
+      return NextResponse.json({ success: true, session: updatedSession });
     }
 
     if (action === 'update') {
@@ -69,21 +73,23 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const session = sessions.get(code);
-      if (!session) {
+      const updates: any = {};
+      if (permissions) {
+        updates.permissions = { ...sessionStorage.getSession(code)?.permissions, ...permissions };
+      }
+      if (body.status) {
+        updates.status = body.status;
+      }
+
+      const updatedSession = sessionStorage.updateSession(code, updates);
+      if (!updatedSession) {
         return NextResponse.json(
           { error: '세션을 찾을 수 없습니다.' },
           { status: 404 }
         );
       }
 
-      if (permissions) {
-        session.permissions = { ...session.permissions, ...permissions };
-      }
-      session.status = body.status || session.status;
-      sessions.set(code, session);
-
-      return NextResponse.json({ success: true, session });
+      return NextResponse.json({ success: true, session: updatedSession });
     }
 
     return NextResponse.json(
@@ -110,16 +116,30 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const session = sessions.get(code);
+    console.log('[Remote Session] GET request for code:', code, 'Total sessions:', sessionStorage.getSessionCount());
+    const allSessions = sessionStorage.getAllSessions();
+    console.log('[Remote Session] Available codes:', allSessions.map(s => s.code));
+
+    const session = sessionStorage.getSession(code);
     if (!session) {
+      console.log('[Remote Session] Session not found for code:', code);
       return NextResponse.json(
-        { error: '세션을 찾을 수 없습니다.' },
+        { 
+          error: '세션을 찾을 수 없습니다.',
+          debug: {
+            requestedCode: code,
+            availableCodes: allSessions.map(s => s.code),
+            totalSessions: sessionStorage.getSessionCount(),
+          },
+        },
         { status: 404 }
       );
     }
 
+    console.log('[Remote Session] Session found:', code, 'Status:', session.status);
     return NextResponse.json({ success: true, session });
   } catch (error: any) {
+    console.error('[Remote Session] GET error:', error);
     return NextResponse.json(
       { error: '세션 조회 중 오류가 발생했습니다.', message: error.message },
       { status: 500 }

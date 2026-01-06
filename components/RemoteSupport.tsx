@@ -144,18 +144,24 @@ export default function RemoteSupport() {
   // 호스트: 연결 코드 생성
   const generateCode = async () => {
     try {
+      console.log('[Host] Generating connection code...');
       const response = await fetch('/api/remote/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'create' }),
       });
       const data = await response.json();
+      console.log('[Host] Code generation response:', data);
       if (data.success) {
         setConnectionCode(data.session.code);
         setSession(data.session);
+        console.log('[Host] Connection code generated:', data.session.code);
+      } else {
+        alert('연결 코드 생성에 실패했습니다.');
       }
-    } catch (error) {
-      console.error('코드 생성 오류:', error);
+    } catch (error: any) {
+      console.error('[Host] Code generation error:', error);
+      alert(`코드 생성 오류: ${error.message || '알 수 없는 오류'}`);
     }
   };
 
@@ -168,12 +174,16 @@ export default function RemoteSupport() {
 
     setIsConnecting(true);
     try {
+      console.log('[Client] Attempting to join with code:', connectionCode);
       const response = await fetch('/api/remote/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'join', code: connectionCode }),
       });
+      
       const data = await response.json();
+      console.log('[Client] Join response:', data);
+      
       if (data.success) {
         setIsConnected(true);
         setSession(data.session);
@@ -183,11 +193,15 @@ export default function RemoteSupport() {
           webrtcRef.current.setupRemoteStream(remoteVideoRef.current);
         }
       } else {
-        alert(data.error || '유효하지 않은 연결 코드입니다.');
+        const errorMsg = data.message 
+          ? `${data.error}\n${data.message}`
+          : data.error || '유효하지 않은 연결 코드입니다.';
+        alert(errorMsg);
+        console.error('[Client] Join failed:', data);
       }
-    } catch (error) {
-      console.error('연결 오류:', error);
-      alert('연결에 실패했습니다.');
+    } catch (error: any) {
+      console.error('[Client] Connection error:', error);
+      alert(`연결에 실패했습니다: ${error.message || '알 수 없는 오류'}`);
     } finally {
       setIsConnecting(false);
     }
