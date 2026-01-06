@@ -31,8 +31,6 @@ export default function RemoteSupport() {
     keyboardControl: false,
     recording: false,
   });
-  const [chatPassword, setChatPassword] = useState('');
-  const [showChatPassword, setShowChatPassword] = useState(false);
   const [chatMessages, setChatMessages] = useState<Array<{ from: 'host' | 'client'; message: string; time: Date }>>([]);
   const [chatInput, setChatInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -96,6 +94,11 @@ export default function RemoteSupport() {
       webrtcRef.current = new WebRTCRemote();
     }
 
+    // 호스트인 경우 원격 스트림 수신 설정
+    if (mode === 'host' && remoteVideoRef.current) {
+      webrtcRef.current.setupRemoteStream(remoteVideoRef.current);
+    }
+
     // 재연결 관리자 초기화
     if (!reconnectionManagerRef.current) {
       reconnectionManagerRef.current = new ReconnectionManager({
@@ -105,7 +108,9 @@ export default function RemoteSupport() {
       
       reconnectionManagerRef.current.onReconnect(async () => {
         setIsReconnecting(true);
-        await connectWithCode();
+        if (mode === 'client') {
+          await connectWithCode();
+        }
       });
       
       reconnectionManagerRef.current.onReconnectSuccess(() => {
@@ -119,10 +124,10 @@ export default function RemoteSupport() {
     }
 
     // 네트워크 품질 모니터 초기화
-    if (webrtcRef.current && webrtcRef.current['peerConnection']) {
+    if (webrtcRef.current && webrtcRef.current.peerConnection) {
       if (!qualityMonitorRef.current) {
         qualityMonitorRef.current = new NetworkQualityMonitor(
-          webrtcRef.current['peerConnection']
+          webrtcRef.current.peerConnection
         );
         qualityMonitorRef.current.onQualityChange((quality) => {
           setNetworkQuality(quality);
@@ -249,7 +254,7 @@ export default function RemoteSupport() {
   const startScreenShare = async () => {
     if (mode === 'client') {
       // 클라이언트: 자신의 화면을 공유
-      if (!webrtcRef.current || !remoteVideoRef.current) return;
+      if (!remoteVideoRef.current) return;
       
       try {
         const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -261,8 +266,26 @@ export default function RemoteSupport() {
           audio: true,
         });
 
+        // 클라이언트 비디오 요소에 스트림 할당 (미리보기)
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = stream;
+          remoteVideoRef.current.play().catch(err => console.error('비디오 재생 오류:', err));
+        }
+
         localStreamRef.current = stream;
         
+        // WebRTC 초기화 및 스트림 추가
+        if (!webrtcRef.current) {
+          webrtcRef.current = new WebRTCRemote();
+        }
+
+        // 스트림 트랙을 PeerConnection에 추가
+        stream.getTracks().forEach(track => {
+          if (webrtcRef.current?.peerConnection) {
+            webrtcRef.current.peerConnection.addTrack(track, stream);
+          }
+        });
+
         // 서버에 화면 공유 시작 알림
         await fetch('/api/remote/session', {
           method: 'POST',
@@ -276,11 +299,15 @@ export default function RemoteSupport() {
 
         setPermissions({ ...permissions, screenShare: true });
         
-        // WebRTC로 스트림 전송 (실제 구현 시)
+        // WebRTC Offer 생성 및 전송 (실제 구현 시 시그널링 서버를 통해 전송)
         if (webrtcRef.current) {
-          // Offer 생성 및 전송
-          const offer = await webrtcRef.current.createOffer();
-          // 시그널링 서버를 통해 전송
+          try {
+            const offer = await webrtcRef.current.createOffer();
+            console.log('Offer 생성됨:', offer);
+            // TODO: 시그널링 서버를 통해 호스트로 Offer 전송
+          } catch (error) {
+            console.error('Offer 생성 오류:', error);
+          }
         }
 
         // 스트림 종료 감지
@@ -303,6 +330,16 @@ export default function RemoteSupport() {
         }),
       });
       setPermissions({ ...permissions, screenShare: true });
+      
+      // 호스트가 원격 스트림을 받을 준비
+      if (!webrtcRef.current) {
+        webrtcRef.current = new WebRTCRemote();
+      }
+      
+      // 원격 스트림 수신 설정
+      if (webrtcRef.current && remoteVideoRef.current) {
+        webrtcRef.current.setupRemoteStream(remoteVideoRef.current);
+      }
     }
   };
 
@@ -426,15 +463,33 @@ export default function RemoteSupport() {
   };
 
   // 채팅 메시지 전송
-  const sendChatMessage = () => {
-    if (!chatInput.trim()) return;
+  const sendChatMessage = async () => {
+    if (!chatInput.trim() || !connectionCode) return;
     
-    setChatMessages([...chatMessages, {
+    const newMessage = {
       from: mode,
       message: chatInput,
       time: new Date(),
-    }]);
+    };
+    
+    // 로컬에 메시지 추가
+    setChatMessages([...chatMessages, newMessage]);
     setChatInput('');
+    
+    // 서버에 메시지 전송 (실제로는 WebRTC DataChannel을 통해 전송)
+    try {
+      await fetch('/api/remote/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update',
+          code: connectionCode,
+          chatMessage: newMessage,
+        }),
+      });
+    } catch (error) {
+      console.error('채팅 메시지 전송 오류:', error);
+    }
   };
 
   // 연결 코드 복사
@@ -565,8 +620,13 @@ export default function RemoteSupport() {
                           <video
                             ref={remoteVideoRef}
                             autoPlay
+                            playsInline
                             className="w-full rounded-lg bg-gray-900"
-                            style={{ maxHeight: '400px' }}
+                            style={{ maxHeight: '400px', minHeight: '200px' }}
+                            onLoadedMetadata={(e) => {
+                              const video = e.currentTarget;
+                              video.play().catch(err => console.error('비디오 재생 오류:', err));
+                            }}
                           />
                         </div>
                       )}
@@ -658,66 +718,46 @@ export default function RemoteSupport() {
 
                     {/* 채팅 */}
                     <div className="border border-gray-200 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="w-5 h-5 text-blue-600" />
-                          <span className="font-semibold text-gray-900">보안 채팅</span>
-                        </div>
-                        {!showChatPassword && (
-                          <button
-                            onClick={() => setShowChatPassword(true)}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
-                          >
-                            <Lock className="w-4 h-4" />
-                            <span>채팅 활성화</span>
-                          </button>
-                        )}
+                      <div className="flex items-center gap-2 mb-4">
+                        <MessageSquare className="w-5 h-5 text-blue-600" />
+                        <span className="font-semibold text-gray-900">채팅</span>
                       </div>
-                      {showChatPassword && (
-                        <div className="space-y-3">
-                          <input
-                            type="password"
-                            value={chatPassword}
-                            onChange={(e) => setChatPassword(e.target.value)}
-                            placeholder="비밀번호 입력 (에이전트가 제공)"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                          />
-                          <div className="bg-gray-50 rounded-lg p-4 h-48 overflow-y-auto">
-                            {chatMessages.length === 0 ? (
-                              <p className="text-gray-500 text-center py-8">메시지가 없습니다.</p>
-                            ) : (
-                              chatMessages.map((msg, index) => (
-                                <div key={index} className={`mb-3 ${msg.from === 'host' ? 'text-right' : 'text-left'}`}>
-                                  <div className={`inline-block px-3 py-2 rounded-lg ${
-                                    msg.from === 'host' ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-900'
-                                  }`}>
-                                    <p className="text-sm">{msg.message}</p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      {msg.time.toLocaleTimeString()}
-                                    </p>
-                                  </div>
+                      <div className="space-y-3">
+                        <div className="bg-gray-50 rounded-lg p-4 h-48 overflow-y-auto">
+                          {chatMessages.length === 0 ? (
+                            <p className="text-gray-500 text-center py-8">메시지가 없습니다.</p>
+                          ) : (
+                            chatMessages.map((msg, index) => (
+                              <div key={index} className={`mb-3 ${msg.from === 'host' ? 'text-right' : 'text-left'}`}>
+                                <div className={`inline-block px-3 py-2 rounded-lg ${
+                                  msg.from === 'host' ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-900'
+                                }`}>
+                                  <p className="text-sm">{msg.message}</p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {msg.time.toLocaleTimeString()}
+                                  </p>
                                 </div>
-                              ))
-                            )}
-                          </div>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={chatInput}
-                              onChange={(e) => setChatInput(e.target.value)}
-                              onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-                              placeholder="메시지 입력..."
-                              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                            />
-                            <button
-                              onClick={sendChatMessage}
-                              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                            >
-                              전송
-                            </button>
-                          </div>
+                              </div>
+                            ))
+                          )}
                         </div>
-                      )}
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={chatInput}
+                            onChange={(e) => setChatInput(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                            placeholder="메시지 입력..."
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-gray-900 placeholder-gray-400"
+                          />
+                          <button
+                            onClick={sendChatMessage}
+                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            전송
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -915,75 +955,60 @@ export default function RemoteSupport() {
                     <video
                       ref={remoteVideoRef}
                       autoPlay
+                      playsInline
                       muted
                       className="w-full rounded-lg bg-gray-900"
-                      style={{ maxHeight: '400px' }}
+                      style={{ maxHeight: '400px', minHeight: '200px' }}
+                      onLoadedMetadata={(e) => {
+                        const video = e.currentTarget;
+                        video.play().catch(err => console.error('비디오 재생 오류:', err));
+                      }}
                     />
                   </div>
                 )}
 
                 {/* 채팅 */}
                 <div className="border border-gray-200 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5 text-blue-600" />
-                      <span className="font-semibold text-gray-900">보안 채팅</span>
-                    </div>
-                    {!showChatPassword && (
-                      <button
-                        onClick={() => setShowChatPassword(true)}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
-                      >
-                        <Lock className="w-4 h-4" />
-                        <span>채팅 활성화</span>
-                      </button>
-                    )}
+                  <div className="flex items-center gap-2 mb-4">
+                    <MessageSquare className="w-5 h-5 text-blue-600" />
+                    <span className="font-semibold text-gray-900">채팅</span>
                   </div>
-                  {showChatPassword && (
-                    <div className="space-y-3">
-                      <input
-                        type="password"
-                        value={chatPassword}
-                        onChange={(e) => setChatPassword(e.target.value)}
-                        placeholder="비밀번호 입력 (에이전트가 제공)"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                      />
-                      <div className="bg-gray-50 rounded-lg p-4 h-48 overflow-y-auto">
-                        {chatMessages.length === 0 ? (
-                          <p className="text-gray-500 text-center py-8">메시지가 없습니다.</p>
-                        ) : (
-                          chatMessages.map((msg, index) => (
-                            <div key={index} className={`mb-3 ${msg.from === 'host' ? 'text-right' : 'text-left'}`}>
-                              <div className={`inline-block px-3 py-2 rounded-lg ${
-                                msg.from === 'host' ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-900'
-                              }`}>
-                                <p className="text-sm">{msg.message}</p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  {msg.time.toLocaleTimeString()}
-                                </p>
-                              </div>
+                  <div className="space-y-3">
+                    <div className="bg-gray-50 rounded-lg p-4 h-48 overflow-y-auto">
+                      {chatMessages.length === 0 ? (
+                        <p className="text-gray-500 text-center py-8">메시지가 없습니다.</p>
+                      ) : (
+                        chatMessages.map((msg, index) => (
+                          <div key={index} className={`mb-3 ${msg.from === 'host' ? 'text-right' : 'text-left'}`}>
+                            <div className={`inline-block px-3 py-2 rounded-lg ${
+                              msg.from === 'host' ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-900'
+                            }`}>
+                              <p className="text-sm">{msg.message}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {msg.time.toLocaleTimeString()}
+                              </p>
                             </div>
-                          ))
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={chatInput}
-                          onChange={(e) => setChatInput(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-                          placeholder="메시지 입력..."
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                        />
-                        <button
-                          onClick={sendChatMessage}
-                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          전송
-                        </button>
-                      </div>
+                          </div>
+                        ))
+                      )}
                     </div>
-                  )}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                        placeholder="메시지 입력..."
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-gray-900 placeholder-gray-400"
+                      />
+                      <button
+                        onClick={sendChatMessage}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        전송
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* 연결 해제 */}

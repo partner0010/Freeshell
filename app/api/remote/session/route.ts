@@ -73,19 +73,35 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const session = sessionStorage.getSession(code);
+      if (!session) {
+        return NextResponse.json(
+          { error: '세션을 찾을 수 없습니다.' },
+          { status: 404 }
+        );
+      }
+
       const updates: any = {};
       if (permissions) {
-        updates.permissions = { ...sessionStorage.getSession(code)?.permissions, ...permissions };
+        updates.permissions = { ...session.permissions, ...permissions };
       }
       if (body.status) {
         updates.status = body.status;
+      }
+      // 채팅 메시지 추가
+      if (body.chatMessage) {
+        if (!session.chatMessages) {
+          session.chatMessages = [];
+        }
+        session.chatMessages.push(body.chatMessage);
+        updates.chatMessages = session.chatMessages;
       }
 
       const updatedSession = sessionStorage.updateSession(code, updates);
       if (!updatedSession) {
         return NextResponse.json(
-          { error: '세션을 찾을 수 없습니다.' },
-          { status: 404 }
+          { error: '세션 업데이트에 실패했습니다.' },
+          { status: 500 }
         );
       }
 

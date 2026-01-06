@@ -23,6 +23,11 @@ export interface SessionData {
   clientConnectedAt?: string;
   hostId?: string;
   clientId?: string;
+  chatMessages?: Array<{
+    from: 'host' | 'client';
+    message: string;
+    time: Date | string;
+  }>;
 }
 
 class SessionStorage {
