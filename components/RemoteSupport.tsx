@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Monitor, MousePointer, Keyboard, Video, MessageSquare, Lock, CheckCircle, XCircle, Loader2, Copy, Download, RefreshCw, Wifi, WifiOff, Upload, FileText } from 'lucide-react';
+import { Monitor, MousePointer, Keyboard, Video, MessageSquare, Lock, CheckCircle, XCircle, Loader2, Copy, Download, RefreshCw, Wifi, WifiOff, Upload, FileText, AlertCircle, Settings, X } from 'lucide-react';
 import { WebRTCRemote } from '@/lib/webrtc-remote';
 import { RemoteControlHandler } from '@/lib/remote-control-handler';
 import { ReconnectionManager } from '@/lib/reconnection-manager';
@@ -23,6 +23,7 @@ export default function RemoteSupport() {
   const [connectionCode, setConnectionCode] = useState('');
   const [session, setSession] = useState<RemoteSession | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [permissions, setPermissions] = useState({
     screenShare: false,
@@ -47,6 +48,9 @@ export default function RemoteSupport() {
   const [networkQuality, setNetworkQuality] = useState<NetworkQuality | null>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [fileTransferProgress, setFileTransferProgress] = useState<number | null>(null);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [permissionType, setPermissionType] = useState<'screen' | 'microphone' | 'camera' | null>(null);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
 
   // 호스트: 클라이언트 연결 감지 (폴링)
   useEffect(() => {
@@ -143,6 +147,9 @@ export default function RemoteSupport() {
 
   // 호스트: 연결 코드 생성
   const generateCode = async () => {
+    if (isGenerating) return; // 중복 호출 방지
+    
+    setIsGenerating(true);
     try {
       console.log('[Host] Generating connection code...');
       const response = await fetch('/api/remote/session', {
@@ -150,18 +157,36 @@ export default function RemoteSupport() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'create' }),
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[Host] API error:', response.status, errorText);
+        let errorMessage = `서버 오류 (${response.status})`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
       const data = await response.json();
       console.log('[Host] Code generation response:', data);
-      if (data.success) {
+      
+      if (data.success && data.session && data.session.code) {
         setConnectionCode(data.session.code);
         setSession(data.session);
         console.log('[Host] Connection code generated:', data.session.code);
       } else {
-        alert('연결 코드 생성에 실패했습니다.');
+        console.error('[Host] Invalid response:', data);
+        throw new Error(data.error || '연결 코드 생성에 실패했습니다.');
       }
     } catch (error: any) {
       console.error('[Host] Code generation error:', error);
-      alert(`코드 생성 오류: ${error.message || '알 수 없는 오류'}`);
+      alert(`코드 생성 오류: ${error.message || '알 수 없는 오류'}\n\n브라우저 개발자 도구 콘솔(F12)을 열어 상세 오류를 확인해주세요.`);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -207,27 +232,85 @@ export default function RemoteSupport() {
     }
   };
 
+  // 권한 요청 팝업 표시
+  const requestPermission = (type: 'screen' | 'microphone' | 'camera') => {
+    setPermissionType(type);
+    setPermissionError(null);
+    setShowPermissionModal(true);
+  };
+
   // 화면 공유 시작
   const startScreenShare = async () => {
     if (!webrtcRef.current || !videoRef.current) return;
 
-    try {
-      const stream = await webrtcRef.current.startScreenShare(videoRef.current);
-      localStreamRef.current = stream;
-      setPermissions({ ...permissions, screenShare: true });
+    // 권한 요청 팝업 표시
+    setPermissionType('screen');
+    setPermissionError(null);
+    setShowPermissionModal(true);
+  };
 
-      // WebRTC Offer 생성 및 전송
-      const offer = await webrtcRef.current.createOffer();
-      // 실제로는 시그널링 서버를 통해 전송해야 함
+  // 실제 권한 요청 실행
+  const executePermissionRequest = async () => {
+    if (!permissionType || !webrtcRef.current || !videoRef.current) return;
+
+    try {
+      if (permissionType === 'screen') {
+        const stream = await webrtcRef.current.startScreenShare(videoRef.current);
+        localStreamRef.current = stream;
+        setPermissions({ ...permissions, screenShare: true });
+        setShowPermissionModal(false);
+        setPermissionType(null);
+
+        // WebRTC Offer 생성 및 전송
+        const offer = await webrtcRef.current.createOffer();
+        // 실제로는 시그널링 서버를 통해 전송해야 함
+        
+        // 스트림 종료 감지
+        stream.getVideoTracks()[0].addEventListener('ended', () => {
+          stopScreenShare();
+        });
+      } else if (permissionType === 'microphone') {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // 마이크 권한 처리
+        setShowPermissionModal(false);
+        setPermissionType(null);
+        stream.getTracks().forEach(track => track.stop()); // 테스트용으로 즉시 중지
+      } else if (permissionType === 'camera') {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        // 카메라 권한 처리
+        setShowPermissionModal(false);
+        setPermissionType(null);
+        stream.getTracks().forEach(track => track.stop()); // 테스트용으로 즉시 중지
+      }
+    } catch (error: any) {
+      console.error('권한 요청 오류:', error);
       
-      // 스트림 종료 감지
-      stream.getVideoTracks()[0].addEventListener('ended', () => {
-        stopScreenShare();
-      });
-    } catch (error) {
-      console.error('화면 공유 오류:', error);
-      alert('화면 공유에 실패했습니다. 브라우저 권한을 확인해주세요.');
+      let errorMessage = '권한 요청에 실패했습니다.';
+      if (error.name === 'NotAllowedError') {
+        errorMessage = '권한이 거부되었습니다. 브라우저 설정에서 권한을 허용해주세요.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = '요청한 미디어 장치를 찾을 수 없습니다.';
+      } else if (error.name === 'NotReadableError') {
+        errorMessage = '미디어 장치에 접근할 수 없습니다. 다른 프로그램에서 사용 중일 수 있습니다.';
+      }
+      
+      setPermissionError(errorMessage);
     }
+  };
+
+  // 브라우저 설정 가이드
+  const getBrowserSettingsGuide = () => {
+    const userAgent = typeof window !== 'undefined' ? navigator.userAgent : '';
+    if (userAgent.includes('Chrome')) {
+      return 'Chrome: 주소창 왼쪽 자물쇠 아이콘 → 사이트 설정 → 권한 허용';
+    } else if (userAgent.includes('Firefox')) {
+      return 'Firefox: 주소창 왼쪽 자물쇠 아이콘 → 권한 → 허용';
+    } else if (userAgent.includes('Safari')) {
+      return 'Safari: Safari → 환경설정 → 웹사이트 → 권한 설정';
+    } else if (userAgent.includes('Edge')) {
+      return 'Edge: 주소창 왼쪽 자물쇠 아이콘 → 사이트 권한 → 허용';
+    }
+    return '브라우저 설정에서 사이트 권한을 확인해주세요.';
   };
 
   // 화면 공유 중지
@@ -320,10 +403,20 @@ export default function RemoteSupport() {
                 <p className="text-gray-700 mb-4">원격 지원을 시작하려면 연결 코드를 생성하세요.</p>
                 <button
                   onClick={generateCode}
-                  className="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto"
+                  disabled={isGenerating}
+                  className="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
                 >
-                  <Monitor className="w-5 h-5" />
-                  <span>연결 코드 생성</span>
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>생성 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Monitor className="w-5 h-5" />
+                      <span>연결 코드 생성</span>
+                    </>
+                  )}
                 </button>
               </div>
             ) : (
@@ -720,7 +813,99 @@ export default function RemoteSupport() {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+
+      {/* 권한 요청 모달 */}
+      {showPermissionModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+              {/* 헤더 */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    {permissionType === 'screen' && '화면 공유 권한 필요'}
+                    {permissionType === 'microphone' && '마이크 권한 필요'}
+                    {permissionType === 'camera' && '카메라 권한 필요'}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowPermissionModal(false);
+                    setPermissionType(null);
+                    setPermissionError(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              {/* 내용 */}
+              <div className="space-y-3">
+                <p className="text-gray-700">
+                  {permissionType === 'screen' && '원격 지원을 위해 화면 공유 권한이 필요합니다. 브라우저에서 권한 요청 팝업이 나타나면 "허용"을 클릭해주세요.'}
+                  {permissionType === 'microphone' && '음성 통신을 위해 마이크 권한이 필요합니다. 브라우저에서 권한 요청 팝업이 나타나면 "허용"을 클릭해주세요.'}
+                  {permissionType === 'camera' && '영상 통신을 위해 카메라 권한이 필요합니다. 브라우저에서 권한 요청 팝업이 나타나면 "허용"을 클릭해주세요.'}
+                </p>
+
+                {permissionError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-start gap-2">
+                      <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-red-800 mb-1">권한 요청 실패</p>
+                        <p className="text-sm text-red-700">{permissionError}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <Settings className="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800 mb-1">권한이 거부된 경우</p>
+                      <p className="text-xs text-gray-600">{getBrowserSettingsGuide()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 버튼 */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowPermissionModal(false);
+                    setPermissionType(null);
+                    setPermissionError(null);
+                  }}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={executePermissionRequest}
+                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  {permissionError ? (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      <span>다시 시도</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>권한 허용</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
