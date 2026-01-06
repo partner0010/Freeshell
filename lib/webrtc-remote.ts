@@ -282,9 +282,24 @@ export class WebRTCRemote {
     if (!this.peerConnection) return;
 
     this.peerConnection.ontrack = (event) => {
+      console.log('[WebRTC] 원격 트랙 수신:', event);
       if (event.streams && event.streams[0]) {
+        console.log('[WebRTC] 스트림 할당:', event.streams[0]);
         videoElement.srcObject = event.streams[0];
         this.remoteStream = event.streams[0];
+        // 비디오 재생 시도
+        videoElement.play().catch(err => {
+          console.error('[WebRTC] 비디오 재생 오류:', err);
+        });
+      } else if (event.track) {
+        // 스트림이 없으면 트랙만 처리
+        console.log('[WebRTC] 트랙만 수신:', event.track);
+        const stream = new MediaStream([event.track]);
+        videoElement.srcObject = stream;
+        this.remoteStream = stream;
+        videoElement.play().catch(err => {
+          console.error('[WebRTC] 비디오 재생 오류:', err);
+        });
       }
     };
   }

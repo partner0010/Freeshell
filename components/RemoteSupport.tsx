@@ -65,6 +65,30 @@ export default function RemoteSupport() {
             if (data.session.permissions) {
               setPermissions(data.session.permissions);
               setSession(data.session);
+              
+              // 화면 공유가 활성화되어 있으면 WebRTC 연결 확인
+              if (data.session.permissions.screenShare && isConnected) {
+                // WebRTC가 초기화되지 않았으면 초기화
+                if (!webrtcRef.current) {
+                  initializeWebRTC();
+                }
+              }
+            }
+            // 채팅 메시지 동기화
+            if (data.session.chatMessages && Array.isArray(data.session.chatMessages)) {
+              const serverMessages = data.session.chatMessages.map((msg: any) => ({
+                ...msg,
+                time: new Date(msg.time),
+              }));
+              // 현재 메시지와 비교하여 업데이트
+              setChatMessages(prevMessages => {
+                const prevStr = JSON.stringify(prevMessages.map((m: { from: 'host' | 'client'; message: string; time: Date }) => ({ ...m, time: m.time.toISOString() })));
+                const serverStr = JSON.stringify(serverMessages.map((m: { from: 'host' | 'client'; message: string; time: Date }) => ({ ...m, time: m.time.toISOString() })));
+                if (prevStr !== serverStr) {
+                  return serverMessages;
+                }
+                return prevMessages;
+              });
             }
           }
         } catch (error) {
@@ -76,7 +100,7 @@ export default function RemoteSupport() {
       const interval = setInterval(checkClientConnection, 2000);
       return () => clearInterval(interval);
     }
-  }, [mode, connectionCode, isConnected]);
+  }, [mode, connectionCode, isConnected, chatMessages]);
 
   // WebRTC 초기화 및 시그널링
   useEffect(() => {
@@ -86,8 +110,42 @@ export default function RemoteSupport() {
     return () => {
       cleanup();
     };
+    // initializeWebRTC는 의도적으로 의존성 배열에서 제외 (무한 루프 방지)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, connectionCode]);
+
+  // 클라이언트: 채팅 메시지 동기화 (폴링)
+  useEffect(() => {
+    if (mode === 'client' && isConnected && connectionCode) {
+      const syncChatMessages = async () => {
+        try {
+          const response = await fetch(`/api/remote/session?code=${connectionCode}`);
+          const data = await response.json();
+          if (data.success && data.session.chatMessages && Array.isArray(data.session.chatMessages)) {
+            const serverMessages = data.session.chatMessages.map((msg: any) => ({
+              ...msg,
+              time: new Date(msg.time),
+            }));
+            // 현재 메시지와 비교하여 업데이트
+              setChatMessages(prevMessages => {
+                const prevStr = JSON.stringify(prevMessages.map((m: { from: 'host' | 'client'; message: string; time: Date }) => ({ ...m, time: m.time.toISOString() })));
+                const serverStr = JSON.stringify(serverMessages.map((m: { from: 'host' | 'client'; message: string; time: Date }) => ({ ...m, time: m.time.toISOString() })));
+                if (prevStr !== serverStr) {
+                  return serverMessages;
+                }
+                return prevMessages;
+              });
+          }
+        } catch (error) {
+          console.error('채팅 메시지 동기화 오류:', error);
+        }
+      };
+
+      // 2초마다 채팅 메시지 동기화
+      const interval = setInterval(syncChatMessages, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [mode, isConnected, connectionCode]);
 
   const initializeWebRTC = async () => {
     if (!webrtcRef.current) {
@@ -95,8 +153,20 @@ export default function RemoteSupport() {
     }
 
     // 호스트인 경우 원격 스트림 수신 설정
-    if (mode === 'host' && remoteVideoRef.current) {
+    if (mode === 'host' && remoteVideoRef.current && webrtcRef.current) {
       webrtcRef.current.setupRemoteStream(remoteVideoRef.current);
+      
+      // 원격 스트림이 수신되면 비디오 요소에 할당
+      if (webrtcRef.current.peerConnection) {
+        webrtcRef.current.peerConnection.ontrack = (event) => {
+          console.log('[Host] 원격 스트림 수신됨:', event);
+          if (event.streams && event.streams[0] && remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = event.streams[0];
+            remoteVideoRef.current.play().catch(err => console.error('비디오 재생 오류:', err));
+            console.log('[Host] 비디오 요소에 스트림 할당됨');
+          }
+        };
+      }
     }
 
     // 재연결 관리자 초기화
@@ -339,6 +409,18 @@ export default function RemoteSupport() {
       // 원격 스트림 수신 설정
       if (webrtcRef.current && remoteVideoRef.current) {
         webrtcRef.current.setupRemoteStream(remoteVideoRef.current);
+        
+        // 원격 스트림이 수신되면 비디오 요소에 할당
+        if (webrtcRef.current.peerConnection) {
+          webrtcRef.current.peerConnection.ontrack = (event) => {
+            console.log('[Host] 원격 스트림 수신됨:', event);
+            if (event.streams && event.streams[0] && remoteVideoRef.current) {
+              remoteVideoRef.current.srcObject = event.streams[0];
+              remoteVideoRef.current.play().catch(err => console.error('비디오 재생 오류:', err));
+              console.log('[Host] 비디오 요소에 스트림 할당됨');
+            }
+          };
+        }
       }
     }
   };
@@ -472,13 +554,9 @@ export default function RemoteSupport() {
       time: new Date(),
     };
     
-    // 로컬에 메시지 추가
-    setChatMessages([...chatMessages, newMessage]);
-    setChatInput('');
-    
-    // 서버에 메시지 전송 (실제로는 WebRTC DataChannel을 통해 전송)
+    // 서버에 메시지 전송
     try {
-      await fetch('/api/remote/session', {
+      const response = await fetch('/api/remote/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -487,8 +565,31 @@ export default function RemoteSupport() {
           chatMessage: newMessage,
         }),
       });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // 서버에서 최신 메시지 목록 가져와서 동기화
+        if (data.success && data.session.chatMessages) {
+          const serverMessages = data.session.chatMessages.map((msg: any) => ({
+            ...msg,
+            time: new Date(msg.time),
+          }));
+          setChatMessages(serverMessages);
+        } else {
+          // 서버 응답이 없으면 로컬에만 추가
+          setChatMessages([...chatMessages, newMessage]);
+        }
+        setChatInput('');
+      } else {
+        // 서버 전송 실패 시 로컬에만 추가
+        setChatMessages([...chatMessages, newMessage]);
+        setChatInput('');
+      }
     } catch (error) {
       console.error('채팅 메시지 전송 오류:', error);
+      // 오류 발생 시 로컬에만 추가
+      setChatMessages([...chatMessages, newMessage]);
+      setChatInput('');
     }
   };
 
@@ -617,17 +718,37 @@ export default function RemoteSupport() {
                       {permissions.screenShare && (
                         <div>
                           <p className="text-sm text-gray-600 mb-2">클라이언트 화면이 표시됩니다.</p>
-                          <video
-                            ref={remoteVideoRef}
-                            autoPlay
-                            playsInline
-                            className="w-full rounded-lg bg-gray-900"
-                            style={{ maxHeight: '400px', minHeight: '200px' }}
-                            onLoadedMetadata={(e) => {
-                              const video = e.currentTarget;
-                              video.play().catch(err => console.error('비디오 재생 오류:', err));
-                            }}
-                          />
+                          <div className="relative">
+                            <video
+                              ref={remoteVideoRef}
+                              autoPlay
+                              playsInline
+                              muted
+                              className="w-full rounded-lg bg-gray-900"
+                              style={{ maxHeight: '400px', minHeight: '200px' }}
+                              onLoadedMetadata={(e) => {
+                                const video = e.currentTarget;
+                                console.log('[Host] 비디오 메타데이터 로드됨:', video.videoWidth, 'x', video.videoHeight);
+                                video.play().catch(err => console.error('비디오 재생 오류:', err));
+                              }}
+                              onLoadedData={(e) => {
+                                console.log('[Host] 비디오 데이터 로드됨');
+                                const video = e.currentTarget;
+                                if (!video.srcObject) {
+                                  console.warn('[Host] 비디오 요소에 스트림이 없습니다.');
+                                }
+                              }}
+                            />
+                            {!remoteVideoRef.current?.srcObject && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-gray-800 rounded-lg">
+                                <div className="text-center">
+                                  <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-2" />
+                                  <p className="text-gray-400 text-sm">클라이언트 화면 공유 대기 중...</p>
+                                  <p className="text-gray-500 text-xs mt-1">클라이언트가 화면 공유를 시작하면 여기에 표시됩니다.</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
