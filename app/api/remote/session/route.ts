@@ -53,6 +53,11 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // 세션 상태를 'connected'로 업데이트하여 호스트가 감지할 수 있도록 함
+      session.status = 'connected';
+      session.clientConnectedAt = new Date().toISOString();
+      sessions.set(code, session);
+
       return NextResponse.json({ success: true, session });
     }
 

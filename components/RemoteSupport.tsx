@@ -48,6 +48,28 @@ export default function RemoteSupport() {
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [fileTransferProgress, setFileTransferProgress] = useState<number | null>(null);
 
+  // 호스트: 클라이언트 연결 감지 (폴링)
+  useEffect(() => {
+    if (mode === 'host' && connectionCode && !isConnected) {
+      const checkClientConnection = async () => {
+        try {
+          const response = await fetch(`/api/remote/session?code=${connectionCode}`);
+          const data = await response.json();
+          if (data.success && data.session.status === 'connected') {
+            setIsConnected(true);
+            setSession(data.session);
+          }
+        } catch (error) {
+          console.error('클라이언트 연결 확인 오류:', error);
+        }
+      };
+
+      // 2초마다 클라이언트 연결 확인
+      const interval = setInterval(checkClientConnection, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [mode, connectionCode, isConnected]);
+
   // WebRTC 초기화 및 시그널링
   useEffect(() => {
     if (isConnected && connectionCode) {
@@ -311,8 +333,27 @@ export default function RemoteSupport() {
                   </p>
                 </div>
 
+                {!isConnected && connectionCode && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Loader2 className="w-5 h-5 text-yellow-600 animate-spin" />
+                      <span className="text-sm font-medium text-yellow-800">클라이언트 연결 대기 중...</span>
+                    </div>
+                    <p className="text-xs text-yellow-600">
+                      클라이언트가 연결 코드를 입력하면 자동으로 연결됩니다.
+                    </p>
+                  </div>
+                )}
+
                 {isConnected && (
                   <div className="space-y-4">
+                    {/* 연결 성공 알림 */}
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">클라이언트가 연결되었습니다!</span>
+                      </div>
+                    </div>
                     {/* 화면 공유 */}
                     <div className="border border-gray-200 rounded-xl p-4">
                       <div className="flex items-center justify-between mb-4">
