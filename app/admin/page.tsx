@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Settings, 
@@ -10,7 +10,13 @@ import {
   SearchCheck, 
   Cloud,
   ArrowLeft,
-  Shield
+  Shield,
+  Server,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -58,7 +64,70 @@ const adminTools = [
   },
 ];
 
+interface SystemStatus {
+  timestamp: string;
+  environment: {
+    nodeEnv: string;
+    isProduction: boolean;
+    platform?: string;
+  };
+  apiKeys: {
+    [key: string]: {
+      configured: boolean;
+      hasValue: boolean;
+      prefix: string;
+      valid: boolean;
+      message: string;
+    };
+  };
+  services: {
+    [key: string]: {
+      name: string;
+      required: string;
+      status: string;
+      fallback: string;
+      description: string;
+    };
+  };
+}
+
 export default function AdminPage() {
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(false);
+
+  const fetchSystemStatus = async () => {
+    setIsLoadingStatus(true);
+    try {
+      const response = await fetch('/api/status');
+      if (response.ok) {
+        const data = await response.json();
+        setSystemStatus(data);
+      }
+    } catch (error) {
+      console.error('시스템 상태 로드 실패:', error);
+    } finally {
+      setIsLoadingStatus(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSystemStatus();
+  }, []);
+
+  const getStatusIcon = (status: string) => {
+    if (status === '✅ 사용 가능' || status === '✅ 항상 사용 가능') {
+      return <CheckCircle className="w-5 h-5 text-green-500" />;
+    }
+    if (status.includes('❌') || status.includes('오류')) {
+      return <XCircle className="w-5 h-5 text-red-500" />;
+    }
+    return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+  };
+
+  const getApiKeyIcon = (valid: boolean) => {
+    return valid ? <CheckCircle className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-red-500" />;
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-purple-50">
       <Navbar />
@@ -110,7 +179,7 @@ export default function AdminPage() {
           </div>
 
           {/* 안내 메시지 */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center mb-12">
             <Settings className="w-8 h-8 text-blue-600 mx-auto mb-3" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               관리자 전용 기능
@@ -119,6 +188,144 @@ export default function AdminPage() {
               이 페이지의 모든 도구는 시스템 관리 및 진단을 위한 것입니다. 
               일반 사용자에게는 표시되지 않습니다.
             </p>
+          </div>
+
+          {/* 시스템 상태 */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl flex items-center justify-center">
+                  <Server className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">시스템 상태</h2>
+                  <p className="text-sm text-gray-600">현재 시스템 상태 및 API 키 확인</p>
+                </div>
+              </div>
+              <button
+                onClick={fetchSystemStatus}
+                disabled={isLoadingStatus}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoadingStatus ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                <span>새로고침</span>
+              </button>
+            </div>
+
+            {isLoadingStatus ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3" />
+                <p className="text-gray-600">시스템 상태를 불러오는 중...</p>
+              </div>
+            ) : systemStatus ? (
+              <div className="space-y-6">
+                {/* 환경 정보 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">환경 정보</h3>
+                    <ul className="space-y-3">
+                      <li className="flex items-center justify-between">
+                        <span className="font-medium text-gray-700">Node 환경:</span>
+                        <span className="text-blue-700 font-semibold">{systemStatus.environment.nodeEnv}</span>
+                      </li>
+                      <li className="flex items-center justify-between">
+                        <span className="font-medium text-gray-700">프로덕션 모드:</span>
+                        <span className={`font-semibold ${systemStatus.environment.isProduction ? 'text-green-700' : 'text-yellow-700'}`}>
+                          {systemStatus.environment.isProduction ? '예' : '아니오'}
+                        </span>
+                      </li>
+                      <li className="flex items-center justify-between">
+                        <span className="font-medium text-gray-700">플랫폼:</span>
+                        <span className="text-purple-700 font-semibold">{systemStatus.environment.platform || '로컬'}</span>
+                      </li>
+                      <li className="flex items-center justify-between">
+                        <span className="font-medium text-gray-700">확인 시간:</span>
+                        <span className="text-gray-600 text-sm">{new Date(systemStatus.timestamp).toLocaleString()}</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* API 키 상태 */}
+                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">API 키 상태</h3>
+                    <ul className="space-y-3">
+                      {Object.entries(systemStatus.apiKeys).map(([key, status]) => (
+                        <li key={key} className="flex items-center gap-3 p-3 rounded-lg bg-white border border-gray-200">
+                          {getApiKeyIcon(status.valid)}
+                          <div className="flex-1">
+                            <span className="font-bold text-gray-900 uppercase text-sm">{key}:</span>
+                            <span className={`ml-2 text-sm font-medium ${
+                              status.valid 
+                                ? 'text-green-700' 
+                                : status.configured 
+                                  ? 'text-yellow-700' 
+                                  : 'text-red-700'
+                            }`}>
+                              {status.message}
+                            </span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* 서비스 상태 */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">AI 서비스 상태</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Object.entries(systemStatus.services).map(([key, service]) => {
+                      const isAvailable = service.status === '✅ 사용 가능' || service.status === '✅ 항상 사용 가능';
+                      return (
+                        <div key={key} className={`rounded-xl p-5 border-2 ${
+                          isAvailable 
+                            ? 'bg-green-50 border-green-200' 
+                            : 'bg-yellow-50 border-yellow-200'
+                        }`}>
+                          <div className="flex items-center gap-3 mb-2">
+                            {getStatusIcon(service.status)}
+                            <h4 className="font-bold text-gray-900">{service.name}</h4>
+                          </div>
+                          <p className="text-sm text-gray-700 mb-2">{service.description}</p>
+                          <p className={`text-sm font-semibold ${
+                            isAvailable ? 'text-green-700' : 'text-yellow-700'
+                          }`}>
+                            {service.status}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 상세 진단 링크 */}
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                  <Link
+                    href="/diagnostics"
+                    className="inline-flex items-center gap-2 text-blue-700 font-semibold hover:text-blue-800 transition-colors"
+                  >
+                    <Activity className="w-5 h-5" />
+                    <span>상세 진단 정보 보기</span>
+                    <ArrowLeft className="w-4 h-4 rotate-180" />
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <AlertCircle className="w-8 h-8 text-yellow-600 mx-auto mb-3" />
+                <p className="text-gray-600">시스템 상태를 불러올 수 없습니다.</p>
+                <button
+                  onClick={fetchSystemStatus}
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  다시 시도
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
