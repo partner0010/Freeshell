@@ -47,13 +47,50 @@ export async function POST(request: NextRequest) {
     // Google Gemini API를 사용하여 실제 콘텐츠 생성
     const sanitizedPrompt = validation.sanitized;
     let content: string;
+    let isRealApiCall = false;
+    let apiResponseTime = 0;
+    
     try {
       const aiPrompt = `${sanitizedPrompt}에 대한 작업을 수행하고 결과를 생성해주세요. ${type} 형식으로 상세하게 작성해주세요.`;
+      const startTime = Date.now();
       content = await aiModelManager.generateWithModel('gemini-pro', aiPrompt);
-    } catch (error) {
-      console.error('Google Gemini API error, using fallback:', error);
-      // API 키가 없거나 오류 발생 시 시뮬레이션된 응답
-      content = `${prompt}에 대한 작업이 성공적으로 완료되었습니다.`;
+      const endTime = Date.now();
+      apiResponseTime = endTime - startTime;
+      
+      // 실제 API 호출 여부 확인
+      const hasApiKey = !!process.env.GOOGLE_API_KEY;
+      isRealApiCall = hasApiKey && apiResponseTime > 100 && 
+                     !content.includes('시뮬레이션') && 
+                     !content.includes('API 키를 설정');
+      
+      console.log('[Spark API] API 호출 결과:', {
+        hasApiKey,
+        apiResponseTime,
+        isRealApiCall,
+        contentLength: content.length,
+      });
+    } catch (error: any) {
+      console.error('[Spark API] Google Gemini API 오류:', {
+        error: error.message,
+        stack: error.stack,
+        hasApiKey: !!process.env.GOOGLE_API_KEY,
+      });
+      
+      // API 키가 있는데도 실패한 경우 실제 에러 반환
+      if (process.env.GOOGLE_API_KEY && process.env.GOOGLE_API_KEY.trim() !== '') {
+        return NextResponse.json(
+          { 
+            error: '작업 처리 중 오류가 발생했습니다.',
+            message: error.message || '알 수 없는 오류',
+            details: 'Google Gemini API 호출이 실패했습니다. API 키가 유효한지 확인하세요.',
+          },
+          { status: 500 }
+        );
+      }
+      
+      // API 키가 없을 때만 시뮬레이션된 응답
+      content = `${prompt}에 대한 작업이 성공적으로 완료되었습니다. (시뮬레이션 모드)`;
+      isRealApiCall = false;
     }
 
     const response = {
@@ -66,9 +103,17 @@ export async function POST(request: NextRequest) {
         url: `https://example.com/spark/${Date.now()}`,
         metadata: {
           createdAt: new Date().toISOString(),
-          model: process.env.GOOGLE_API_KEY ? 'Gemini Pro' : 'Simulation',
+          model: isRealApiCall ? 'Gemini Pro' : 'Simulation',
           tools: ['web-search', 'content-generation', 'data-analysis'],
         },
+      },
+      apiInfo: {
+        isRealApiCall: isRealApiCall,
+        responseTime: apiResponseTime,
+        hasApiKey: !!process.env.GOOGLE_API_KEY,
+        message: isRealApiCall 
+          ? '✅ 실제 Google Gemini API를 사용하여 생성된 응답입니다.' 
+          : '⚠️ 시뮬레이션된 응답입니다. GOOGLE_API_KEY를 설정하면 실제 AI 응답을 받을 수 있습니다.',
       },
     };
 

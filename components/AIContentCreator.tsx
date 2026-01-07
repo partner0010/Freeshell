@@ -62,12 +62,29 @@ export default function AIContentCreator() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || '콘텐츠 생성 실패');
+        const errorMessage = errorData.error || '콘텐츠 생성 실패';
+        const details = errorData.details || '';
+        throw new Error(details ? `${errorMessage}\n${details}` : errorMessage);
       }
 
-      const data: ContentResult = await response.json();
+      const data: ContentResult & { apiInfo?: any } = await response.json();
       setResult(data);
+      
+      // API 상태 로그
+      if (data.apiInfo) {
+        console.log('[AIContentCreator] API 상태:', {
+          isRealApiCall: data.apiInfo.isRealApiCall,
+          hasApiKey: data.apiInfo.hasApiKey,
+          message: data.apiInfo.message,
+        });
+        
+        // API 키가 있는데도 실패한 경우 에러 표시
+        if (!data.apiInfo.isRealApiCall && data.apiInfo.hasApiKey) {
+          setError(data.apiInfo.message || 'API 호출에 실패했습니다. API 키를 확인하세요.');
+        }
+      }
     } catch (err: any) {
+      console.error('[AIContentCreator] 콘텐츠 생성 오류:', err);
       setError(err.message || '콘텐츠 생성 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);

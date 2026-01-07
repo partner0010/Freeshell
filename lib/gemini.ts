@@ -13,16 +13,44 @@ export class GeminiClient {
   private model: string;
 
   constructor(config: GeminiConfig = {}) {
-    this.apiKey = config.apiKey || process.env.GOOGLE_API_KEY || '';
+    // 환경 변수에서 API 키 로드 (서버 사이드에서만 작동)
+    const envApiKey = typeof process !== 'undefined' && process.env ? process.env.GOOGLE_API_KEY : '';
+    this.apiKey = config.apiKey || envApiKey || '';
     // v1 API에서는 gemini-pro 사용, v1beta에서는 gemini-1.5-flash 사용
     this.model = config.model || 'gemini-pro'; // 기본 모델 (v1 API 호환)
+    
+    // API 키 로드 확인 (디버깅용)
+    if (this.apiKey) {
+      console.log('[GeminiClient] API 키 로드됨:', this.apiKey.substring(0, 10) + '...');
+    } else {
+      console.warn('[GeminiClient] API 키가 설정되지 않았습니다. process.env.GOOGLE_API_KEY:', !!envApiKey);
+    }
   }
 
   async generateText(prompt: string, options?: {
     maxTokens?: number;
     temperature?: number;
   }): Promise<string> {
-    if (!this.apiKey) {
+    // API 키가 없으면 자체 AI 엔진 사용
+    if (!this.apiKey || this.apiKey.trim() === '') {
+      console.warn('[GeminiClient] API 키가 없어 자체 AI 엔진 사용');
+      
+      try {
+        const { generateLocalAI } = await import('@/lib/local-ai');
+        const result = await generateLocalAI(prompt);
+        
+        if (result.success) {
+          console.log('[GeminiClient] 자체 AI 엔진 성공:', {
+            source: result.source,
+            responseTime: result.responseTime,
+          });
+          return result.text;
+        }
+      } catch (error) {
+        console.error('[GeminiClient] 자체 AI 엔진 오류:', error);
+      }
+      
+      // 자체 AI도 실패하면 시뮬레이션 반환
       return this.simulateResponse(prompt);
     }
 
@@ -69,41 +97,67 @@ export class GeminiClient {
           // JSON 파싱 실패 시 원본 텍스트 사용
         }
         
-        console.error('Google Gemini API error:', {
+        console.error('[GeminiClient] API 오류:', {
           status: response.status,
           statusText: response.statusText,
           error: errorText,
           apiKeyPrefix: this.apiKey?.substring(0, 10) + '...',
+          hasApiKey: !!this.apiKey,
         });
         
-        // 401/403: 인증 오류
+        // 401/403: 인증 오류 - 실제 에러 반환
         if (response.status === 401 || response.status === 403) {
-          return `❌ API 키 인증 실패: ${errorMessage}\n\nNetlify 환경 변수에서 GOOGLE_API_KEY를 확인하세요.`;
+          throw new Error(`API 키 인증 실패: ${errorMessage}`);
         }
         
-        return this.simulateResponse(prompt);
+        // 다른 오류도 실제 에러로 처리 (시뮬레이션 반환하지 않음)
+        throw new Error(`Google Gemini API 오류: ${errorMessage}`);
       }
 
       const data = await response.json();
       const generatedText = data.candidates[0]?.content?.parts[0]?.text;
       
       if (!generatedText) {
-        console.error('Google Gemini API 빈 응답:', data);
-        return this.simulateResponse(prompt);
+        console.error('[GeminiClient] API 빈 응답:', data);
+        throw new Error('Google Gemini API가 빈 응답을 반환했습니다.');
       }
       
-      console.log('Google Gemini API 성공:', {
+      console.log('[GeminiClient] API 성공:', {
         model: this.model,
         responseLength: generatedText.length,
+        apiKeyPrefix: this.apiKey?.substring(0, 10) + '...',
       });
       
       return generatedText;
     } catch (error: any) {
-      console.error('Google Gemini API error:', {
+      console.error('[GeminiClient] API 오류:', {
         error: error.message,
         stack: error.stack,
         apiKeyPrefix: this.apiKey?.substring(0, 10) + '...',
+        hasApiKey: !!this.apiKey,
       });
+      
+      // API 키가 있는데도 실패한 경우 자체 AI 엔진으로 fallback 시도
+      if (this.apiKey && this.apiKey.trim() !== '') {
+        console.warn('[GeminiClient] Google Gemini 실패, 자체 AI 엔진으로 fallback 시도');
+        try {
+          const { generateLocalAI } = await import('@/lib/local-ai');
+          const result = await generateLocalAI(prompt);
+          if (result.success) {
+            console.log('[GeminiClient] 자체 AI 엔진 fallback 성공:', {
+              source: result.source,
+              responseTime: result.responseTime,
+            });
+            return result.text;
+          }
+        } catch (fallbackError) {
+          console.error('[GeminiClient] 자체 AI 엔진 fallback도 실패:', fallbackError);
+        }
+        // 자체 AI도 실패하면 실제 에러 throw
+        throw error;
+      }
+      
+      // API 키가 없을 때는 이미 위에서 자체 AI 엔진 사용했으므로 여기서는 시뮬레이션 반환
       return this.simulateResponse(prompt);
     }
   }

@@ -1,0 +1,293 @@
+'use client';
+
+import { useState } from 'react';
+import { GitCompare, TrendingUp, Award, Zap, Brain, Sparkles, CheckCircle, XCircle, Minus } from 'lucide-react';
+
+export default function AIComparison() {
+  const [prompt, setPrompt] = useState('');
+  const [comparison, setComparison] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleCompare = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prompt.trim()) return;
+
+    setLoading(true);
+    setComparison(null);
+
+    try {
+      const res = await fetch('/api/ai-comparison', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setComparison(data.comparison);
+      }
+    } catch (error) {
+      console.error('AI 비교 오류:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getWinnerIcon = (winner: string) => {
+    if (winner === 'our') return <Award className="w-5 h-5 text-green-600" />;
+    if (winner === 'cursor') return <Award className="w-5 h-5 text-blue-600" />;
+    return <Minus className="w-5 h-5 text-gray-400" />;
+  };
+
+  const getWinnerText = (winner: string) => {
+    if (winner === 'our') return '우리 AI 승리';
+    if (winner === 'cursor') return 'Cursor AI 승리';
+    return '무승부';
+  };
+
+  return (
+    <div className="w-full max-w-7xl mx-auto p-6">
+      <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl shadow-xl p-8 border-2 border-blue-200">
+        {/* 헤더 */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center">
+            <GitCompare className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">AI 비교 분석</h2>
+            <p className="text-sm text-gray-600">Cursor AI vs 우리 AI - 실제 비교 테스트</p>
+          </div>
+        </div>
+
+        {/* 입력 폼 */}
+        <form onSubmit={handleCompare} className="mb-6">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="비교할 질문을 입력하세요..."
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-blue-200 focus:border-blue-500 focus:outline-none text-gray-900"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Zap className="w-5 h-5 animate-spin" />
+                  비교 중...
+                </>
+              ) : (
+                <>
+                  <GitCompare className="w-5 h-5" />
+                  AI 비교
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* 비교 결과 */}
+        {comparison && (
+          <div className="space-y-6">
+            {/* 종합 점수 */}
+            <div className="bg-white rounded-xl p-6 border-2 border-blue-200 shadow-lg">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Award className="w-6 h-6 text-blue-600" />
+                종합 점수
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className={`p-4 rounded-lg border-2 ${
+                  comparison.overallWinner === 'cursor' 
+                    ? 'bg-blue-50 border-blue-300' 
+                    : 'bg-gray-50 border-gray-200'
+                }`}>
+                  <div className="text-sm text-gray-600 mb-1">Cursor AI</div>
+                  <div className="text-3xl font-bold text-blue-600">{comparison.score.cursor}점</div>
+                </div>
+                <div className={`p-4 rounded-lg border-2 ${
+                  comparison.overallWinner === 'our' 
+                    ? 'bg-green-50 border-green-300' 
+                    : 'bg-gray-50 border-gray-200'
+                }`}>
+                  <div className="text-sm text-gray-600 mb-1">우리 AI</div>
+                  <div className="text-3xl font-bold text-green-600">{comparison.score.our}점</div>
+                </div>
+              </div>
+              <div className="mt-4 text-center">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-100 to-green-100 rounded-lg">
+                  {getWinnerIcon(comparison.overallWinner)}
+                  <span className="font-bold text-gray-900">
+                    {getWinnerText(comparison.overallWinner)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 항목별 비교 */}
+            <div className="bg-white rounded-xl p-6 border-2 border-purple-200 shadow-lg">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-6 h-6 text-purple-600" />
+                항목별 비교
+              </h3>
+              <div className="space-y-4">
+                {Object.entries(comparison.comparison).map(([key, value]: [string, any]) => (
+                  <div key={key} className="border-b border-gray-200 pb-4 last:border-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-900 capitalize">{key}</h4>
+                      {getWinnerIcon(value.winner)}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Cursor AI</span>
+                        <span className="font-bold text-blue-600">{value.cursor}{key === 'responseTime' ? 'ms' : '점'}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">우리 AI</span>
+                        <span className="font-bold text-green-600">{value.our}{key === 'responseTime' ? 'ms' : '점'}</span>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                      <span>승자:</span>
+                      <span className="font-semibold">{getWinnerText(value.winner)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 강점 비교 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-blue-600" />
+                  Cursor AI 강점
+                </h3>
+                <ul className="space-y-2">
+                  {comparison.strengths.cursor.map((strength: string, i: number) => (
+                    <li key={i} className="text-gray-700 flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <span>{strength}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  우리 AI 강점
+                </h3>
+                <ul className="space-y-2">
+                  {comparison.strengths.our.map((strength: string, i: number) => (
+                    <li key={i} className="text-gray-700 flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <span>{strength}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* 약점 비교 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-red-50 rounded-xl p-6 border-2 border-red-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-red-600" />
+                  Cursor AI 약점
+                </h3>
+                <ul className="space-y-2">
+                  {comparison.weaknesses.cursor.map((weakness: string, i: number) => (
+                    <li key={i} className="text-gray-700 flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <span>{weakness}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-yellow-50 rounded-xl p-6 border-2 border-yellow-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-yellow-600" />
+                  우리 AI 약점
+                </h3>
+                <ul className="space-y-2">
+                  {comparison.weaknesses.our.map((weakness: string, i: number) => (
+                    <li key={i} className="text-gray-700 flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      <span>{weakness}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* 고유 기능 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-purple-50 rounded-xl p-6 border-2 border-purple-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                  Cursor AI 고유 기능
+                </h3>
+                <ul className="space-y-2">
+                  {comparison.uniqueFeatures.cursor.map((feature: string, i: number) => (
+                    <li key={i} className="text-gray-700 flex items-start gap-2">
+                      <Sparkles className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-indigo-50 rounded-xl p-6 border-2 border-indigo-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-indigo-600" />
+                  우리 AI 고유 기능
+                </h3>
+                <ul className="space-y-2">
+                  {comparison.uniqueFeatures.our.map((feature: string, i: number) => (
+                    <li key={i} className="text-gray-700 flex items-start gap-2">
+                      <Brain className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* 상세 분석 */}
+            <div className="bg-white rounded-xl p-6 border-2 border-gray-200 shadow-lg">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Brain className="w-6 h-6 text-gray-600" />
+                상세 분석
+              </h3>
+              <div className="prose prose-lg max-w-none">
+                <div className="whitespace-pre-wrap text-gray-700">{comparison.detailedAnalysis}</div>
+              </div>
+            </div>
+
+            {/* 응답 비교 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Cursor AI 응답</h3>
+                <div className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-wrap text-gray-700 text-sm">
+                    {comparison.cursorAIResponse}
+                  </div>
+                </div>
+              </div>
+              <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">우리 AI 응답</h3>
+                <div className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-wrap text-gray-700 text-sm">
+                    {comparison.ourAIResponse}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+

@@ -182,25 +182,46 @@ JSON 형식으로 반환해주세요:
         const aiAnalysis = await aiModelManager.generateWithModel('gemini-pro', analysisPrompt);
         const jsonMatch = aiAnalysis.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          if (parsed.bugs) {
-            analysisResult.issues.push(...parsed.bugs);
+          try {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.bugs && Array.isArray(parsed.bugs)) {
+              analysisResult.issues.push(...parsed.bugs);
+            }
+            if (parsed.optimizations && Array.isArray(parsed.optimizations)) {
+              analysisResult.optimizations.push(...parsed.optimizations);
+            }
+            if (parsed.codeQuality && typeof parsed.codeQuality === 'object') {
+              analysisResult.codeQuality = {
+                ...analysisResult.codeQuality,
+                ...parsed.codeQuality,
+              };
+            }
+            if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
+              analysisResult.suggestions.push(...parsed.suggestions);
+            }
+          } catch (parseError) {
+            console.error('[Debug Analyze] JSON 파싱 오류:', parseError);
+            // JSON 파싱 실패 시에도 AI 응답을 제안으로 추가
+            analysisResult.suggestions.push({
+              type: 'ai_analysis',
+              description: 'AI 분석 결과 (구조화되지 않음)',
+              content: aiAnalysis.substring(0, 500),
+            });
           }
-          if (parsed.optimizations) {
-            analysisResult.optimizations.push(...parsed.optimizations);
-          }
-          if (parsed.codeQuality) {
-            analysisResult.codeQuality = {
-              ...analysisResult.codeQuality,
-              ...parsed.codeQuality,
-            };
-          }
-          if (parsed.suggestions) {
-            analysisResult.suggestions.push(...parsed.suggestions);
-          }
+        } else {
+          // JSON이 없으면 전체 응답을 제안으로 추가
+          analysisResult.suggestions.push({
+            type: 'ai_analysis',
+            description: 'AI 분석 결과',
+            content: aiAnalysis.substring(0, 1000),
+          });
         }
-      } catch (aiError) {
-        console.error('AI 분석 오류:', aiError);
+      } catch (aiError: any) {
+        console.error('[Debug Analyze] AI 분석 오류:', {
+          error: aiError.message,
+          hasApiKey: !!process.env.GOOGLE_API_KEY,
+        });
+        // AI 분석 실패해도 기본 분석 결과는 반환
       }
     }
 

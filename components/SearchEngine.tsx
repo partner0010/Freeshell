@@ -40,11 +40,32 @@ export default function SearchEngine() {
       }
 
       const data = await response.json();
+      
+      // API 오류가 있으면 에러 표시
+      if (data.error) {
+        setError(data.message || data.error || '검색 중 오류가 발생했습니다.');
+        if (data.details) {
+          setError(`${data.error}\n${data.details}`);
+        }
+        return;
+      }
+      
       setResult(data);
       addToSearchHistory(query);
+      
+      // API 상태 로그
+      if (data.apiInfo) {
+        console.log('[SearchEngine] API 상태:', {
+          isRealApiCall: data.apiInfo.isRealApiCall,
+          hasApiKey: data.apiInfo.hasApiKey,
+          responseTime: data.apiInfo.responseTime,
+          message: data.apiInfo.message,
+        });
+      }
     } catch (err: any) {
-      console.error('Search error:', err);
-      setError(err.message || '검색 중 오류가 발생했습니다. 다시 시도해주세요.');
+      console.error('[SearchEngine] 검색 오류:', err);
+      const errorMessage = err.message || '검색 중 오류가 발생했습니다. 다시 시도해주세요.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -130,12 +151,22 @@ export default function SearchEngine() {
           {/* API 사용 여부 표시 */}
           {result.apiInfo && (
             <div className={`mb-4 p-3 rounded-lg border ${
-              result.apiInfo.isRealApiCall 
+              result.apiInfo.isInfiniteAI
+                ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300'
+                : result.apiInfo.isRealApiCall 
                 ? 'bg-green-50 border-green-200' 
                 : 'bg-yellow-50 border-yellow-200'
             }`}>
               <div className="flex items-center gap-2 text-sm">
-                {result.apiInfo.isRealApiCall ? (
+                {result.apiInfo.isInfiniteAI ? (
+                  <>
+                    <Sparkles className="w-5 h-5 text-indigo-600" />
+                    <span className="text-indigo-700 font-bold">✨ 무한한 가능성 AI - 스스로 깨우치고 판단</span>
+                    <span className="text-gray-500 text-xs ml-2">
+                      {result.infiniteAI?.optionsCount || 0}가지 옵션 생성 후 최적 선택
+                    </span>
+                  </>
+                ) : result.apiInfo.isRealApiCall ? (
                   <>
                     <span className="text-green-600 font-semibold">✅ 실제 AI API 사용</span>
                     <span className="text-gray-500">({result.apiInfo.responseTime}ms)</span>
@@ -151,7 +182,13 @@ export default function SearchEngine() {
                   </>
                 )}
               </div>
-              {!result.apiInfo.isRealApiCall && (
+              {result.apiInfo.isInfiniteAI && result.infiniteAI && (
+                <div className="mt-2 text-xs text-indigo-600">
+                  선택된 접근: <strong>{result.infiniteAI.selectedOption}</strong> | 
+                  혁신 수준: <strong>{result.infiniteAI.innovationLevel}%</strong>
+                </div>
+              )}
+              {!result.apiInfo.isRealApiCall && !result.apiInfo.isInfiniteAI && (
                 <p className="text-xs text-gray-600 mt-1">
                   {result.apiInfo.message}
                 </p>

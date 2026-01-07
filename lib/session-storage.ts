@@ -28,6 +28,20 @@ export interface SessionData {
     message: string;
     time: Date | string;
   }>;
+  webrtc?: {
+    offer?: RTCSessionDescriptionInit;
+    answer?: RTCSessionDescriptionInit;
+    offerFrom?: 'host' | 'client';
+    answerFrom?: 'host' | 'client';
+    offerTimestamp?: string;
+    answerTimestamp?: string;
+    candidates?: Array<{
+      candidate: RTCIceCandidateInit;
+      from: 'host' | 'client';
+      timestamp: string;
+    }>;
+  };
+  autoApprove?: boolean; // TeamViewer 스타일: 모든 권한 자동 승인
 }
 
 class SessionStorage {

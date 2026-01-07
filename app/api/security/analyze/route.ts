@@ -114,19 +114,40 @@ JSON 형식으로 반환해주세요:
           // AI 응답에서 JSON 추출 시도
           const jsonMatch = aiAnalysis.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            if (parsed.vulnerabilities) {
-              analysisResult.vulnerabilities.push(...parsed.vulnerabilities);
+            try {
+              const parsed = JSON.parse(jsonMatch[0]);
+              if (parsed.vulnerabilities && Array.isArray(parsed.vulnerabilities)) {
+                analysisResult.vulnerabilities.push(...parsed.vulnerabilities);
+              }
+              if (parsed.optimizations && Array.isArray(parsed.optimizations)) {
+                analysisResult.recommendations.push(...parsed.optimizations);
+              }
+              if (typeof parsed.securityScore === 'number') {
+                analysisResult.securityScore = Math.min(analysisResult.securityScore, parsed.securityScore);
+              }
+            } catch (parseError) {
+              console.error('[Security Analyze] JSON 파싱 오류:', parseError);
+              // JSON 파싱 실패 시에도 AI 응답을 텍스트로 추가
+              analysisResult.recommendations.push({
+                type: 'ai_analysis',
+                description: 'AI 분석 결과 (구조화되지 않음)',
+                content: aiAnalysis.substring(0, 500),
+              });
             }
-            if (parsed.optimizations) {
-              analysisResult.recommendations.push(...parsed.optimizations);
-            }
-            if (parsed.securityScore) {
-              analysisResult.securityScore = Math.min(analysisResult.securityScore, parsed.securityScore);
-            }
+          } else {
+            // JSON이 없으면 전체 응답을 텍스트로 추가
+            analysisResult.recommendations.push({
+              type: 'ai_analysis',
+              description: 'AI 분석 결과',
+              content: aiAnalysis.substring(0, 1000),
+            });
           }
-        } catch (aiError) {
-          console.error('AI 분석 오류:', aiError);
+        } catch (aiError: any) {
+          console.error('[Security Analyze] AI 분석 오류:', {
+            error: aiError.message,
+            hasApiKey: !!process.env.GOOGLE_API_KEY,
+          });
+          // AI 분석 실패해도 기본 분석 결과는 반환
         }
 
       } catch (error: any) {

@@ -17,13 +17,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) {
+    // 환경 변수에서 API 키 로드
+    const apiKey = typeof process !== 'undefined' && process.env ? process.env.GOOGLE_API_KEY : '';
+    
+    if (!apiKey || apiKey.trim() === '') {
+      console.warn('[Content Create] GOOGLE_API_KEY가 설정되지 않았습니다.');
       return NextResponse.json(
         { error: 'GOOGLE_API_KEY가 설정되지 않았습니다. Netlify 환경 변수에서 설정하세요.' },
         { status: 500 }
       );
     }
+    
+    console.log('[Content Create] API 키 확인됨:', apiKey.substring(0, 10) + '...');
 
     // 콘텐츠 유형별 프롬프트 생성
     let prompt = '';
@@ -126,7 +131,19 @@ ${additionalInfo ? `추가 요구사항: ${additionalInfo}` : ''}
     }
 
     // Gemini API 호출
+    console.log('[Content Create] API 호출 시작:', {
+      hasApiKey: !!apiKey,
+      apiKeyPrefix: apiKey?.substring(0, 10) + '...',
+      type,
+      topic,
+    });
+    
     const content = await generateGeminiResponse(prompt, apiKey);
+    
+    console.log('[Content Create] API 호출 성공:', {
+      contentLength: content.length,
+      isSimulation: content.includes('시뮬레이션'),
+    });
 
     return NextResponse.json({
       success: true,
@@ -134,13 +151,31 @@ ${additionalInfo ? `추가 요구사항: ${additionalInfo}` : ''}
       topic,
       content,
       timestamp: new Date().toISOString(),
+      apiInfo: {
+        isRealApiCall: !content.includes('시뮬레이션') && !content.includes('API 키를 설정'),
+        hasApiKey: !!apiKey,
+        message: content.includes('시뮬레이션') 
+          ? '⚠️ 시뮬레이션된 응답입니다. GOOGLE_API_KEY를 설정하면 실제 AI 응답을 받을 수 있습니다.'
+          : '✅ 실제 Google Gemini API를 사용하여 생성된 응답입니다.',
+      },
     });
   } catch (error: any) {
-    console.error('Content creation error:', error);
+    console.error('[Content Create] 콘텐츠 생성 오류:', {
+      error: error.message,
+      stack: error.stack,
+      hasApiKey: !!process.env.GOOGLE_API_KEY,
+    });
+    
     return NextResponse.json(
       {
         error: '콘텐츠 생성 중 오류가 발생했습니다.',
-        message: error.message,
+        message: error.message || '알 수 없는 오류',
+        details: 'Google Gemini API 호출이 실패했습니다. API 키가 유효한지 확인하세요.',
+        apiInfo: {
+          isRealApiCall: false,
+          hasApiKey: !!process.env.GOOGLE_API_KEY,
+          message: `❌ API 호출 실패: ${error.message}`,
+        },
       },
       { status: 500 }
     );

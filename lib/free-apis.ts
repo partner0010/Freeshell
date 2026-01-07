@@ -416,7 +416,23 @@ export async function searchUnsplashImages(query: string, perPage: number = 20):
     );
     
     if (!response.ok) {
-      console.error('Unsplash API error:', response.statusText);
+      const errorText = await response.text();
+      console.error('[Unsplash API] 오류:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+      });
+      
+      // Rate limit 확인
+      if (response.status === 429) {
+        console.warn('[Unsplash API] Rate limit exceeded. 시간당 최대 50회 요청 가능합니다.');
+      }
+      
+      // 인증 오류
+      if (response.status === 401 || response.status === 403) {
+        console.error('[Unsplash API] 인증 실패. API 키를 확인하세요.');
+      }
+      
       return [];
     }
     
@@ -449,7 +465,23 @@ export async function searchPexelsVideos(query: string, perPage: number = 15): P
     );
     
     if (!response.ok) {
-      console.error('Pexels Video API error:', response.statusText);
+      const errorText = await response.text();
+      console.error('[Pexels Video API] 오류:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+      });
+      
+      // Rate limit 확인
+      if (response.status === 429) {
+        console.warn('[Pexels Video API] Rate limit exceeded. 시간당 최대 200회 요청 가능합니다.');
+      }
+      
+      // 인증 오류
+      if (response.status === 401 || response.status === 403) {
+        console.error('[Pexels Video API] 인증 실패. API 키를 확인하세요.');
+      }
+      
       return [];
     }
     

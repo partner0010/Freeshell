@@ -12,8 +12,23 @@ export async function POST(request: NextRequest) {
     console.log('[Remote Session] Action:', action, 'Code:', code, 'Sessions count:', sessionStorage.getSessionCount());
 
     if (action === 'create') {
-      const session = sessionStorage.createSession(permissions);
-      console.log('[Remote Session] Created:', session.code, 'Total sessions:', sessionStorage.getSessionCount());
+      // TeamViewer 스타일: autoApprove 옵션 지원
+      const autoApprove = body.autoApprove === true;
+      const session = sessionStorage.createSession(
+        autoApprove ? {
+          screenShare: true,
+          mouseControl: true,
+          keyboardControl: true,
+          recording: true,
+        } : permissions
+      );
+      
+      // autoApprove 플래그 저장
+      if (autoApprove) {
+        (session as any).autoApprove = true;
+      }
+      
+      console.log('[Remote Session] Created:', session.code, 'AutoApprove:', autoApprove, 'Total sessions:', sessionStorage.getSessionCount());
       return NextResponse.json({ success: true, session });
     }
 

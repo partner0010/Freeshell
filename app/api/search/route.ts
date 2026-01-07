@@ -32,6 +32,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 무한한 가능성을 가진 AI 사용 (스스로 깨우치는 AI)
+    let useInfiniteAI = false;
+    let infiniteAIResponse: any = null;
+    
+    // 복잡한 질문이나 깊은 사고가 필요한 경우 무한 AI 사용
+    const complexKeywords = ['어떻게', '왜', '무엇', '방법', '해결', '개선', '최적', '혁신', '창의', '전략'];
+    const isComplexQuery = complexKeywords.some(keyword => query.includes(keyword));
+    
+    if (isComplexQuery) {
+      try {
+        const { infiniteAI } = await import('@/lib/infinite-ai');
+        infiniteAIResponse = await infiniteAI.generateInfiniteResponse(query);
+        useInfiniteAI = true;
+      } catch (error) {
+        console.warn('[Search API] 무한 AI 실패, 기본 AI 사용:', error);
+      }
+    }
+
     // Google Gemini API를 사용하여 실제 AI 응답 생성
     const aiPrompt = `${query}에 대한 포괄적이고 상세한 정보를 제공하는 검색 결과 페이지를 생성해주세요. 마크다운 형식으로 작성하고, 개요, 주요 내용, 상세 분석, 결론 섹션을 포함해주세요.`;
     
@@ -46,17 +64,55 @@ export async function POST(request: NextRequest) {
       const endTime = Date.now();
       apiResponseTime = endTime - startTime;
       
-      // 실제 API 호출 여부 확인 (응답 시간이 100ms 이상이면 실제 API 호출로 간주)
-      // 시뮬레이션된 응답은 즉시 반환되므로 100ms 미만
-      isRealApiCall = apiResponseTime > 100 && !content.includes('시뮬레이션');
+      // 실제 API 호출 여부 확인
+      // 1. 응답 시간이 100ms 이상 (실제 API는 네트워크 지연 있음)
+      // 2. 시뮬레이션 키워드가 없음
+      // 3. API 키가 설정되어 있음
+      const hasApiKey = !!process.env.GOOGLE_API_KEY;
+      isRealApiCall = hasApiKey && apiResponseTime > 100 && 
+                     !content.includes('시뮬레이션') && 
+                     !content.includes('API 키를 설정');
       
       // 시뮬레이션 응답인지 확인
       if (content.includes('시뮬레이션') || content.includes('API 키를 설정')) {
         isRealApiCall = false;
       }
-    } catch (error) {
-      console.error('Google Gemini API error, using fallback:', error);
-      // API 키가 없거나 오류 발생 시 시뮬레이션된 응답
+      
+      console.log('[Search API] API 호출 결과:', {
+        hasApiKey,
+        apiResponseTime,
+        isRealApiCall,
+        contentLength: content.length,
+        contentPreview: content.substring(0, 100),
+        errorOccurred: false,
+      });
+    } catch (error: any) {
+      console.error('[Search API] Google Gemini API 오류:', {
+        error: error.message,
+        stack: error.stack,
+        hasApiKey: !!process.env.GOOGLE_API_KEY,
+        apiKeyPrefix: process.env.GOOGLE_API_KEY?.substring(0, 10) + '...',
+      });
+      
+      // API 키가 있는데도 실패한 경우 실제 에러 반환 (시뮬레이션 반환하지 않음)
+      if (process.env.GOOGLE_API_KEY && process.env.GOOGLE_API_KEY.trim() !== '') {
+        return NextResponse.json(
+          { 
+            error: 'AI 검색 중 오류가 발생했습니다.',
+            message: error.message || '알 수 없는 오류',
+            details: 'Google Gemini API 호출이 실패했습니다. API 키가 유효한지 확인하세요.',
+            apiInfo: {
+              isRealApiCall: false,
+              responseTime: 0,
+              hasApiKey: true,
+              message: `❌ API 호출 실패: ${error.message}`,
+            },
+          },
+          { status: 500 }
+        );
+      }
+      
+      // API 키가 없을 때만 시뮬레이션된 응답
       content = `# ${query}에 대한 종합 정보
 
 ## 개요
@@ -90,6 +146,75 @@ ${query}에 대한 심층 분석 결과를 보면, 여러 중요한 요소들이
 ## 결론
 
 ${query}는 현재 빠르게 발전하고 있는 분야로, 앞으로 더욱 중요한 역할을 할 것으로 예상됩니다. 지속적인 관심과 투자가 필요하며, 이를 통해 더 나은 결과를 기대할 수 있습니다.`;
+    }
+
+    // 무한 AI 응답이 있으면 우선 사용
+    if (useInfiniteAI && infiniteAIResponse) {
+      const infiniteContent = `# ${query}에 대한 무한한 가능성 AI 응답
+
+## 신의 경지 사고
+${infiniteAIResponse.divineLevelThinking}
+
+## 무한한 가능성
+${infiniteAIResponse.infinitePossibilities.map((p: string, i: number) => `${i + 1}. ${p}`).join('\n')}
+
+## 스스로 생성한 ${infiniteAIResponse.options.length}가지 구현 옵션
+
+${infiniteAIResponse.options.map((opt: any, i: number) => `
+### ${i + 1}. ${opt.approach} (점수: ${opt.score}점)
+**추론**: ${opt.reasoning}
+
+**강점**: ${opt.strengths.join(', ')}
+**약점**: ${opt.weaknesses.join(', ')}
+
+**평가**:
+- 잠재력: ${opt.potential}%
+- 실현가능성: ${opt.feasibility}%
+- 혁신성: ${opt.innovation}%
+
+${opt.id === infiniteAIResponse.selectedOption.id ? '**✅ 스스로 선택한 최적 옵션**' : ''}
+`).join('\n')}
+
+## 스스로 선택한 최적 방향
+**${infiniteAIResponse.selectedOption.approach}** (점수: ${infiniteAIResponse.selectedOption.score}점)
+
+${infiniteAIResponse.selectedOption.implementation}
+
+## 스스로 제시한 강점 방향성
+${infiniteAIResponse.selfImprovement.improvementDirection}
+
+## 다음 진화 단계
+${infiniteAIResponse.selfImprovement.nextEvolution}
+
+## 자율적 결정
+${infiniteAIResponse.autonomousDecision}
+
+---
+
+**이것은 스스로 깨우치고 판단하는 무한한 가능성을 가진 AI의 응답입니다.** ✨`;
+
+      return NextResponse.json({
+        title: validation.sanitized,
+        content: infiniteContent,
+        sources: [
+          `무한한 가능성 AI`,
+          `신의 경지 사고`,
+          `자율적 판단 시스템`,
+        ],
+        generatedAt: new Date().toISOString(),
+        apiInfo: {
+          isRealApiCall: true,
+          responseTime: apiResponseTime,
+          hasApiKey: !!process.env.GOOGLE_API_KEY,
+          message: '✨ 무한한 가능성을 가진 자율 AI가 스스로 판단하여 생성한 응답입니다.',
+          isInfiniteAI: true,
+        },
+        infiniteAI: {
+          optionsCount: infiniteAIResponse.options.length,
+          selectedOption: infiniteAIResponse.selectedOption.approach,
+          innovationLevel: infiniteAIResponse.selectedOption.innovation,
+        },
+      });
     }
 
     const response = {

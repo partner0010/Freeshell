@@ -171,22 +171,45 @@ JSON 형식으로 반환해주세요:
           const aiAnalysis = await aiModelManager.generateWithModel('gemini-pro', analysisPrompt);
           const jsonMatch = aiAnalysis.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            if (parsed.structure) {
-              analysisResult.structure = parsed.structure;
+            try {
+              const parsed = JSON.parse(jsonMatch[0]);
+              if (parsed.structure && typeof parsed.structure === 'object') {
+                analysisResult.structure = parsed.structure;
+              }
+              if (parsed.vulnerabilities && Array.isArray(parsed.vulnerabilities)) {
+                analysisResult.vulnerabilities.push(...parsed.vulnerabilities);
+              }
+              if (parsed.performance && typeof parsed.performance === 'object') {
+                analysisResult.performance = parsed.performance;
+              }
+              if (typeof parsed.securityScore === 'number') {
+                analysisResult.securityScore = Math.min(analysisResult.securityScore, parsed.securityScore);
+              }
+            } catch (parseError) {
+              console.error('[Site Check] JSON 파싱 오류:', parseError);
+              // JSON 파싱 실패 시에도 AI 응답을 취약점으로 추가
+              analysisResult.vulnerabilities.push({
+                severity: 'info',
+                type: 'ai_analysis',
+                description: 'AI 분석 결과 (구조화되지 않음)',
+                content: aiAnalysis.substring(0, 500),
+              });
             }
-            if (parsed.vulnerabilities) {
-              analysisResult.vulnerabilities.push(...parsed.vulnerabilities);
-            }
-            if (parsed.performance) {
-              analysisResult.performance = parsed.performance;
-            }
-            if (parsed.securityScore) {
-              analysisResult.securityScore = Math.min(analysisResult.securityScore, parsed.securityScore);
-            }
+          } else {
+            // JSON이 없으면 전체 응답을 취약점으로 추가
+            analysisResult.vulnerabilities.push({
+              severity: 'info',
+              type: 'ai_analysis',
+              description: 'AI 분석 결과',
+              content: aiAnalysis.substring(0, 1000),
+            });
           }
-        } catch (aiError) {
-          console.error('AI 분석 오류:', aiError);
+        } catch (aiError: any) {
+          console.error('[Site Check] AI 분석 오류:', {
+            error: aiError.message,
+            hasApiKey: !!process.env.GOOGLE_API_KEY,
+          });
+          // AI 분석 실패해도 기본 분석 결과는 반환
         }
 
       } catch (htmlError) {

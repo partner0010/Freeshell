@@ -18,6 +18,7 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/', label: '홈' },
+    { href: '/test-ai', label: 'AI 테스트' },
     { href: '/admin', label: '관리자' },
   ];
 

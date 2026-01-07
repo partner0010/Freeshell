@@ -13,14 +13,23 @@ export class AIModelManager {
 
   constructor() {
     // Google Gemini만 등록 (무료 티어 제공)
-    // v1 API에서 gemini-pro 사용 (안정적)
+    // 환경 변수에서 API 키 로드 (서버 사이드에서만 작동)
+    const envApiKey = typeof process !== 'undefined' && process.env ? process.env.GOOGLE_API_KEY : '';
+    
     this.registerModel({
       id: 'gemini-pro',
       name: 'Gemini Pro',
       provider: 'Google',
-      apiKey: process.env.GOOGLE_API_KEY,
+      apiKey: envApiKey || '',
       endpoint: 'gemini-pro', // v1 API 호환 모델
     });
+    
+    // API 키 로드 확인 (디버깅용)
+    if (envApiKey) {
+      console.log('[AIModelManager] GOOGLE_API_KEY 로드됨:', envApiKey.substring(0, 10) + '...');
+    } else {
+      console.warn('[AIModelManager] GOOGLE_API_KEY가 설정되지 않았습니다.');
+    }
   }
 
   registerModel(model: AIModel) {
@@ -80,15 +89,33 @@ export class AIModelManager {
 
 
   private async callGoogle(model: AIModel, prompt: string): Promise<string> {
-    // API 키가 없으면 폴백
-    if (!model.apiKey) {
-      console.warn('GOOGLE_API_KEY가 설정되지 않았습니다. 시뮬레이션된 응답을 반환합니다.');
+    // API 키가 없으면 자체 AI 엔진 사용
+    if (!model.apiKey || model.apiKey.trim() === '') {
+      console.warn('[AIModelManager] GOOGLE_API_KEY가 설정되지 않았습니다. 자체 AI 엔진을 사용합니다.');
+      
+      // 자체 AI 엔진 사용 (여러 무료 AI를 순차적으로 시도)
+      try {
+        const { generateLocalAI } = await import('@/lib/local-ai');
+        const result = await generateLocalAI(prompt);
+        
+        if (result.success) {
+          console.log('[AIModelManager] 자체 AI 엔진 성공:', {
+            source: result.source,
+            responseTime: result.responseTime,
+          });
+          return result.text;
+        }
+      } catch (error) {
+        console.error('[AIModelManager] 자체 AI 엔진 오류:', error);
+      }
+      
+      // 자체 AI도 실패하면 기본 응답
       if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
         const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
         const textToTranslate = match ? match[1].trim() : prompt;
         return textToTranslate;
       }
-      return `이것은 시뮬레이션된 응답입니다. 실제 Google Gemini API 키를 설정하면 실제 Gemini 응답을 받을 수 있습니다.\n\n프롬프트: ${prompt.substring(0, 200)}...`;
+      return `이것은 자체 AI 엔진 응답입니다. Google Gemini API 키를 설정하면 더 정확한 응답을 받을 수 있습니다.\n\n프롬프트: ${prompt.substring(0, 200)}...`;
     }
 
     // 모델 이름 결정 (endpoint가 있으면 사용, 없으면 기본값)
@@ -137,29 +164,17 @@ export class AIModelManager {
           // JSON 파싱 실패 시 원본 텍스트 사용
         }
         
-        console.error('Google Gemini API error:', {
+        console.error('[AIModelManager] Google Gemini API 오류:', {
           status: response.status,
           statusText: response.statusText,
           error: errorText,
           apiKeyPrefix: model.apiKey?.substring(0, 10) + '...',
+          hasApiKey: !!model.apiKey,
+          apiKeyLength: model.apiKey?.length,
         });
         
-        // 401/403: 인증 오류
-        if (response.status === 401 || response.status === 403) {
-          return `❌ API 키 인증 실패: ${errorMessage}\n\nNetlify 환경 변수에서 GOOGLE_API_KEY를 확인하세요.`;
-        }
-        
-        // 429: Rate limit
-        if (response.status === 429) {
-          return `⏱️ 요청 한도 초과: ${errorMessage}\n\n잠시 후 다시 시도해주세요.`;
-        }
-        
-        if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
-          const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
-          const textToTranslate = match ? match[1].trim() : prompt;
-          return textToTranslate;
-        }
-        return `API 호출에 실패했습니다: ${errorMessage}`;
+        // 모든 오류를 실제 에러로 처리 (시뮬레이션 반환하지 않음)
+        throw new Error(`Google Gemini API 오류 (${response.status}): ${errorMessage}`);
       }
 
       const data = await response.json();
@@ -173,29 +188,39 @@ export class AIModelManager {
       const generatedText = data.candidates[0]?.content?.parts[0]?.text;
       
       if (!generatedText) {
-        console.error('Google Gemini API 빈 응답:', data);
-        return `API가 빈 응답을 반환했습니다.`;
+        console.error('[AIModelManager] Google Gemini API 빈 응답:', data);
+        throw new Error('Google Gemini API가 빈 응답을 반환했습니다.');
       }
       
-      console.log('Google Gemini API 성공:', {
+      console.log('[AIModelManager] Google Gemini API 성공:', {
         model: modelName,
         responseLength: generatedText.length,
+        apiKeyPrefix: model.apiKey?.substring(0, 10) + '...',
+        hasApiKey: !!model.apiKey,
       });
       
       return generatedText;
     } catch (error: any) {
-      console.error('Google Gemini API call error:', {
+      console.error('[AIModelManager] Google Gemini API 오류:', {
         error: error.message,
         stack: error.stack,
         apiKeyPrefix: model.apiKey?.substring(0, 10) + '...',
+        hasApiKey: !!model.apiKey,
+        apiKeyLength: model.apiKey?.length,
       });
       
+      // API 키가 있는데도 실패한 경우 실제 에러를 throw (시뮬레이션 반환하지 않음)
+      if (model.apiKey && model.apiKey.trim() !== '') {
+        throw error; // 실제 에러를 상위로 전달
+      }
+      
+      // API 키가 없을 때만 시뮬레이션 반환
       if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
         const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
         const textToTranslate = match ? match[1].trim() : prompt;
         return textToTranslate;
       }
-      return `API 호출 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`;
+      return `이것은 시뮬레이션된 응답입니다. 실제 Google Gemini API 키를 설정하면 실제 Gemini 응답을 받을 수 있습니다.\n\n프롬프트: ${prompt.substring(0, 200)}...`;
     }
   }
 

@@ -100,6 +100,7 @@ export default function RemoteSupport() {
       const interval = setInterval(checkClientConnection, 2000);
       return () => clearInterval(interval);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, connectionCode, isConnected, chatMessages]);
 
   // WebRTC 초기화 및 시그널링
@@ -227,16 +228,19 @@ export default function RemoteSupport() {
   };
 
   // 호스트: 연결 코드 생성
-  const generateCode = async () => {
+  const generateCode = async (autoApprove: boolean = false) => {
     if (isGenerating) return; // 중복 호출 방지
     
     setIsGenerating(true);
     try {
-      console.log('[Host] Generating connection code...');
+      console.log('[Host] Generating connection code...', 'AutoApprove:', autoApprove);
       const response = await fetch('/api/remote/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create' }),
+        body: JSON.stringify({ 
+          action: 'create',
+          autoApprove: autoApprove, // TeamViewer 스타일: 모든 권한 자동 승인
+        }),
       });
 
       if (!response.ok) {
@@ -294,6 +298,29 @@ export default function RemoteSupport() {
         setIsConnected(true);
         setSession(data.session);
         
+        // 자동 승인 모드인 경우 모든 권한 허용
+        if ((data.session as any).autoApprove) {
+          const autoPermissions = {
+            screenShare: true,
+            mouseControl: true,
+            keyboardControl: true,
+            recording: true,
+          };
+          setPermissions(autoPermissions);
+          // 서버에도 반영
+          await fetch('/api/remote/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'update',
+              code: connectionCode,
+              permissions: autoPermissions,
+            }),
+          });
+        } else {
+          setPermissions(data.session.permissions);
+        }
+        
         // WebRTC 연결 시작
         if (webrtcRef.current && remoteVideoRef.current) {
           webrtcRef.current.setupRemoteStream(remoteVideoRef.current);
@@ -322,11 +349,17 @@ export default function RemoteSupport() {
 
   // 화면 공유 시작 (클라이언트가 화면을 공유하고 호스트가 받음)
   const startScreenShare = async () => {
+    console.log('[ScreenShare] 시작 요청, mode:', mode);
+    
     if (mode === 'client') {
       // 클라이언트: 자신의 화면을 공유
-      if (!remoteVideoRef.current) return;
+      if (!remoteVideoRef.current) {
+        console.error('[Client] remoteVideoRef가 없습니다.');
+        return;
+      }
       
       try {
+        console.log('[Client] getDisplayMedia 호출...');
         const stream = await navigator.mediaDevices.getDisplayMedia({
           video: {
             cursor: 'always',
@@ -336,23 +369,45 @@ export default function RemoteSupport() {
           audio: true,
         });
 
+        console.log('[Client] 스트림 획득 성공:', stream);
+
         // 클라이언트 비디오 요소에 스트림 할당 (미리보기)
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = stream;
-          remoteVideoRef.current.play().catch(err => console.error('비디오 재생 오류:', err));
+          await remoteVideoRef.current.play().catch(err => console.error('비디오 재생 오류:', err));
+          console.log('[Client] 비디오 요소에 스트림 할당 완료');
         }
 
         localStreamRef.current = stream;
         
         // WebRTC 초기화 및 스트림 추가
         if (!webrtcRef.current) {
+          console.log('[Client] WebRTC 초기화...');
           webrtcRef.current = new WebRTCRemote();
+          
+          // ICE candidate 수집 및 전송
+          webrtcRef.current.peerConnection!.onicecandidate = (event) => {
+            if (event.candidate) {
+              console.log('[Client] ICE candidate 생성:', event.candidate);
+              fetch('/api/remote/signaling', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'ice-candidate',
+                  code: connectionCode,
+                  candidate: event.candidate,
+                  from: 'client',
+                }),
+              }).catch(err => console.error('[Client] ICE candidate 전송 오류:', err));
+            }
+          };
         }
 
         // 스트림 트랙을 PeerConnection에 추가
         stream.getTracks().forEach(track => {
           if (webrtcRef.current?.peerConnection) {
             webrtcRef.current.peerConnection.addTrack(track, stream);
+            console.log('[Client] 트랙 추가:', track.kind);
           }
         });
 
@@ -369,27 +424,73 @@ export default function RemoteSupport() {
 
         setPermissions({ ...permissions, screenShare: true });
         
-        // WebRTC Offer 생성 및 전송 (실제 구현 시 시그널링 서버를 통해 전송)
+        // WebRTC Offer 생성 및 전송
         if (webrtcRef.current) {
           try {
+            console.log('[Client] Offer 생성 중...');
             const offer = await webrtcRef.current.createOffer();
-            console.log('Offer 생성됨:', offer);
-            // TODO: 시그널링 서버를 통해 호스트로 Offer 전송
+            console.log('[Client] Offer 생성됨:', offer);
+            
+            // 시그널링 서버를 통해 호스트로 Offer 전송
+            await fetch('/api/remote/signaling', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'offer',
+                code: connectionCode,
+                offer: offer,
+                from: 'client',
+              }),
+            });
+            console.log('[Client] Offer 전송 완료');
+            
+            // Answer 대기 (폴링)
+            const checkAnswer = setInterval(async () => {
+              try {
+                const response = await fetch(`/api/remote/signaling?code=${connectionCode}&from=client`);
+                const data = await response.json();
+                if (data.success && data.answer) {
+                  console.log('[Client] Answer 수신:', data.answer);
+                  await webrtcRef.current!.setRemoteDescription(data.answer);
+                  clearInterval(checkAnswer);
+                  
+                  // ICE candidates 처리
+                  if (data.candidates && data.candidates.length > 0) {
+                    for (const candidateData of data.candidates) {
+                      await webrtcRef.current!.addIceCandidate(candidateData.candidate);
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error('[Client] Answer 확인 오류:', error);
+              }
+            }, 1000);
+            
+            // 30초 후 타임아웃
+            setTimeout(() => clearInterval(checkAnswer), 30000);
           } catch (error) {
-            console.error('Offer 생성 오류:', error);
+            console.error('[Client] Offer 생성/전송 오류:', error);
+            alert('화면 공유 연결에 실패했습니다. 다시 시도해주세요.');
           }
         }
 
         // 스트림 종료 감지
         stream.getVideoTracks()[0].addEventListener('ended', () => {
+          console.log('[Client] 화면 공유 종료됨');
           stopScreenShare();
         });
-      } catch (error) {
-        console.error('화면 공유 오류:', error);
-        alert('화면 공유에 실패했습니다. 브라우저 권한을 확인해주세요.');
+      } catch (error: any) {
+        console.error('[Client] 화면 공유 오류:', error);
+        if (error.name === 'NotAllowedError') {
+          alert('화면 공유 권한이 거부되었습니다. 브라우저 설정에서 권한을 허용해주세요.');
+        } else {
+          alert(`화면 공유에 실패했습니다: ${error.message || '알 수 없는 오류'}`);
+        }
       }
     } else {
-      // 호스트: 클라이언트에게 화면 공유 요청
+      // 호스트: 클라이언트에게 화면 공유 요청 (클라이언트가 먼저 시작해야 함)
+      console.log('[Host] 화면 공유 요청 (클라이언트가 시작해야 함)');
+      
       await fetch('/api/remote/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -403,24 +504,70 @@ export default function RemoteSupport() {
       
       // 호스트가 원격 스트림을 받을 준비
       if (!webrtcRef.current) {
+        console.log('[Host] WebRTC 초기화...');
         webrtcRef.current = new WebRTCRemote();
+        
+        // ICE candidate 수집 및 전송
+        webrtcRef.current.peerConnection!.onicecandidate = (event) => {
+          if (event.candidate) {
+            console.log('[Host] ICE candidate 생성:', event.candidate);
+            fetch('/api/remote/signaling', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'ice-candidate',
+                code: connectionCode,
+                candidate: event.candidate,
+                from: 'host',
+              }),
+            }).catch(err => console.error('[Host] ICE candidate 전송 오류:', err));
+          }
+        };
       }
       
       // 원격 스트림 수신 설정
       if (webrtcRef.current && remoteVideoRef.current) {
         webrtcRef.current.setupRemoteStream(remoteVideoRef.current);
         
-        // 원격 스트림이 수신되면 비디오 요소에 할당
-        if (webrtcRef.current.peerConnection) {
-          webrtcRef.current.peerConnection.ontrack = (event) => {
-            console.log('[Host] 원격 스트림 수신됨:', event);
-            if (event.streams && event.streams[0] && remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = event.streams[0];
-              remoteVideoRef.current.play().catch(err => console.error('비디오 재생 오류:', err));
-              console.log('[Host] 비디오 요소에 스트림 할당됨');
+        // Offer 대기 및 Answer 생성 (폴링)
+        const checkOffer = setInterval(async () => {
+          try {
+            const response = await fetch(`/api/remote/signaling?code=${connectionCode}&from=host`);
+            const data = await response.json();
+            if (data.success && data.offer) {
+              console.log('[Host] Offer 수신:', data.offer);
+              // Answer 생성 및 전송 (createAnswer는 offer를 받아서 처리)
+              const answer = await webrtcRef.current!.createAnswer(data.offer);
+              console.log('[Host] Answer 생성됨:', answer);
+              
+              await fetch('/api/remote/signaling', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'answer',
+                  code: connectionCode,
+                  answer: answer,
+                  from: 'host',
+                }),
+              });
+              console.log('[Host] Answer 전송 완료');
+              
+              clearInterval(checkOffer);
+              
+              // ICE candidates 처리
+              if (data.candidates && data.candidates.length > 0) {
+                for (const candidateData of data.candidates) {
+                  await webrtcRef.current!.addIceCandidate(candidateData.candidate);
+                }
+              }
             }
-          };
-        }
+          } catch (error) {
+            console.error('[Host] Offer 확인 오류:', error);
+          }
+        }, 1000);
+        
+        // 30초 후 타임아웃
+        setTimeout(() => clearInterval(checkOffer), 30000);
       }
     }
   };
@@ -630,25 +777,48 @@ export default function RemoteSupport() {
         {mode === 'host' && (
           <div className="space-y-4">
             {!connectionCode ? (
-              <div className="text-center py-8">
+              <div className="text-center py-8 space-y-4">
                 <p className="text-gray-700 mb-4">원격 지원을 시작하려면 연결 코드를 생성하세요.</p>
-                <button
-                  onClick={generateCode}
-                  disabled={isGenerating}
-                  className="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>생성 중...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Monitor className="w-5 h-5" />
-                      <span>연결 코드 생성</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex flex-col gap-3 items-center">
+                  <button
+                    onClick={() => generateCode(false)}
+                    disabled={isGenerating}
+                    className="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>생성 중...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Monitor className="w-5 h-5" />
+                        <span>연결 코드 생성</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => generateCode(true)}
+                    disabled={isGenerating}
+                    className="px-8 py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+                    title="TeamViewer 스타일: 모든 원격 제어 권한 자동 승인"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>생성 중...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        <span>자동 승인 코드 생성</span>
+                      </>
+                    )}
+                  </button>
+                  <p className="text-xs text-gray-500 mt-2">
+                    자동 승인: 모든 원격 제어 권한이 자동으로 허용됩니다 (TeamViewer 스타일)
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -887,50 +1057,78 @@ export default function RemoteSupport() {
           </div>
         )}
 
-        {/* 클라이언트 모드 */}
+        {/* 클라이언트 모드 - 사용자 친화적 UI */}
         {mode === 'client' && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {!isConnected ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    6자리 연결 코드 입력
-                  </label>
-                  <div className="flex gap-3">
-                    <input
-                      type="text"
-                      value={connectionCode}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                        setConnectionCode(value);
-                      }}
-                      placeholder="000000"
-                      maxLength={6}
-                      className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 text-center text-2xl font-bold tracking-widest text-gray-900"
-                    />
-                    <button
-                      onClick={connectWithCode}
-                      disabled={isConnecting || connectionCode.length !== 6}
-                      className="px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {isConnecting ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>연결 중...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Monitor className="w-5 h-5" />
-                          <span>연결</span>
-                        </>
-                      )}
-                    </button>
+              /* 1단계: 연결 코드 입력 - TeamViewer 스타일 */
+              <div className="text-center space-y-6 py-8">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center gap-3 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                      <Monitor className="w-8 h-8 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h2 className="text-2xl font-bold text-gray-900">원격 지원 받기</h2>
+                      <p className="text-gray-600 text-sm">지원 담당자가 화면을 볼 수 있습니다</p>
+                    </div>
                   </div>
-                </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                  <p className="text-sm text-gray-700">
-                    고객 지원 담당자로부터 받은 6자리 연결 코드를 입력하세요.
-                  </p>
+                  
+                  <div className="space-y-3">
+                    <label className="block text-lg font-semibold text-gray-900">
+                      연결 코드를 입력하세요
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                      <input
+                        type="text"
+                        value={connectionCode}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                          setConnectionCode(value);
+                        }}
+                        placeholder="000000"
+                        maxLength={6}
+                        autoFocus
+                        className="flex-1 px-6 py-4 border-2 border-blue-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-200 text-center text-3xl font-bold tracking-[0.5em] text-gray-900 bg-white"
+                      />
+                      <button
+                        onClick={connectWithCode}
+                        disabled={isConnecting || connectionCode.length !== 6}
+                        className="px-8 py-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:shadow-none min-w-[140px]"
+                      >
+                        {isConnecting ? (
+                          <>
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                            <span>연결 중...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-6 h-6" />
+                            <span>연결</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    {connectionCode.length > 0 && connectionCode.length < 6 && (
+                      <p className="text-sm text-orange-600 font-medium">
+                        {6 - connectionCode.length}자리 더 입력하세요
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 max-w-md mx-auto">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-left">
+                        <p className="text-sm font-semibold text-blue-900 mb-1">안내</p>
+                        <p className="text-sm text-blue-700">
+                          지원 담당자로부터 받은 6자리 연결 코드를 입력하세요.
+                          <br />
+                          프로그램 설치 없이 브라우저에서 바로 사용할 수 있습니다.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -1042,21 +1240,29 @@ export default function RemoteSupport() {
                   </div>
                 </div>
 
-                {/* 화면 공유 시작 버튼 */}
+                {/* 화면 공유 시작 버튼 - 큰 버튼으로 강조 */}
                 {!permissions.screenShare && (
-                  <div className="border border-gray-200 rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold text-gray-900 mb-1">화면 공유</h4>
-                        <p className="text-sm text-gray-600">원격 지원을 위해 화면을 공유하세요.</p>
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-2xl p-8 text-center">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-center gap-3 mb-2">
+                        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                          <Monitor className="w-8 h-8 text-white" />
+                        </div>
+                        <div className="text-left">
+                          <h3 className="text-2xl font-bold text-gray-900">화면 공유 시작</h3>
+                          <p className="text-gray-600">지원 담당자가 화면을 볼 수 있도록 공유하세요</p>
+                        </div>
                       </div>
                       <button
                         onClick={startScreenShare}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+                        className="w-full max-w-md mx-auto px-8 py-5 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
-                        <Monitor className="w-5 h-5" />
-                        <span>화면 공유 시작</span>
+                        <Monitor className="w-6 h-6" />
+                        <span>화면 공유 시작하기</span>
                       </button>
+                      <p className="text-xs text-gray-500 mt-2">
+                        브라우저에서 화면 공유 권한을 요청합니다. &quot;공유&quot; 또는 &quot;허용&quot;을 클릭하세요.
+                      </p>
                     </div>
                   </div>
                 )}
@@ -1088,11 +1294,11 @@ export default function RemoteSupport() {
                   </div>
                 )}
 
-                {/* 채팅 */}
-                <div className="border border-gray-200 rounded-xl p-4">
+                {/* 채팅 - 간단한 UI */}
+                <div className="bg-white border-2 border-gray-200 rounded-xl p-5 shadow-lg">
                   <div className="flex items-center gap-2 mb-4">
-                    <MessageSquare className="w-5 h-5 text-blue-600" />
-                    <span className="font-semibold text-gray-900">채팅</span>
+                    <MessageSquare className="w-6 h-6 text-blue-600" />
+                    <span className="font-bold text-gray-900 text-lg">지원 담당자와 채팅</span>
                   </div>
                   <div className="space-y-3">
                     <div className="bg-gray-50 rounded-lg p-4 h-48 overflow-y-auto">

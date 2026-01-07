@@ -41,12 +41,21 @@ export default function Translator() {
 
       if (response.ok) {
         const data = await response.json();
-        setTargetText(data.result || sourceText);
+        const translatedText = data.result || sourceText;
+        
+        // 시뮬레이션 응답인지 확인
+        if (translatedText.includes('시뮬레이션') || translatedText === sourceText) {
+          console.warn('[Translator] 시뮬레이션 모드 또는 번역 실패');
+        }
+        
+        setTargetText(translatedText);
       } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[Translator] 번역 API 오류:', errorData);
         setTargetText(sourceText);
       }
-    } catch (error) {
-      console.error('번역 실패:', error);
+    } catch (error: any) {
+      console.error('[Translator] 번역 실패:', error);
       setTargetText(sourceText);
     } finally {
       setIsTranslating(false);

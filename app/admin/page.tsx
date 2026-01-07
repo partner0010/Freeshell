@@ -91,9 +91,59 @@ interface SystemStatus {
   };
 }
 
+interface AIDiagnostics {
+  timestamp: string;
+  overall: {
+    status: string;
+    healthScore: number;
+    criticalIssues: number;
+    warnings: number;
+    workingServices: number;
+    totalServices: number;
+  };
+  services: {
+    [key: string]: {
+      name: string;
+      provider: string;
+      required: boolean;
+      apiKey: {
+        configured: boolean;
+        hasValue: boolean;
+        length: number;
+        prefix: string;
+        valid: boolean;
+        issues: string[];
+      };
+      test?: {
+        performed: boolean;
+        success: boolean;
+        responseTime: number;
+        error: string | null;
+        details: any;
+      };
+      status: string;
+      issues: string[];
+      solutions: string[];
+    };
+  };
+  recommendations: {
+    critical: string[];
+    important: string[];
+    optional: string[];
+  };
+  environment: {
+    nodeEnv: string;
+    isProduction: boolean;
+    platform: string;
+  };
+}
+
 export default function AdminPage() {
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  const [aiDiagnostics, setAiDiagnostics] = useState<AIDiagnostics | null>(null);
   const [isLoadingStatus, setIsLoadingStatus] = useState(false);
+  const [isLoadingDiagnostics, setIsLoadingDiagnostics] = useState(false);
+  const [activeTab, setActiveTab] = useState<'basic' | 'detailed'>('detailed');
 
   const fetchSystemStatus = async () => {
     setIsLoadingStatus(true);
@@ -110,8 +160,24 @@ export default function AdminPage() {
     }
   };
 
+  const fetchAIDiagnostics = async () => {
+    setIsLoadingDiagnostics(true);
+    try {
+      const response = await fetch('/api/ai-diagnostics');
+      if (response.ok) {
+        const data = await response.json();
+        setAiDiagnostics(data);
+      }
+    } catch (error) {
+      console.error('AI 진단 로드 실패:', error);
+    } finally {
+      setIsLoadingDiagnostics(false);
+    }
+  };
+
   useEffect(() => {
     fetchSystemStatus();
+    fetchAIDiagnostics();
   }, []);
 
   const getStatusIcon = (status: string) => {
@@ -126,6 +192,36 @@ export default function AdminPage() {
 
   const getApiKeyIcon = (valid: boolean) => {
     return valid ? <CheckCircle className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-red-500" />;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'error':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'warning':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'not_configured':
+        return 'text-gray-600 bg-gray-50 border-gray-200';
+      default:
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">정상</span>;
+      case 'error':
+        return <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">오류</span>;
+      case 'warning':
+        return <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">경고</span>;
+      case 'not_configured':
+        return <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">미설정</span>;
+      default:
+        return <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">확인 중</span>;
+    }
   };
 
   return (
@@ -188,6 +284,237 @@ export default function AdminPage() {
               이 페이지의 모든 도구는 시스템 관리 및 진단을 위한 것입니다. 
               일반 사용자에게는 표시되지 않습니다.
             </p>
+          </div>
+
+          {/* AI 상태 진단 */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                  <Activity className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">AI 상태 진단</h2>
+                  <p className="text-sm text-gray-600">상세한 AI 서비스 진단 및 문제 해결 가이드</p>
+                </div>
+              </div>
+              <button
+                onClick={fetchAIDiagnostics}
+                disabled={isLoadingDiagnostics}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoadingDiagnostics ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                <span>진단 실행</span>
+              </button>
+            </div>
+
+            {isLoadingDiagnostics ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-3" />
+                <p className="text-gray-600">AI 진단을 실행하는 중...</p>
+              </div>
+            ) : aiDiagnostics ? (
+              <div className="space-y-6">
+                {/* 전체 상태 요약 */}
+                <div className={`rounded-xl p-6 border-2 ${getStatusColor(aiDiagnostics.overall.status)}`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-xl font-bold mb-2">전체 AI 서비스 상태</h3>
+                      <p className="text-sm opacity-80">
+                        {aiDiagnostics.overall.workingServices} / {aiDiagnostics.overall.totalServices} 서비스 정상 작동
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold mb-1">{aiDiagnostics.overall.healthScore}%</div>
+                      <div className="text-sm opacity-80">건강 점수</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 mt-4">
+                    {getStatusBadge(aiDiagnostics.overall.status)}
+                    {aiDiagnostics.overall.criticalIssues > 0 && (
+                      <span className="text-sm font-semibold text-red-700">
+                        ⚠️ {aiDiagnostics.overall.criticalIssues}개 중요 문제
+                      </span>
+                    )}
+                    {aiDiagnostics.overall.warnings > 0 && (
+                      <span className="text-sm font-semibold text-yellow-700">
+                        ⚠️ {aiDiagnostics.overall.warnings}개 경고
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 각 AI 서비스 상세 진단 */}
+                {Object.entries(aiDiagnostics.services).map(([key, service]) => (
+                  <div key={key} className={`rounded-xl p-6 border-2 ${getStatusColor(service.status)}`}>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="text-lg font-bold">{service.name}</h4>
+                          {service.required && (
+                            <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">필수</span>
+                          )}
+                          {getStatusBadge(service.status)}
+                        </div>
+                        <p className="text-sm opacity-80 mb-3">Provider: {service.provider}</p>
+                      </div>
+                    </div>
+
+                    {/* API 키 정보 */}
+                    <div className="bg-white/50 rounded-lg p-4 mb-4">
+                      <h5 className="font-semibold mb-2 text-sm">API 키 정보</h5>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                        <div>
+                          <span className="text-gray-600">설정 여부:</span>
+                          <span className={`ml-2 font-semibold ${service.apiKey.configured ? 'text-green-700' : 'text-red-700'}`}>
+                            {service.apiKey.configured ? '✅ 설정됨' : '❌ 미설정'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">길이:</span>
+                          <span className="ml-2 font-semibold">{service.apiKey.length}자</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">접두사:</span>
+                          <span className="ml-2 font-mono text-xs">{service.apiKey.prefix}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">유효성:</span>
+                          <span className={`ml-2 font-semibold ${service.apiKey.valid ? 'text-green-700' : 'text-red-700'}`}>
+                            {service.apiKey.valid ? '✅ 유효' : '❌ 무효'}
+                          </span>
+                        </div>
+                      </div>
+                      {service.apiKey.issues.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <p className="text-sm font-semibold text-red-700 mb-1">API 키 문제:</p>
+                          <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
+                            {service.apiKey.issues.map((issue, idx) => (
+                              <li key={idx}>{issue}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* API 테스트 결과 */}
+                    {service.test && (
+                      <div className="bg-white/50 rounded-lg p-4 mb-4">
+                        <h5 className="font-semibold mb-2 text-sm">API 테스트 결과</h5>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                          <div>
+                            <span className="text-gray-600">테스트 수행:</span>
+                            <span className={`ml-2 font-semibold ${service.test.performed ? 'text-green-700' : 'text-gray-700'}`}>
+                              {service.test.performed ? '✅ 완료' : '❌ 미수행'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">성공 여부:</span>
+                            <span className={`ml-2 font-semibold ${service.test.success ? 'text-green-700' : 'text-red-700'}`}>
+                              {service.test.success ? '✅ 성공' : '❌ 실패'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">응답 시간:</span>
+                            <span className="ml-2 font-semibold">{service.test.responseTime}ms</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">실제 호출:</span>
+                            <span className={`ml-2 font-semibold ${service.test.details.realAPICall ? 'text-green-700' : 'text-red-700'}`}>
+                              {service.test.details.realAPICall ? '✅ 예' : '❌ 아니오'}
+                            </span>
+                          </div>
+                        </div>
+                        {service.test.error && (
+                          <div className="mt-3 pt-3 border-t border-red-200">
+                            <p className="text-sm font-semibold text-red-700 mb-1">에러 메시지:</p>
+                            <p className="text-sm text-red-600 font-mono bg-red-50 p-2 rounded">{service.test.error}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 문제점 */}
+                    {service.issues.length > 0 && (
+                      <div className="bg-red-50 rounded-lg p-4 mb-4 border border-red-200">
+                        <h5 className="font-semibold text-red-700 mb-2 text-sm">🔍 발견된 문제</h5>
+                        <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
+                          {service.issues.map((issue, idx) => (
+                            <li key={idx}>{issue}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* 해결 방법 */}
+                    {service.solutions.length > 0 && (
+                      <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <h5 className="font-semibold text-blue-700 mb-2 text-sm">💡 조치 방법</h5>
+                        <ol className="list-decimal list-inside text-sm text-blue-800 space-y-2">
+                          {service.solutions.map((solution, idx) => (
+                            <li key={idx} className="pl-2">{solution}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* 권장사항 */}
+                {(aiDiagnostics.recommendations.critical.length > 0 || 
+                  aiDiagnostics.recommendations.important.length > 0 || 
+                  aiDiagnostics.recommendations.optional.length > 0) && (
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200">
+                    <h3 className="text-lg font-bold mb-4 text-gray-900">📋 권장사항</h3>
+                    {aiDiagnostics.recommendations.critical.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-red-700 mb-2">🚨 중요 (즉시 조치 필요)</h4>
+                        <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                          {aiDiagnostics.recommendations.critical.map((rec, idx) => (
+                            <li key={idx}>{rec}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {aiDiagnostics.recommendations.important.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-yellow-700 mb-2">⚠️ 중요 (조치 권장)</h4>
+                        <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                          {aiDiagnostics.recommendations.important.map((rec, idx) => (
+                            <li key={idx}>{rec}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {aiDiagnostics.recommendations.optional.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold text-blue-700 mb-2">ℹ️ 선택사항</h4>
+                        <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                          {aiDiagnostics.recommendations.optional.map((rec, idx) => (
+                            <li key={idx}>{rec}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <AlertCircle className="w-8 h-8 text-yellow-600 mx-auto mb-3" />
+                <p className="text-gray-600">AI 진단 정보를 불러올 수 없습니다.</p>
+                <button
+                  onClick={fetchAIDiagnostics}
+                  className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  다시 시도
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 시스템 상태 */}
