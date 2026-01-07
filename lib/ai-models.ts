@@ -13,13 +13,13 @@ export class AIModelManager {
 
   constructor() {
     // Google Gemini만 등록 (무료 티어 제공)
-    // 최신 모델: gemini-1.5-flash (빠름), gemini-1.5-pro (고품질)
+    // v1 API에서 gemini-pro 사용 (안정적)
     this.registerModel({
       id: 'gemini-pro',
-      name: 'Gemini 1.5 Flash',
+      name: 'Gemini Pro',
       provider: 'Google',
       apiKey: process.env.GOOGLE_API_KEY,
-      endpoint: 'gemini-1.5-flash', // 최신 모델 사용
+      endpoint: 'gemini-pro', // v1 API 호환 모델
     });
   }
 
@@ -92,10 +92,9 @@ export class AIModelManager {
     }
 
     // 모델 이름 결정 (endpoint가 있으면 사용, 없으면 기본값)
-    // v1 API에서는 gemini-pro 또는 gemini-1.5-pro 사용
-    // gemini-1.5-flash는 v1beta에서만 사용 가능하므로 v1beta로 변경
-    const modelName = model.endpoint || 'gemini-1.5-flash';
-    const apiVersion = 'v1beta'; // v1에서 gemini-1.5-flash 지원 안함, v1beta 사용
+    // v1 API에서 gemini-pro 사용 (안정적이고 무료 티어 지원)
+    const modelName = model.endpoint || 'gemini-pro';
+    const apiVersion = 'v1'; // v1 API 사용 (더 안정적)
     
     try {
       // Google Gemini API 호출 (v1beta API 사용 - gemini-1.5-flash 지원)

@@ -14,7 +14,8 @@ export class GeminiClient {
 
   constructor(config: GeminiConfig = {}) {
     this.apiKey = config.apiKey || process.env.GOOGLE_API_KEY || '';
-    this.model = config.model || 'gemini-1.5-flash'; // 최신 모델 사용
+    // v1 API에서는 gemini-pro 사용, v1beta에서는 gemini-1.5-flash 사용
+    this.model = config.model || 'gemini-pro'; // 기본 모델 (v1 API 호환)
   }
 
   async generateText(prompt: string, options?: {
@@ -26,8 +27,10 @@ export class GeminiClient {
     }
 
     try {
-      // v1beta API 사용 (gemini-1.5-flash는 v1beta에서만 지원)
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
+      // v1 API 사용 (gemini-pro는 v1에서 지원)
+      // v1beta는 gemini-1.5-flash를 지원하지만, 안정성을 위해 v1 사용
+      const apiVersion = this.model.includes('1.5') ? 'v1beta' : 'v1';
+      const apiUrl = `https://generativelanguage.googleapis.com/${apiVersion}/models/${this.model}:generateContent?key=${this.apiKey}`;
       
       console.log('Google Gemini API 호출:', {
         model: this.model,
