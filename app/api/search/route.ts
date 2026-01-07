@@ -51,10 +51,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 추적 가능한 AI 사용 (AI의 사고 과정을 단계별로 추적)
-    const aiPrompt = `${query}에 대한 포괄적이고 상세한 정보를 제공하는 검색 결과 페이지를 생성해주세요. 마크다운 형식으로 작성하고, 개요, 주요 내용, 상세 분석, 결론 섹션을 포함해주세요.`;
-    
+    // query만 전달하여 AI가 자연스럽게 답변하도록 함
     const { generateTrackedAI } = await import('@/lib/tracked-ai');
-    const trackedResult = await generateTrackedAI(aiPrompt);
+    const trackedResult = await generateTrackedAI(query);
     
     const content = trackedResult.text;
     const hasApiKey = !!process.env.GOOGLE_API_KEY;

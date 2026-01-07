@@ -144,17 +144,29 @@ export default function AdminPage() {
   const [isLoadingStatus, setIsLoadingStatus] = useState(false);
   const [isLoadingDiagnostics, setIsLoadingDiagnostics] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'detailed'>('detailed');
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
 
   const fetchSystemStatus = async () => {
     setIsLoadingStatus(true);
+    setStatusError(null);
     try {
       const response = await fetch('/api/status');
       if (response.ok) {
         const data = await response.json();
         setSystemStatus(data);
+        setStatusError(null);
+      } else {
+        const errorData = await response.json().catch(() => ({ error: '알 수 없는 오류' }));
+        const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        console.error('시스템 상태 로드 실패:', response.status, response.statusText, errorMessage);
+        setStatusError(errorMessage);
+        setSystemStatus(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('시스템 상태 로드 실패:', error);
+      setStatusError(error.message || '네트워크 오류가 발생했습니다.');
+      setSystemStatus(null);
     } finally {
       setIsLoadingStatus(false);
     }
@@ -162,14 +174,24 @@ export default function AdminPage() {
 
   const fetchAIDiagnostics = async () => {
     setIsLoadingDiagnostics(true);
+    setDiagnosticsError(null);
     try {
       const response = await fetch('/api/ai-diagnostics');
       if (response.ok) {
         const data = await response.json();
         setAiDiagnostics(data);
+        setDiagnosticsError(null);
+      } else {
+        const errorData = await response.json().catch(() => ({ error: '알 수 없는 오류' }));
+        const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        console.error('AI 진단 로드 실패:', response.status, response.statusText, errorMessage);
+        setDiagnosticsError(errorMessage);
+        setAiDiagnostics(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('AI 진단 로드 실패:', error);
+      setDiagnosticsError(error.message || '네트워크 오류가 발생했습니다.');
+      setAiDiagnostics(null);
     } finally {
       setIsLoadingDiagnostics(false);
     }
@@ -506,7 +528,12 @@ export default function AdminPage() {
             ) : (
               <div className="text-center py-12">
                 <AlertCircle className="w-8 h-8 text-yellow-600 mx-auto mb-3" />
-                <p className="text-gray-600">AI 진단 정보를 불러올 수 없습니다.</p>
+                <p className="text-gray-600 mb-2">AI 진단 정보를 불러올 수 없습니다.</p>
+                {diagnosticsError && (
+                  <p className="text-sm text-red-600 mb-4 bg-red-50 border border-red-200 rounded-lg p-3 inline-block">
+                    오류: {diagnosticsError}
+                  </p>
+                )}
                 <button
                   onClick={fetchAIDiagnostics}
                   className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -644,7 +671,12 @@ export default function AdminPage() {
             ) : (
               <div className="text-center py-12">
                 <AlertCircle className="w-8 h-8 text-yellow-600 mx-auto mb-3" />
-                <p className="text-gray-600">시스템 상태를 불러올 수 없습니다.</p>
+                <p className="text-gray-600 mb-2">시스템 상태를 불러올 수 없습니다.</p>
+                {statusError && (
+                  <p className="text-sm text-red-600 mb-4 bg-red-50 border border-red-200 rounded-lg p-3 inline-block">
+                    오류: {statusError}
+                  </p>
+                )}
                 <button
                   onClick={fetchSystemStatus}
                   className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
