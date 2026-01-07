@@ -147,6 +147,14 @@ export class ExpertAI {
     
     // 실제 AI API 호출
     const geminiKey = process.env.GOOGLE_API_KEY;
+    console.log('[ExpertAI] API 키 확인:', {
+      exists: !!geminiKey,
+      length: geminiKey?.length || 0,
+      prefix: geminiKey ? geminiKey.substring(0, 10) + '...' : '없음',
+      mode,
+      promptLength: prompt.length,
+    });
+    
     if (geminiKey && geminiKey.trim() !== '') {
       try {
         const response = await fetch(
@@ -169,17 +177,44 @@ export class ExpertAI {
         if (response.ok) {
           const data = await response.json();
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) {
+          if (text && text.trim()) {
+            console.log('[ExpertAI] ✅ API 호출 성공, 응답 길이:', text.length);
             return this.formatResponse(text, mode, options);
+          } else {
+            console.warn('[ExpertAI] ⚠️ API 응답이 비어있습니다:', JSON.stringify(data, null, 2));
           }
+        } else {
+          const errorText = await response.text();
+          console.error('[ExpertAI] ❌ API 오류 응답:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorText.substring(0, 500),
+            apiKeyExists: !!geminiKey,
+            apiKeyLength: geminiKey?.length || 0,
+            apiKeyPrefix: geminiKey ? geminiKey.substring(0, 10) + '...' : '없음',
+          });
         }
-      } catch (error) {
-        console.error('[ExpertAI] API 오류:', error);
+      } catch (error: any) {
+        console.error('[ExpertAI] API 호출 오류:', error.message);
       }
     }
 
-    // Fallback: 규칙 기반 응답
-    return this.generateFallbackResponse(task, mode);
+    // Fallback: local-ai 또는 규칙 기반 응답
+    // API 키가 있지만 실패한 경우, local-ai를 시도
+    if (geminiKey && geminiKey.trim() !== '') {
+      try {
+        const { generateLocalAI } = await import('@/lib/local-ai');
+        const localResponse = await generateLocalAI(prompt);
+        if (localResponse && localResponse.text && localResponse.text.trim()) {
+          return this.formatResponse(localResponse.text, mode, options);
+        }
+      } catch (error) {
+        console.error('[ExpertAI] Local AI fallback 오류:', error);
+      }
+    }
+
+    // 최종 Fallback: 규칙 기반 응답 (API 키가 없을 때만 메시지 표시)
+    return this.generateFallbackResponse(task, mode, !!geminiKey);
   }
 
   /**
@@ -232,9 +267,16 @@ export class ExpertAI {
   /**
    * Fallback 응답 생성
    */
-  private generateFallbackResponse(task: string, mode: ExpertMode): string {
+  private generateFallbackResponse(task: string, mode: ExpertMode, hasApiKey: boolean = false): string {
     const basePrompt = this.getBasePrompt(mode);
-    return `${basePrompt}\n\n[요청] ${task}\n\n위 요청에 대해 전문가 수준의 답변을 제공하려면 GOOGLE_API_KEY를 설정하세요.`;
+    
+    if (hasApiKey) {
+      // API 키가 있지만 호출이 실패한 경우
+      return `${basePrompt}\n\n[요청] ${task}\n\n죄송합니다. AI API 호출 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요. 문제가 계속되면 관리자에게 문의해주세요.`;
+    } else {
+      // API 키가 없는 경우
+      return `${basePrompt}\n\n[요청] ${task}\n\n위 요청에 대해 전문가 수준의 답변을 제공하려면 GOOGLE_API_KEY를 설정하세요.`;
+    }
   }
 }
 

@@ -131,6 +131,49 @@ export default function AIComparison() {
         {/* 비교 결과 */}
         {comparison && (
           <div className="space-y-6">
+            {/* 각 AI의 실제 답변 */}
+            <div className="bg-white rounded-xl p-6 border-2 border-purple-200 shadow-lg">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Brain className="w-6 h-6 text-purple-600" />
+                각 AI의 실제 답변
+              </h3>
+              <div className="space-y-4">
+                {comparison.selectedAIs && comparison.selectedAIs.map((aiId: string) => {
+                  const response = comparison.responses?.[aiId as AIProvider];
+                  const aiInfo = AVAILABLE_AIS.find(a => a.id === aiId);
+                  if (!response || !aiInfo) return null;
+                  
+                  return (
+                    <div key={aiId} className={`rounded-lg p-4 border-2 ${
+                      aiId === 'our' 
+                        ? 'bg-indigo-50 border-indigo-200' 
+                        : 'bg-gray-50 border-gray-200'
+                    }`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">{aiInfo.icon}</span>
+                        <h4 className="font-bold text-gray-900">{aiInfo.name}</h4>
+                        <span className="text-xs text-gray-500 ml-auto">
+                          응답 시간: {response.responseTime}ms
+                        </span>
+                      </div>
+                      <div className="prose prose-sm max-w-none">
+                        <div className="whitespace-pre-wrap text-gray-700 bg-white rounded p-3 border border-gray-200">
+                          {response.response}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {comparison.responses?.our && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-700">
+                    ✅ 다른 AI들의 답변을 우리 AI에게 학습시켰습니다. 다음번에는 더 나은 답변을 제공할 수 있습니다.
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* 종합 점수 */}
             <div className="bg-white rounded-xl p-6 border-2 border-blue-200 shadow-lg">
               <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">

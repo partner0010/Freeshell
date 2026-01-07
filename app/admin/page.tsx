@@ -16,7 +16,8 @@ import {
   XCircle,
   AlertCircle,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  TrendingUp
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -62,6 +63,22 @@ const adminTools = [
     href: '/remote-solution',
     icon: Cloud,
     color: 'from-red-500 to-red-600',
+  },
+  {
+    id: 'investment',
+    title: '투자 분석',
+    description: '실시간 주식/코인 분석, HOT 종목, 구매/판매 타이밍 예측',
+    href: '/admin/investment',
+    icon: TrendingUp,
+    color: 'from-emerald-500 to-teal-600',
+  },
+  {
+    id: 'elite-investment',
+    title: '상위 1% 투자 프로그램',
+    description: '전문가급 심층 분석, 기술적/펀더멘털 분석, 리스크 관리, 최적 타이밍',
+    href: '/admin/elite-investment',
+    icon: TrendingUp,
+    color: 'from-purple-500 to-pink-600',
   },
 ];
 
@@ -201,6 +218,7 @@ export default function AdminPage() {
   useEffect(() => {
     fetchSystemStatus();
     fetchAIDiagnostics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getStatusIcon = (status: string) => {
@@ -388,41 +406,43 @@ export default function AdminPage() {
                     </div>
 
                     {/* API 키 정보 */}
-                    <div className="bg-white/50 rounded-lg p-4 mb-4">
-                      <h5 className="font-semibold mb-2 text-sm">API 키 정보</h5>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                        <div>
-                          <span className="text-gray-600">설정 여부:</span>
-                          <span className={`ml-2 font-semibold ${service.apiKey.configured ? 'text-green-700' : 'text-red-700'}`}>
-                            {service.apiKey.configured ? '✅ 설정됨' : '❌ 미설정'}
-                          </span>
+                    {service.apiKey && (
+                      <div className="bg-white/50 rounded-lg p-4 mb-4">
+                        <h5 className="font-semibold mb-2 text-sm">API 키 정보</h5>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                          <div>
+                            <span className="text-gray-600">설정 여부:</span>
+                            <span className={`ml-2 font-semibold ${service.apiKey?.configured ? 'text-green-700' : 'text-red-700'}`}>
+                              {service.apiKey?.configured ? '✅ 설정됨' : '❌ 미설정'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">길이:</span>
+                            <span className="ml-2 font-semibold">{service.apiKey?.length || 0}자</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">접두사:</span>
+                            <span className="ml-2 font-mono text-xs">{service.apiKey?.prefix || 'N/A'}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">유효성:</span>
+                            <span className={`ml-2 font-semibold ${service.apiKey?.valid ? 'text-green-700' : 'text-red-700'}`}>
+                              {service.apiKey?.valid ? '✅ 유효' : '❌ 무효'}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-gray-600">길이:</span>
-                          <span className="ml-2 font-semibold">{service.apiKey.length}자</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">접두사:</span>
-                          <span className="ml-2 font-mono text-xs">{service.apiKey.prefix}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">유효성:</span>
-                          <span className={`ml-2 font-semibold ${service.apiKey.valid ? 'text-green-700' : 'text-red-700'}`}>
-                            {service.apiKey.valid ? '✅ 유효' : '❌ 무효'}
-                          </span>
-                        </div>
+                        {(service.apiKey?.issues?.length || 0) > 0 && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <p className="text-sm font-semibold text-red-700 mb-1">API 키 문제:</p>
+                            <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
+                              {(service.apiKey?.issues || []).map((issue, idx) => (
+                                <li key={idx}>{issue}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
-                      {service.apiKey.issues.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          <p className="text-sm font-semibold text-red-700 mb-1">API 키 문제:</p>
-                          <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
-                            {service.apiKey.issues.map((issue, idx) => (
-                              <li key={idx}>{issue}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
+                    )}
 
                     {/* API 테스트 결과 */}
                     {service.test && (
@@ -462,11 +482,11 @@ export default function AdminPage() {
                     )}
 
                     {/* 문제점 */}
-                    {service.issues.length > 0 && (
+                    {(service.issues?.length || 0) > 0 && (
                       <div className="bg-red-50 rounded-lg p-4 mb-4 border border-red-200">
                         <h5 className="font-semibold text-red-700 mb-2 text-sm">🔍 발견된 문제</h5>
                         <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
-                          {service.issues.map((issue, idx) => (
+                          {(service.issues || []).map((issue, idx) => (
                             <li key={idx}>{issue}</li>
                           ))}
                         </ul>
@@ -474,11 +494,11 @@ export default function AdminPage() {
                     )}
 
                     {/* 해결 방법 */}
-                    {service.solutions.length > 0 && (
+                    {(service.solutions?.length || 0) > 0 && (
                       <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                         <h5 className="font-semibold text-blue-700 mb-2 text-sm">💡 조치 방법</h5>
                         <ol className="list-decimal list-inside text-sm text-blue-800 space-y-2">
-                          {service.solutions.map((solution, idx) => (
+                          {(service.solutions || []).map((solution, idx) => (
                             <li key={idx} className="pl-2">{solution}</li>
                           ))}
                         </ol>
@@ -488,36 +508,36 @@ export default function AdminPage() {
                 ))}
 
                 {/* 권장사항 */}
-                {(aiDiagnostics.recommendations.critical.length > 0 || 
-                  aiDiagnostics.recommendations.important.length > 0 || 
-                  aiDiagnostics.recommendations.optional.length > 0) && (
+                {((aiDiagnostics.recommendations?.critical?.length || 0) > 0 || 
+                  (aiDiagnostics.recommendations?.important?.length || 0) > 0 || 
+                  (aiDiagnostics.recommendations?.optional?.length || 0) > 0) && (
                   <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200">
                     <h3 className="text-lg font-bold mb-4 text-gray-900">📋 권장사항</h3>
-                    {aiDiagnostics.recommendations.critical.length > 0 && (
+                    {(aiDiagnostics.recommendations?.critical?.length || 0) > 0 && (
                       <div className="mb-4">
                         <h4 className="font-semibold text-red-700 mb-2">🚨 중요 (즉시 조치 필요)</h4>
                         <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                          {aiDiagnostics.recommendations.critical.map((rec, idx) => (
+                          {(aiDiagnostics.recommendations.critical || []).map((rec, idx) => (
                             <li key={idx}>{rec}</li>
                           ))}
                         </ul>
                       </div>
                     )}
-                    {aiDiagnostics.recommendations.important.length > 0 && (
+                    {(aiDiagnostics.recommendations?.important?.length || 0) > 0 && (
                       <div className="mb-4">
                         <h4 className="font-semibold text-yellow-700 mb-2">⚠️ 중요 (조치 권장)</h4>
                         <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                          {aiDiagnostics.recommendations.important.map((rec, idx) => (
+                          {(aiDiagnostics.recommendations.important || []).map((rec, idx) => (
                             <li key={idx}>{rec}</li>
                           ))}
                         </ul>
                       </div>
                     )}
-                    {aiDiagnostics.recommendations.optional.length > 0 && (
+                    {(aiDiagnostics.recommendations?.optional?.length || 0) > 0 && (
                       <div>
                         <h4 className="font-semibold text-blue-700 mb-2">ℹ️ 선택사항</h4>
                         <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                          {aiDiagnostics.recommendations.optional.map((rec, idx) => (
+                          {(aiDiagnostics.recommendations.optional || []).map((rec, idx) => (
                             <li key={idx}>{rec}</li>
                           ))}
                         </ul>

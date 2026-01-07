@@ -221,6 +221,47 @@ export default function AutoLearningPanel() {
         </div>
       </div>
 
+      {/* 초기 학습 데이터 로드 */}
+      <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+        <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+          <Brain className="w-4 h-4 text-green-600" />
+          초기 학습 데이터 확보
+        </h3>
+        <p className="text-sm text-gray-700 mb-3">
+          네트워크를 통해 풍부한 초기 학습 데이터를 로드합니다. AI 비교 분석을 통해 다른 AI들의 지식도 자동으로 학습됩니다.
+        </p>
+        <button
+          onClick={async () => {
+            setLoading(true);
+            try {
+              const response = await fetch('/api/learning/initialize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ force: false }),
+              });
+              const data = await response.json();
+              if (data.success) {
+                alert(data.message);
+                setTimeout(fetchStatus, 2000);
+              }
+            } catch (error) {
+              console.error('초기 학습 데이터 로드 실패:', error);
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={loading}
+          className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Brain className="w-4 h-4" />
+          )}
+          <span>초기 학습 데이터 로드</span>
+        </button>
+      </div>
+
       {/* 학습 방법 설명 */}
       <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
         <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
@@ -228,9 +269,11 @@ export default function AutoLearningPanel() {
           학습 방법
         </h3>
         <ul className="text-sm text-gray-700 space-y-1">
-          <li>• 웹 검색을 통한 정보 수집 (DuckDuckGo, Wikipedia)</li>
-          <li>• AI 자가 학습 (AI가 스스로 질문하고 답변)</li>
-          <li>• 지식 베이스 개선 및 보완</li>
+          <li>• 웹 검색을 통한 정보 수집 (DuckDuckGo, Wikipedia) - 50%</li>
+          <li>• 다른 AI들의 지식 습득 (ChatGPT, Claude, Gemini 등) - 30%</li>
+          <li>• AI 자가 학습 (AI가 스스로 질문하고 답변) - 10%</li>
+          <li>• 지식 베이스 개선 및 보완 - 10%</li>
+          <li>• AI 비교 분석을 통한 자동 학습</li>
           <li>• 학습된 지식은 자동으로 응답에 활용됩니다</li>
         </ul>
       </div>

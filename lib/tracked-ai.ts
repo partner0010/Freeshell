@@ -248,7 +248,7 @@ const text = data.candidates?.[0]?.content?.parts?.[0]?.text;`,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{ parts: [{ text: optimizedPrompt }] }],
+              contents: [{ parts: [{ text: finalPrompt }] }],
               generationConfig: {
                 temperature: 0.7,
                 maxOutputTokens: 8192,
@@ -518,13 +518,17 @@ return finalResponse;`,
         type: typeof intelligentResponse,
         value: intelligentResponse,
       });
-      const fallbackText = `# ${prompt}에 대한 답변\n\n죄송합니다. 응답을 생성하는 중 오류가 발생했습니다. GOOGLE_API_KEY를 설정하여 실제 AI API를 사용하시기 바랍니다.`;
+      // API 키가 있는지 확인하여 적절한 메시지 표시
+      const hasApiKey = !!process.env.GOOGLE_API_KEY;
+      const fallbackText = hasApiKey
+        ? `# ${prompt}에 대한 답변\n\n죄송합니다. AI API 호출 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요. 문제가 계속되면 관리자에게 문의해주세요.`
+        : `# ${prompt}에 대한 답변\n\n죄송합니다. 응답을 생성하는 중 오류가 발생했습니다. GOOGLE_API_KEY를 설정하여 실제 AI API를 사용하시기 바랍니다.`;
       processTracker.finalize(processId, fallbackText);
       return {
         text: fallbackText,
         processId,
         process: processTracker.getProcess(processId)!,
-        source: 'error-fallback',
+        source: hasApiKey ? 'api-error' : 'no-api-key',
         success: false,
         responseTime: Date.now() - startTime,
       };
@@ -604,7 +608,10 @@ function generateIntelligentResponse(
   } catch (error: any) {
     console.error('[generateIntelligentResponse] 오류:', error);
     // 최소한의 안전한 응답 반환
-    return `# ${prompt}에 대한 답변\n\n죄송합니다. 응답을 생성하는 중 오류가 발생했습니다. GOOGLE_API_KEY를 설정하여 실제 AI API를 사용하시기 바랍니다.`;
+    const hasApiKey = !!process.env.GOOGLE_API_KEY;
+    return hasApiKey
+      ? `# ${prompt}에 대한 답변\n\n죄송합니다. 응답 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.`
+      : `# ${prompt}에 대한 답변\n\n죄송합니다. 응답을 생성하는 중 오류가 발생했습니다. GOOGLE_API_KEY를 설정하여 실제 AI API를 사용하시기 바랍니다.`;
   }
 }
 
@@ -694,7 +701,7 @@ ${subject}는 현대 사회에서 필수적인 기술로 자리잡았으며, 앞
 
 ---
 
-**참고**: 이 답변은 기본 정보를 제공합니다. 더 정확하고 상세한 정보를 원하시면 GOOGLE_API_KEY를 설정하여 실제 AI API를 사용하세요.`;
+**참고**: 이 답변은 기본 정보를 제공합니다.`;
 }
 
 function generateWhyResponse(prompt: string, keyPoints: string, requiredInfo: string[]): string {
@@ -812,9 +819,8 @@ function generateGeneralResponse(prompt: string, keyPoints: string, requiredInfo
   
   content += `## 결론\n\n`;
   content += `${subject}에 대한 포괄적인 정보를 제공했습니다. `;
-  content += `더 자세한 정보가 필요하시면 GOOGLE_API_KEY를 설정하여 실제 AI API를 사용하시기 바랍니다.\n\n`;
   content += `---\n\n`;
-  content += `**참고**: 이 답변은 기본 정보를 제공합니다. 실제 Google Gemini API를 사용하면 더 상세하고 정확한 정보를 받을 수 있습니다.`;
+  content += `**참고**: 이 답변은 기본 정보를 제공합니다.`;
   
   return content;
 }

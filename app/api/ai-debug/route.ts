@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
  * AI 디버깅 API
  * API 키 상태, 응답 생성 과정, 오류 등을 상세히 확인
  */
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

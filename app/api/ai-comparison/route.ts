@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { aiComparison, AIProvider } from '@/lib/ai-comparison';
+import { aiComparison, AIProvider, AVAILABLE_AIS } from '@/lib/ai-comparison';
 
 /**
  * AI 비교 분석 API
@@ -24,6 +24,37 @@ export async function POST(request: NextRequest) {
 
     // AI 비교 분석
     const comparison = await aiComparison.compareAIs(prompt, ais);
+
+    // 우리 AI에게 다른 AI들의 답변을 학습시키기
+    try {
+      const { aiKnowledgeBase } = await import('@/lib/ai-knowledge-base');
+      
+      // 다른 AI들의 답변을 정리
+      const otherAIResponses: Array<{ aiName: string; response: string }> = [];
+      const ourResponse = comparison.responses?.our?.response;
+      
+      Object.entries(comparison.responses || {}).forEach(([aiId, response]: [string, any]) => {
+        if (aiId !== 'our' && response?.response) {
+          const aiInfo = AVAILABLE_AIS.find(a => a.id === aiId);
+          const aiName = aiInfo?.name || aiId;
+          otherAIResponses.push({ aiName, response: response.response });
+        }
+      });
+
+      if (otherAIResponses.length > 0) {
+        // learnFromAIComparison 메서드 사용
+        aiKnowledgeBase.learnFromAIComparison(prompt, otherAIResponses, ourResponse);
+
+        console.log('[AI Comparison] ✅ 우리 AI에게 다른 AI들의 답변을 학습시켰습니다:', {
+          prompt: prompt.substring(0, 50),
+          otherAIResponsesCount: otherAIResponses.length,
+          learnedAIs: otherAIResponses.map(r => r.aiName),
+        });
+      }
+    } catch (error) {
+      console.warn('[AI Comparison] 학습 저장 실패:', error);
+      // 학습 실패해도 비교 결과는 반환
+    }
 
     return NextResponse.json({
       success: true,

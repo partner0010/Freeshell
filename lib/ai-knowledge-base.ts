@@ -176,25 +176,86 @@ export class AIKnowledgeBase {
   }
 
   /**
+   * 다른 AI들의 응답을 학습 데이터로 저장
+   * AI 비교 분석에서 사용
+   */
+  learnFromAIComparison(
+    prompt: string,
+    otherAIResponses: Array<{ aiName: string; response: string }>,
+    ourResponse?: string
+  ): void {
+    // 다른 AI들의 답변을 종합하여 학습 내용 구성
+    const learningContent = `다른 AI들은 "${prompt}" 질문에 대해 다음과 같이 생각했습니다:\n\n${otherAIResponses.map(r => `${r.aiName}:\n${r.response}`).join('\n\n---\n\n')}${ourResponse ? `\n\n우리 AI의 답변:\n${ourResponse}` : ''}\n\n이 정보를 참고하여 더 나은 답변을 제공할 수 있습니다.`;
+
+    this.saveConversation(prompt, learningContent, {
+      source: 'ai-comparison-learning',
+      confidence: 0.9,
+      tags: ['AI비교', '다른AI학습', '종합지식', ...otherAIResponses.map(r => r.aiName)],
+    });
+
+    console.log('[AIKnowledgeBase] AI 비교 학습 저장:', {
+      prompt: prompt.substring(0, 50),
+      otherAICount: otherAIResponses.length,
+    });
+  }
+
+  /**
+   * 대량의 초기 학습 데이터 로드
+   * 네트워크를 통해 풍부한 학습 데이터 확보
+   */
+  async loadInitialLearningData(): Promise<number> {
+    const initialTopics = [
+      'AI 기본 개념', '머신러닝 기초', '딥러닝 원리',
+      '프로그래밍 기초', '웹 개발 가이드', '데이터베이스 설계',
+      'API 설계 원칙', '보안 베스트 프랙티스', '성능 최적화',
+      '코드 품질 향상', '테스트 자동화', 'DevOps 기초',
+    ];
+
+    let loaded = 0;
+    for (const topic of initialTopics) {
+      try {
+        const entry = await this.learnFromWeb(topic);
+        if (entry) {
+          loaded++;
+          console.log(`[AIKnowledgeBase] 초기 학습 데이터 로드: ${topic}`);
+        }
+        // API 제한을 고려한 대기
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } catch (error) {
+        console.error(`[AIKnowledgeBase] ${topic} 로드 실패:`, error);
+      }
+    }
+
+    return loaded;
+  }
+
+  /**
    * 지식 베이스 통계
    */
   getStats(): {
     totalEntries: number;
     totalAccess: number;
     topics: string[];
+    sources: Record<string, number>;
   } {
     let totalAccess = 0;
     const topics: string[] = [];
+    const sources: Record<string, number> = {};
 
     for (const entry of global.__aiKnowledgeBase.values()) {
       totalAccess += entry.accessCount;
       topics.push(entry.topic);
+      
+      // 소스별 통계
+      const source = entry.tags.find(t => t.includes('학습') || t.includes('AI')) || '기타';
+      sources[source] = (sources[source] || 0) + 1;
     }
 
     return {
       totalEntries: global.__aiKnowledgeBase.size,
       totalAccess,
       topics: [...new Set(topics)],
+      sources,
     };
   }
 }
