@@ -12,6 +12,9 @@ export interface AIProcessStep {
   duration?: number;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   details?: string;
+  code?: string; // 처리되는 코드
+  logic?: string; // 처리 로직 설명
+  variables?: Record<string, any>; // 사용되는 변수
 }
 
 export interface AIProcessTracker {
@@ -73,6 +76,16 @@ class ProcessTracker {
 
     tracker.steps.push(fullStep);
     tracker.currentStep = tracker.steps.length;
+  }
+
+  updateStep(processId: string, stepIndex: number, updates: Partial<AIProcessStep>): void {
+    const tracker = this.processes.get(processId);
+    if (!tracker) return;
+
+    const step = tracker.steps[stepIndex];
+    if (step) {
+      Object.assign(step, updates);
+    }
   }
 
   completeStep(processId: string, stepIndex: number, details?: string): void {

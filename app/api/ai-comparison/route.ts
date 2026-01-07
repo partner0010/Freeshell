@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { aiComparison } from '@/lib/ai-comparison';
+import { aiComparison, AIProvider } from '@/lib/ai-comparison';
 
 /**
  * AI 비교 분석 API
- * Cursor AI와 우리 AI를 비교하여 차이점과 강점 분석
+ * 여러 AI들을 비교하여 차이점과 강점 분석
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { prompt } = body;
+    const { prompt, selectedAIs } = body;
 
     if (!prompt) {
       return NextResponse.json(
@@ -17,8 +17,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 선택된 AI들 (기본값: 모든 AI)
+    const ais: AIProvider[] = selectedAIs && Array.isArray(selectedAIs) 
+      ? selectedAIs.filter((ai: string) => ['chatgpt', 'claude', 'gemini', 'cursor', 'our'].includes(ai)) as AIProvider[]
+      : ['chatgpt', 'claude', 'gemini', 'cursor', 'our'];
+
     // AI 비교 분석
-    const comparison = await aiComparison.compareWithCursor(prompt);
+    const comparison = await aiComparison.compareAIs(prompt, ais);
 
     return NextResponse.json({
       success: true,

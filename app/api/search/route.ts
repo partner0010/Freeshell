@@ -51,9 +51,20 @@ export async function POST(request: NextRequest) {
     }
 
     // 추적 가능한 AI 사용 (AI의 사고 과정을 단계별로 추적)
-    // query만 전달하여 AI가 자연스럽게 답변하도록 함
+    // 웹 검색을 통한 정보 습득 및 학습 기능 포함
     const { generateTrackedAI } = await import('@/lib/tracked-ai');
     const trackedResult = await generateTrackedAI(query);
+    
+    // 지식 베이스에 저장 (학습)
+    try {
+      const { aiKnowledgeBase } = await import('@/lib/ai-knowledge-base');
+      aiKnowledgeBase.saveConversation(query, trackedResult.text, {
+        source: trackedResult.source,
+        confidence: trackedResult.success ? 0.8 : 0.5,
+      });
+    } catch (error) {
+      console.warn('[Search API] 지식 저장 실패:', error);
+    }
     
     const content = trackedResult.text;
     const hasApiKey = !!process.env.GOOGLE_API_KEY;

@@ -136,10 +136,16 @@ export async function searchPixabayImages(
   userImageURL: string;
 }>> {
   const apiKey = process.env.PIXABAY_API_KEY;
-  if (!apiKey) {
-    console.warn('PIXABAY_API_KEY가 설정되지 않았습니다.');
+  if (!apiKey || apiKey.trim() === '') {
+    console.warn('[Pixabay] PIXABAY_API_KEY가 설정되지 않았습니다.');
     return [];
   }
+  
+  console.log('[Pixabay] API 키 확인:', {
+    exists: !!apiKey,
+    length: apiKey.length,
+    prefix: apiKey.substring(0, 10) + '...',
+  });
   
   try {
     // API 파라미터 구성

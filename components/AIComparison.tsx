@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import { GitCompare, TrendingUp, Award, Zap, Brain, Sparkles, CheckCircle, XCircle, Minus } from 'lucide-react';
+import { AVAILABLE_AIS, AIProvider } from '@/lib/ai-comparison';
 
 export default function AIComparison() {
   const [prompt, setPrompt] = useState('');
+  const [selectedAIs, setSelectedAIs] = useState<AIProvider[]>(['chatgpt', 'claude', 'gemini', 'cursor', 'our']);
   const [comparison, setComparison] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const handleCompare = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prompt.trim()) return;
+    if (!prompt.trim() || selectedAIs.length === 0) return;
 
     setLoading(true);
     setComparison(null);
@@ -19,7 +21,7 @@ export default function AIComparison() {
       const res = await fetch('/api/ai-comparison', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, selectedAIs }),
       });
 
       const data = await res.json();
@@ -30,6 +32,14 @@ export default function AIComparison() {
       console.error('AI 비교 오류:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleAI = (aiId: AIProvider) => {
+    if (selectedAIs.includes(aiId)) {
+      setSelectedAIs(selectedAIs.filter(id => id !== aiId));
+    } else {
+      setSelectedAIs([...selectedAIs, aiId]);
     }
   };
 
@@ -55,8 +65,37 @@ export default function AIComparison() {
           </div>
           <div>
             <h2 className="text-3xl font-bold text-gray-900">AI 비교 분석</h2>
-            <p className="text-sm text-gray-600">Cursor AI vs 우리 AI - 실제 비교 테스트</p>
+            <p className="text-sm text-gray-600">여러 AI를 선택하여 나란히 비교 분석</p>
           </div>
+        </div>
+
+        {/* AI 선택 */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">비교할 AI 선택:</label>
+          <div className="flex flex-wrap gap-3">
+            {AVAILABLE_AIS.map((ai) => {
+              const isSelected = selectedAIs.includes(ai.id);
+              return (
+                <button
+                  key={ai.id}
+                  type="button"
+                  onClick={() => toggleAI(ai.id)}
+                  className={`px-4 py-2 rounded-lg border-2 transition-all flex items-center gap-2 ${
+                    isSelected
+                      ? `bg-${ai.color}-100 border-${ai.color}-300 text-${ai.color}-700 font-semibold`
+                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="text-lg">{ai.icon}</span>
+                  <span>{ai.name}</span>
+                  {isSelected && <CheckCircle className="w-4 h-4" />}
+                </button>
+              );
+            })}
+          </div>
+          {selectedAIs.length === 0 && (
+            <p className="text-sm text-red-600 mt-2">최소 1개 이상의 AI를 선택해주세요.</p>
+          )}
         </div>
 
         {/* 입력 폼 */}
@@ -265,25 +304,6 @@ export default function AIComparison() {
               </div>
             </div>
 
-            {/* 응답 비교 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Cursor AI 응답</h3>
-                <div className="prose prose-sm max-w-none">
-                  <div className="whitespace-pre-wrap text-gray-700 text-sm">
-                    {comparison.cursorAIResponse}
-                  </div>
-                </div>
-              </div>
-              <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">우리 AI 응답</h3>
-                <div className="prose prose-sm max-w-none">
-                  <div className="whitespace-pre-wrap text-gray-700 text-sm">
-                    {comparison.ourAIResponse}
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>

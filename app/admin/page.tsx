@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import AutoLearningPanel from '@/components/AutoLearningPanel';
 
 const adminTools = [
   {
@@ -544,6 +545,11 @@ export default function AdminPage() {
             )}
           </div>
 
+          {/* 자동 학습 시스템 */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 mb-8">
+            <AutoLearningPanel />
+          </div>
+
           {/* 시스템 상태 */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
             <div className="flex items-center justify-between mb-6">
@@ -654,6 +660,22 @@ export default function AdminPage() {
                       );
                     })}
                   </div>
+                </div>
+
+                {/* API 연결 테스트 */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">🔌 API 연결 테스트</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    실제 API 호출을 테스트하여 연결 상태를 확인합니다.
+                  </p>
+                  <Link
+                    href="/api/ai/test-connection"
+                    target="_blank"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+                  >
+                    <Server className="w-4 h-4" />
+                    <span>API 연결 테스트 실행</span>
+                  </Link>
                 </div>
 
                 {/* 상세 진단 링크 */}

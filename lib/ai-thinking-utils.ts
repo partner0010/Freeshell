@@ -43,7 +43,7 @@ export function analyzeQuestionType(prompt: string): QuestionType {
     };
   }
   
-  if (lower.includes('무엇') || lower.includes('뭐') || lower.includes('what')) {
+  if (lower.includes('무엇') || lower.includes('뭐') || lower.includes('what') || lower.endsWith('란?') || lower.endsWith('는?') || lower.endsWith('은?')) {
     return {
       type: 'what',
       description: '정의/개념 질문 - 명확한 정의와 설명이 필요합니다',

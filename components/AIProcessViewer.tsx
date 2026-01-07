@@ -38,7 +38,7 @@ export default function AIProcessViewer({ processId, query }: AIProcessViewerPro
     if (processId) {
       fetchProcess();
       if (autoRefresh) {
-        const interval = setInterval(fetchProcess, 500); // 0.5초마다 업데이트
+        const interval = setInterval(fetchProcess, 300); // 0.3초마다 업데이트 (더 빠른 실시간 업데이트)
         return () => clearInterval(interval);
       }
     }
@@ -135,16 +135,16 @@ export default function AIProcessViewer({ processId, query }: AIProcessViewerPro
 
       {/* 단계별 진행 상황 */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">처리 단계</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-4">처리 단계 (실시간)</h3>
         <div className="space-y-4">
           {process.steps.map((step, index) => (
               <div
                 key={index}
                 className={`border rounded-lg p-4 transition-all transform ${
                   step.status === 'processing' 
-                    ? 'shadow-lg scale-105 border-2' 
+                    ? 'shadow-lg scale-105 border-2 border-blue-400 animate-pulse bg-blue-50' 
                     : step.status === 'completed'
-                    ? 'shadow-sm'
+                    ? 'shadow-sm bg-green-50 border-green-300'
                     : ''
                 } ${getStatusColor(step.status)}`}
               >
@@ -179,6 +179,78 @@ export default function AIProcessViewer({ processId, query }: AIProcessViewerPro
                       </div>
                     </div>
                     <p className="text-sm font-medium mb-2">{step.description}</p>
+                    
+                    {/* 처리 로직 표시 */}
+                    {step.logic && (
+                      <div className={`mt-2 p-3 rounded-lg border-2 ${
+                        step.status === 'processing'
+                          ? 'bg-blue-50 border-blue-300 animate-pulse'
+                          : 'bg-blue-50 border-blue-200'
+                      }`}>
+                        <p className="text-xs font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                          💡 처리 로직:
+                        </p>
+                        <div className="space-y-1">
+                          {step.logic.split('\n').map((line, idx) => (
+                            <p key={idx} className="text-xs text-blue-800 whitespace-pre-wrap">
+                              {line}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 처리되는 코드 표시 */}
+                    {step.code && (
+                      <div className="mt-2 p-3 bg-gray-900 rounded-lg border-2 border-gray-700 relative overflow-hidden">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-semibold text-gray-300 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                            💻 처리되는 코드 (실시간):
+                          </p>
+                          {step.status === 'processing' && (
+                            <span className="text-xs text-green-400 font-mono animate-pulse">
+                              실행 중...
+                            </span>
+                          )}
+                        </div>
+                        <pre className="text-xs text-gray-100 overflow-x-auto font-mono">
+                          <code className="block whitespace-pre">{step.code}</code>
+                        </pre>
+                        {step.status === 'processing' && (
+                          <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500 animate-pulse"></div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 변수 상태 표시 */}
+                    {step.variables && Object.keys(step.variables).length > 0 && (
+                      <div className={`mt-2 p-3 rounded-lg border-2 ${
+                        step.status === 'processing'
+                          ? 'bg-purple-50 border-purple-300'
+                          : 'bg-purple-50 border-purple-200'
+                      }`}>
+                        <p className="text-xs font-semibold text-purple-900 mb-2 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                          📊 변수 상태 (실시간):
+                        </p>
+                        <div className="space-y-1 max-h-40 overflow-y-auto">
+                          {Object.entries(step.variables).map(([key, value]) => (
+                            <div key={key} className="text-xs font-mono bg-white/50 p-2 rounded border border-purple-200">
+                              <span className="text-purple-800 font-bold">{key}:</span>
+                              <span className="ml-2 text-purple-700 break-all">
+                                {typeof value === 'object' 
+                                  ? JSON.stringify(value, null, 2).substring(0, 200) + (JSON.stringify(value).length > 200 ? '...' : '')
+                                  : String(value).substring(0, 100) + (String(value).length > 100 ? '...' : '')
+                                }
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {step.details && (
                       <div className="mt-2 p-3 bg-white/70 rounded-lg border border-white/50">
                         <p className="text-xs text-gray-700 whitespace-pre-wrap">{step.details}</p>
