@@ -85,7 +85,21 @@ export default function AIContentCreator() {
       }
     } catch (err: any) {
       console.error('[AIContentCreator] 콘텐츠 생성 오류:', err);
-      setError(err.message || '콘텐츠 생성 중 오류가 발생했습니다.');
+      let errorMessage = '콘텐츠 생성 중 오류가 발생했습니다.';
+      
+      if (err.message) {
+        if (err.message.includes('network') || err.message.includes('fetch')) {
+          errorMessage = '네트워크 연결을 확인해주세요.';
+        } else if (err.message.includes('timeout')) {
+          errorMessage = '요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.';
+        } else if (err.message.includes('API 키')) {
+          errorMessage = 'API 키 설정이 필요합니다. 관리자 페이지에서 확인하세요.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
