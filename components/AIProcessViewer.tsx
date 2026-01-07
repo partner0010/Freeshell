@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Brain, Search, Lightbulb, CheckCircle, XCircle, 
   Clock, Zap, TrendingUp, AlertCircle, Loader2,
@@ -18,17 +18,7 @@ export default function AIProcessViewer({ processId, query }: AIProcessViewerPro
   const [isLoading, setIsLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  useEffect(() => {
-    if (processId) {
-      fetchProcess();
-      if (autoRefresh) {
-        const interval = setInterval(fetchProcess, 500); // 0.5초마다 업데이트
-        return () => clearInterval(interval);
-      }
-    }
-  }, [processId, autoRefresh]);
-
-  const fetchProcess = async () => {
+  const fetchProcess = useCallback(async () => {
     if (!processId) return;
     
     try {
@@ -42,7 +32,17 @@ export default function AIProcessViewer({ processId, query }: AIProcessViewerPro
     } catch (error) {
       console.error('처리 과정 조회 오류:', error);
     }
-  };
+  }, [processId]);
+
+  useEffect(() => {
+    if (processId) {
+      fetchProcess();
+      if (autoRefresh) {
+        const interval = setInterval(fetchProcess, 500); // 0.5초마다 업데이트
+        return () => clearInterval(interval);
+      }
+    }
+  }, [processId, autoRefresh, fetchProcess]);
 
   const getStageIcon = (stage: string) => {
     const iconClass = "w-5 h-5";
