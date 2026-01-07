@@ -4,7 +4,11 @@ import { useState } from 'react';
 import { Search, History, Sparkles } from 'lucide-react';
 import { useSearchStore } from '@/store/searchStore';
 
-export default function SearchEngine() {
+interface SearchEngineProps {
+  onComplete?: (result: any) => void;
+}
+
+export default function SearchEngine({ onComplete }: SearchEngineProps = {}) {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
