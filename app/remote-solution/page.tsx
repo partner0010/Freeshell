@@ -5,6 +5,7 @@ import { Cloud, Server, Monitor, Network, Settings, CheckCircle, Clock, AlertCir
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import RemoteSupport from '@/components/RemoteSupport';
+import AdminAccessGuard from '@/components/AdminAccessGuard';
 
 interface RemoteConnection {
   id: string;
@@ -23,7 +24,7 @@ interface Service {
   latency?: number;
 }
 
-export default function RemoteSolutionPage() {
+function RemoteSolutionContent() {
   const [connections, setConnections] = useState<RemoteConnection[]>([]);
   const [newConnection, setNewConnection] = useState({ name: '', url: '', type: 'browser' as const });
   const [services] = useState<Service[]>([
@@ -334,4 +335,8 @@ export default function RemoteSolutionPage() {
       <Footer />
     </div>
   );
+}
+
+export default function RemoteSolutionPage() {
+  return <RemoteSolutionContent />;
 }

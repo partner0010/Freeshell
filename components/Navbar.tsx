@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, Settings } from 'lucide-react';
+import AuthButton from './AuthButton';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +19,8 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/', label: '홈' },
+    { href: '/templates', label: '템플릿' },
+    { href: '/pricing', label: '가격' },
     { href: '/test-ai', label: 'AI 테스트' },
     { href: '/admin', label: '관리자' },
   ];
@@ -53,6 +56,7 @@ export default function Navbar() {
                 <span>{link.label}</span>
               </Link>
             ))}
+            <AuthButton />
           </div>
 
           {/* 모바일 메뉴 버튼 */}
@@ -84,6 +88,9 @@ export default function Navbar() {
                 <span>{link.label}</span>
               </Link>
             ))}
+            <div className="px-4 py-3">
+              <AuthButton />
+            </div>
           </div>
         </div>
       )}

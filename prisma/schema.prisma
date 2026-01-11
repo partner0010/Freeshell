@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  plan      PlanType @default(FREE)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  projects Project[]
+  payments Payment[]
+
+  @@map("users")
+}
+
+model Project {
+  id             String        @id @default(cuid())
+  userId         String        @map("user_id")
+  title          String
+  targetAudience String        @map("target_audience")
+  purpose        ProjectPurpose
+  platform       String
+  contentType    ContentType   @map("content_type")
+  templateId     String?       @map("template_id")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiStepResults AIStepResult[]
+
+  @@map("projects")
+}
+
+model AIStepResult {
+  id         String     @id @default(cuid())
+  projectId  String     @map("project_id")
+  stepType   StepType   @map("step_type")
+  inputData  Json       @map("input_data")
+  outputData Json?      @map("output_data")
+  status     StepStatus @default(SUCCESS)
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("ai_step_results")
+}
+
+model Payment {
+  id                   String        @id @default(cuid())
+  userId               String        @map("user_id")
+  plan                 PlanType
+  amount               Float
+  periodStart          DateTime      @map("period_start")
+  periodEnd            DateTime      @map("period_end")
+  status               PaymentStatus @default(PENDING)
+  stripePaymentIntentId String?       @map("stripe_payment_intent_id")
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+enum PlanType {
+  FREE
+  PERSONAL
+  PRO
+  ENTERPRISE
+}
+
+enum ProjectPurpose {
+  TRAFFIC
+  CONVERSION
+  BRANDING
+}
+
+enum ContentType {
+  YOUTUBE_SCRIPT
+  BLOG_POST
+  SNS_POST
+  INSTAGRAM_CAPTION
+  TWITTER_THREAD
+}
+
+enum StepType {
+  PLAN
+  STRUCTURE
+  DRAFT
+  QUALITY
+  PLATFORM
+}
+
+enum StepStatus {
+  SUCCESS
+  RETRY
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+

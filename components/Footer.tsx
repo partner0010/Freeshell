@@ -37,8 +37,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/content-guide" className="text-gray-600 hover:text-gray-900 transition-colors">
-                  콘텐츠 제작 가이드
+                <Link href="/pricing" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  가격 및 플랜
+                </Link>
+              </li>
+              <li>
+                <Link href="/templates" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  템플릿 라이브러리
                 </Link>
               </li>
             </ul>

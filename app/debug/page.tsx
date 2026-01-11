@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Bug, Code, Upload, Download, Zap, AlertTriangle, CheckCircle, XCircle, Loader2, FileCode, Search } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import AdminAccessGuard from '@/components/AdminAccessGuard';
 
 interface DebugResult {
   timestamp: string;
@@ -33,7 +34,7 @@ interface DebugResult {
   };
 }
 
-export default function DebugPage() {
+function DebugContent() {
   const [code, setCode] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -332,5 +333,17 @@ export default function DebugPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function DebugPage() {
+  return (
+    <AdminAccessGuard
+      toolId="debugTools"
+      toolName="디버그 도구"
+      requiredPlan="pro"
+    >
+      <DebugContent />
+    </AdminAccessGuard>
   );
 }

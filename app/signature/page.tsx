@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileSignature, Upload, Send, CheckCircle, Clock, XCircle,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import UpgradePrompt from '@/components/UpgradePrompt';
 
 interface Document {
   id: string;
@@ -38,6 +39,35 @@ export default function SignaturePage() {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+
+  // TODO: 실제 사용자 ID 가져오기 (인증 후)
+  const userId = 'demo-user-id';
+
+  // 페이지 로드 시 접근 확인
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const response = await fetch(`/api/admin/check-access?tool=electronicSignature&user_id=${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (!data.allowed) {
+            setHasAccess(false);
+            setShowUpgradePrompt(true);
+          } else {
+            setHasAccess(true);
+          }
+        }
+      } catch (error) {
+        console.error('접근 확인 실패:', error);
+        // 오류 시 일단 접근 허용 (개발 환경)
+        setHasAccess(true);
+      }
+    };
+
+    checkAccess();
+  }, []);
 
   // 문서 업로드
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -268,6 +298,24 @@ export default function SignaturePage() {
       )}
 
       <Footer />
+
+      {/* 업그레이드 프롬프트 */}
+      {showUpgradePrompt && (
+        <UpgradePrompt
+          title="전자결재 기능"
+          message="전자결재 기능은 유료 플랜에서만 이용 가능합니다. 플랜을 업그레이드하여 전문적인 전자서명 서비스를 이용하세요."
+          requiredPlan="personal"
+          feature="electronicSignature"
+          onClose={() => {
+            setShowUpgradePrompt(false);
+            // 무료 플랜 사용자는 리다이렉트
+            if (!hasAccess) {
+              window.location.href = '/pricing';
+            }
+          }}
+          showComparison={true}
+        />
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Search, CheckCircle, XCircle, AlertTriangle, Loader2, Globe, Shield, Zap, FileText, Lock, Code, Download } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import AdminAccessGuard from '@/components/AdminAccessGuard';
 
 interface CheckResult {
   name: string;
@@ -39,7 +40,7 @@ interface SiteAnalysisResult {
   securityScore: number;
 }
 
-export default function SiteCheckPage() {
+function SiteCheckContent() {
   const [url, setUrl] = useState('');
   const [isChecking, setIsChecking] = useState(false);
   const [result, setResult] = useState<SiteAnalysisResult | null>(null);
@@ -407,4 +408,8 @@ export default function SiteCheckPage() {
       <Footer />
     </div>
   );
+}
+
+export default function SiteCheckPage() {
+  return <SiteCheckContent />;
 }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Activity, Globe, FileCode, Shield, AlertTriangle, CheckCircle, XCircle, Loader2, Download, Upload, Zap, Lock, Code, Search } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import AdminAccessGuard from '@/components/AdminAccessGuard';
 
 interface AnalysisResult {
   type: 'url' | 'code';
@@ -28,7 +29,7 @@ interface AnalysisResult {
   timestamp: string;
 }
 
-export default function SecurityAnalyzePage() {
+function SecurityAnalyzeContent() {
   const [analysisType, setAnalysisType] = useState<'url' | 'code'>('url');
   const [url, setUrl] = useState('');
   const [code, setCode] = useState('');
@@ -401,6 +402,18 @@ export default function SecurityAnalyzePage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function SecurityAnalyzePage() {
+  return (
+    <AdminAccessGuard
+      toolId="systemDiagnostics"
+      toolName="시스템 진단"
+      requiredPlan="personal"
+    >
+      <SecurityAnalyzeContent />
+    </AdminAccessGuard>
   );
 }
 
