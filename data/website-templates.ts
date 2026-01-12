@@ -27,32 +27,92 @@ export interface WebsiteTemplate {
 // 템플릿 생성 함수 - 다양한 변형을 자동 생성
 function generateTemplateVariations(baseTemplate: Omit<WebsiteTemplate, 'id'>, count: number): WebsiteTemplate[] {
   const variations: WebsiteTemplate[] = [];
-  const colors = [
-    { primary: '#3b82f6', secondary: '#8b5cf6', accent: '#ec4899' },
-    { primary: '#10b981', secondary: '#06b6d4', accent: '#f59e0b' },
-    { primary: '#ef4444', secondary: '#f97316', accent: '#eab308' },
-    { primary: '#6366f1', secondary: '#8b5cf6', accent: '#ec4899' },
-    { primary: '#14b8a6', secondary: '#0ea5e9', accent: '#a855f7' },
+  
+  // 더 다양한 색상 스킴 (20가지)
+  const colorSchemes = [
+    { primary: '#3b82f6', secondary: '#8b5cf6', accent: '#ec4899' }, // Blue-Purple-Pink
+    { primary: '#10b981', secondary: '#06b6d4', accent: '#f59e0b' }, // Green-Cyan-Orange
+    { primary: '#ef4444', secondary: '#f97316', accent: '#eab308' }, // Red-Orange-Yellow
+    { primary: '#6366f1', secondary: '#8b5cf6', accent: '#ec4899' }, // Indigo-Purple-Pink
+    { primary: '#14b8a6', secondary: '#0ea5e9', accent: '#a855f7' }, // Teal-Blue-Purple
+    { primary: '#f43f5e', secondary: '#ec4899', accent: '#a855f7' }, // Rose-Pink-Purple
+    { primary: '#06b6d4', secondary: '#3b82f6', accent: '#8b5cf6' }, // Cyan-Blue-Purple
+    { primary: '#f59e0b', secondary: '#ef4444', accent: '#ec4899' }, // Amber-Red-Pink
+    { primary: '#8b5cf6', secondary: '#ec4899', accent: '#f43f5e' }, // Purple-Pink-Rose
+    { primary: '#0ea5e9', secondary: '#06b6d4', accent: '#10b981' }, // Sky-Cyan-Emerald
+    { primary: '#a855f7', secondary: '#6366f1', accent: '#3b82f6' }, // Violet-Indigo-Blue
+    { primary: '#ec4899', secondary: '#f43f5e', accent: '#ef4444' }, // Pink-Rose-Red
+    { primary: '#06b6d4', secondary: '#14b8a6', accent: '#10b981' }, // Cyan-Teal-Emerald
+    { primary: '#3b82f6', secondary: '#0ea5e9', accent: '#06b6d4' }, // Blue-Sky-Cyan
+    { primary: '#8b5cf6', secondary: '#a855f7', accent: '#6366f1' }, // Purple-Violet-Indigo
+    { primary: '#f97316', secondary: '#f59e0b', accent: '#eab308' }, // Orange-Amber-Yellow
+    { primary: '#ec4899', secondary: '#8b5cf6', accent: '#6366f1' }, // Pink-Purple-Indigo
+    { primary: '#10b981', secondary: '#14b8a6', accent: '#06b6d4' }, // Emerald-Teal-Cyan
+    { primary: '#ef4444', secondary: '#f43f5e', accent: '#ec4899' }, // Red-Rose-Pink
+    { primary: '#6366f1', secondary: '#3b82f6', accent: '#0ea5e9' }, // Indigo-Blue-Sky
+  ];
+
+  // 스타일 변형 (레이아웃, 폰트, 간격 등)
+  const styleVariations = [
+    { layout: 'centered', spacing: 'compact', font: 'sans' },
+    { layout: 'wide', spacing: 'normal', font: 'serif' },
+    { layout: 'narrow', spacing: 'loose', font: 'mono' },
+    { layout: 'centered', spacing: 'normal', font: 'sans' },
+    { layout: 'wide', spacing: 'compact', font: 'serif' },
   ];
 
   for (let i = 0; i < count; i++) {
-    const colorScheme = colors[i % colors.length];
+    const colorScheme = colorSchemes[i % colorSchemes.length];
+    const styleVar = styleVariations[i % styleVariations.length];
+    
+    // CSS 변형 생성
+    let modifiedCss = baseTemplate.preview.css
+      .replace(/#3b82f6/g, colorScheme.primary)
+      .replace(/#8b5cf6/g, colorScheme.secondary)
+      .replace(/#ec4899/g, colorScheme.accent)
+      .replace(/#6366f1/g, colorScheme.primary)
+      .replace(/#10b981/g, colorScheme.secondary)
+      .replace(/#ef4444/g, colorScheme.accent);
+
+    // 스타일 변형 적용
+    if (styleVar.spacing === 'compact') {
+      modifiedCss = modifiedCss.replace(/padding:\s*\d+px/g, (match) => {
+        const value = parseInt(match.match(/\d+/)?.[0] || '20');
+        return match.replace(/\d+/, String(Math.max(10, value * 0.7)));
+      });
+    } else if (styleVar.spacing === 'loose') {
+      modifiedCss = modifiedCss.replace(/padding:\s*\d+px/g, (match) => {
+        const value = parseInt(match.match(/\d+/)?.[0] || '20');
+        return match.replace(/\d+/, String(value * 1.3));
+      });
+    }
+
+    // 폰트 변형
+    if (styleVar.font === 'serif') {
+      modifiedCss = modifiedCss.replace(/font-family:[^;]+/g, 'font-family: Georgia, serif');
+    } else if (styleVar.font === 'mono') {
+      modifiedCss = modifiedCss.replace(/font-family:[^;]+/g, 'font-family: "Courier New", monospace');
+    }
+
     const variation = {
       ...baseTemplate,
-      id: `${baseTemplate.name.toLowerCase().replace(/\s+/g, '-')}-${i + 1}`,
-      name: `${baseTemplate.name} ${i + 1 > 1 ? `(${i + 1})` : ''}`,
+      id: `${baseTemplate.name.toLowerCase().replace(/\s+/g, '-')}-v${i + 1}`,
+      name: `${baseTemplate.name} ${i + 1 > 1 ? `(변형 ${i + 1})` : ''}`,
+      description: `${baseTemplate.description} - ${colorScheme.primary} 테마`,
       preview: {
         ...baseTemplate.preview,
-        css: baseTemplate.preview.css.replace(/#3b82f6/g, colorScheme.primary)
-          .replace(/#8b5cf6/g, colorScheme.secondary)
-          .replace(/#ec4899/g, colorScheme.accent),
+        css: modifiedCss,
       },
       files: baseTemplate.files.map(file => ({
         ...file,
         content: file.type === 'css' 
-          ? file.content.replace(/#3b82f6/g, colorScheme.primary)
-            .replace(/#8b5cf6/g, colorScheme.secondary)
-            .replace(/#ec4899/g, colorScheme.accent)
+          ? file.content
+              .replace(/#3b82f6/g, colorScheme.primary)
+              .replace(/#8b5cf6/g, colorScheme.secondary)
+              .replace(/#ec4899/g, colorScheme.accent)
+              .replace(/#6366f1/g, colorScheme.primary)
+              .replace(/#10b981/g, colorScheme.secondary)
+              .replace(/#ef4444/g, colorScheme.accent)
           : file.content,
       })),
     };

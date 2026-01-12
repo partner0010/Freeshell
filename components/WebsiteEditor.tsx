@@ -18,6 +18,7 @@ import EditorHelpPanel from './EditorHelpPanel';
 import ProjectReview from './ProjectReview';
 import AIRecommendation from './AIRecommendation';
 import AutoFeatureAdder from './AutoFeatureAdder';
+import Navbar from './Navbar';
 
 interface WebsiteEditorProps {
   initialFiles?: Array<{ name: string; type: string; content: string }>;
@@ -55,20 +56,8 @@ export default function WebsiteEditor({ initialFiles = [], initialTemplateId, on
   useEffect(() => {
     if (initialFiles.length > 0) {
       setFiles(initialFiles);
-      updatePreview();
-      // 로컬 스토리지에서 자동 저장된 파일 복구 시도
-      const saved = localStorage.getItem('editor-autosave');
-      if (saved) {
-        try {
-          const savedFiles = JSON.parse(saved);
-          if (savedFiles.length > 0) {
-            setFiles(savedFiles);
-            updatePreview();
-          }
-        } catch (error) {
-          console.error('자동 저장 복구 실패:', error);
-        }
-      }
+      // updatePreview는 files가 변경된 후에 호출되어야 함
+      setTimeout(() => updatePreview(), 100);
     } else if (initialTemplateId) {
       // 템플릿 ID로 템플릿 로드
       loadTemplate(initialTemplateId);
@@ -80,7 +69,7 @@ export default function WebsiteEditor({ initialFiles = [], initialTemplateId, on
           const savedFiles = JSON.parse(saved);
           if (savedFiles.length > 0) {
             setFiles(savedFiles);
-            updatePreview();
+            setTimeout(() => updatePreview(), 100);
           }
         } catch (error) {
           console.error('자동 저장 복구 실패:', error);
@@ -88,6 +77,13 @@ export default function WebsiteEditor({ initialFiles = [], initialTemplateId, on
       }
     }
   }, [initialFiles, initialTemplateId]);
+
+  // files가 변경될 때마다 미리보기 업데이트
+  useEffect(() => {
+    if (files.length > 0) {
+      updatePreview();
+    }
+  }, [files]);
 
   // 자동 저장
   useEffect(() => {
@@ -218,19 +214,53 @@ console.log('웹사이트가 로드되었습니다!');`,
 
     if (htmlFile) {
       let html = htmlFile.content;
+      
+      // CSS 파일이 있으면 <style> 태그로 삽입
       if (cssFile) {
-        html = html.replace(
-          /<link[^>]*href=["'][^"']*\.css["'][^>]*>/gi,
-          `<style>${cssFile.content}</style>`
-        );
+        // 기존 <link> 태그 제거
+        html = html.replace(/<link[^>]*href=["'][^"']*\.css["'][^>]*>/gi, '');
+        // <head> 태그 안에 <style> 추가, 없으면 </head> 앞에 추가
+        if (html.includes('</head>')) {
+          html = html.replace('</head>', `<style>${cssFile.content}</style></head>`);
+        } else if (html.includes('<head>')) {
+          html = html.replace('<head>', `<head><style>${cssFile.content}</style>`);
+        } else {
+          html = `<style>${cssFile.content}</style>${html}`;
+        }
       }
+      
+      // JS 파일이 있으면 <script> 태그로 삽입
       if (jsFile) {
-        html = html.replace(
-          /<script[^>]*src=["'][^"']*\.js["'][^>]*><\/script>/gi,
-          `<script>${jsFile.content}</script>`
-        );
+        // 기존 <script src> 태그 제거
+        html = html.replace(/<script[^>]*src=["'][^"']*\.js["'][^>]*><\/script>/gi, '');
+        // </body> 태그 앞에 <script> 추가, 없으면 끝에 추가
+        if (html.includes('</body>')) {
+          html = html.replace('</body>', `<script>${jsFile.content}</script></body>`);
+        } else {
+          html = `${html}<script>${jsFile.content}</script>`;
+        }
       }
+      
       setPreviewHtml(html);
+    } else {
+      // HTML 파일이 없으면 기본 HTML 생성
+      const defaultHtml = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미리보기</title>
+    ${cssFile ? `<style>${cssFile.content}</style>` : ''}
+</head>
+<body>
+    <div class="container">
+        <h1>미리보기</h1>
+        <p>HTML 파일을 추가하세요</p>
+    </div>
+    ${jsFile ? `<script>${jsFile.content}</script>` : ''}
+</body>
+</html>`;
+      setPreviewHtml(defaultHtml);
     }
   };
 
@@ -365,8 +395,11 @@ h1 {
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
+      {/* 네비게이션 바 */}
+      <Navbar />
+      
       {/* 헤더 */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between mt-16">
         <div className="flex items-center gap-4">
           <h2 className="text-xl font-bold text-gray-900">웹사이트 에디터</h2>
           <div className="flex items-center gap-2">

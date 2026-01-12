@@ -34,11 +34,32 @@ export default function TemplatePreviewModal({
     mobile: 'w-[375px] h-[667px] mx-auto',
   };
 
-  const previewHtml = template.preview.html
-    .replace('style.css', '')
-    .replace('script.js', '')
-    + `<style>${template.preview.css}</style>`
-    + (template.preview.js ? `<script>${template.preview.js}</script>` : '');
+  // HTML에서 외부 리소스 링크 제거하고 인라인 스타일/스크립트 추가
+  let previewHtml = template.preview.html;
+  
+  // <link> 태그 제거
+  previewHtml = previewHtml.replace(/<link[^>]*>/gi, '');
+  
+  // <script src> 태그 제거
+  previewHtml = previewHtml.replace(/<script[^>]*src=["'][^"']*["'][^>]*><\/script>/gi, '');
+  
+  // CSS를 <head>에 추가
+  if (previewHtml.includes('</head>')) {
+    previewHtml = previewHtml.replace('</head>', `<style>${template.preview.css}</style></head>`);
+  } else if (previewHtml.includes('<head>')) {
+    previewHtml = previewHtml.replace('<head>', `<head><style>${template.preview.css}</style>`);
+  } else {
+    previewHtml = `<head><style>${template.preview.css}</style></head>${previewHtml}`;
+  }
+  
+  // JavaScript를 </body> 앞에 추가
+  if (template.preview.js) {
+    if (previewHtml.includes('</body>')) {
+      previewHtml = previewHtml.replace('</body>', `<script>${template.preview.js}</script></body>`);
+    } else {
+      previewHtml = `${previewHtml}<script>${template.preview.js}</script>`;
+    }
+  }
 
   return (
     <AnimatePresence>

@@ -219,12 +219,38 @@ function WebsiteTemplateGallery() {
                 }`}
               >
                 {/* 미리보기 썸네일 */}
-                <div className={`relative ${viewMode === 'list' ? 'w-64 flex-shrink-0' : 'w-full h-48'} bg-gradient-to-br from-blue-100 to-purple-100`}>
-                  <iframe
-                    srcDoc={template.preview.html.replace('style.css', '').replace('script.js', '') + `<style>${template.preview.css}</style>${template.preview.js ? `<script>${template.preview.js}</script>` : ''}`}
-                    className="w-full h-full border-0 pointer-events-none"
-                    title={template.name}
-                  />
+                <div className={`relative ${viewMode === 'list' ? 'w-64 flex-shrink-0' : 'w-full h-48'} bg-gradient-to-br from-blue-100 to-purple-100 overflow-hidden`}>
+                  {(() => {
+                    // HTML에서 외부 리소스 링크 제거하고 인라인 스타일/스크립트 추가
+                    let thumbnailHtml = template.preview.html;
+                    thumbnailHtml = thumbnailHtml.replace(/<link[^>]*>/gi, '');
+                    thumbnailHtml = thumbnailHtml.replace(/<script[^>]*src=["'][^"']*["'][^>]*><\/script>/gi, '');
+                    
+                    if (thumbnailHtml.includes('</head>')) {
+                      thumbnailHtml = thumbnailHtml.replace('</head>', `<style>${template.preview.css}</style></head>`);
+                    } else if (thumbnailHtml.includes('<head>')) {
+                      thumbnailHtml = thumbnailHtml.replace('<head>', `<head><style>${template.preview.css}</style>`);
+                    } else {
+                      thumbnailHtml = `<head><style>${template.preview.css}</style></head>${thumbnailHtml}`;
+                    }
+                    
+                    if (template.preview.js) {
+                      if (thumbnailHtml.includes('</body>')) {
+                        thumbnailHtml = thumbnailHtml.replace('</body>', `<script>${template.preview.js}</script></body>`);
+                      } else {
+                        thumbnailHtml = `${thumbnailHtml}<script>${template.preview.js}</script>`;
+                      }
+                    }
+                    
+                    return (
+                      <iframe
+                        srcDoc={thumbnailHtml}
+                        className="w-full h-full border-0 pointer-events-none scale-75 origin-top-left"
+                        style={{ width: '133.33%', height: '133.33%' }}
+                        title={template.name}
+                      />
+                    );
+                  })()}
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                       <button
