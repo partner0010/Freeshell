@@ -31,11 +31,28 @@ export class GeminiClient {
     maxTokens?: number;
     temperature?: number;
   }): Promise<string> {
-    // API 키가 없으면 자체 AI 엔진 사용
+    // API 키가 없으면 완전 무료 AI 서비스 사용
     if (!this.apiKey || this.apiKey.trim() === '') {
-      console.warn('[GeminiClient] API 키가 없어 자체 AI 엔진 사용');
+      console.warn('[GeminiClient] API 키가 없어 완전 무료 AI 서비스 사용');
       
       try {
+        // 1순위: 완전 무료 AI 서비스 (API 키 없이도 작동)
+        const { generateWithFreeAI } = await import('@/lib/free-ai-services');
+        const freeAIResult = await generateWithFreeAI(prompt);
+        
+        if (freeAIResult.success && freeAIResult.text && !freeAIResult.text.includes('기본 AI')) {
+          console.log('[GeminiClient] ✅ 완전 무료 AI 서비스 성공:', {
+            source: freeAIResult.source,
+            requiresApiKey: freeAIResult.requiresApiKey,
+          });
+          return freeAIResult.text;
+        }
+      } catch (error) {
+        console.warn('[GeminiClient] 완전 무료 AI 서비스 실패:', error);
+      }
+      
+      try {
+        // 2순위: 자체 AI 엔진 사용
         const { generateLocalAI } = await import('@/lib/local-ai');
         const result = await generateLocalAI(prompt);
         
@@ -50,7 +67,7 @@ export class GeminiClient {
         console.error('[GeminiClient] 자체 AI 엔진 오류:', error);
       }
       
-      // 자체 AI도 실패하면 시뮬레이션 반환
+      // 모두 실패하면 시뮬레이션 반환
       return this.simulateResponse(prompt);
     }
 

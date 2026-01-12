@@ -36,14 +36,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const sanitizedQuery = validation.sanitized || query || '';
+
     // DuckDuckGo와 Wikipedia 검색을 병렬로 실행
     const [duckDuckGoResults, wikipediaResults] = await Promise.all([
-      searchDuckDuckGo(validation.sanitized),
-      searchWikipedia(validation.sanitized),
+      searchDuckDuckGo(sanitizedQuery),
+      searchWikipedia(sanitizedQuery),
     ]);
 
     const response = {
-      query: validation.sanitized,
+      query: sanitizedQuery,
       results: {
         web: duckDuckGoResults,
         wikipedia: wikipediaResults,

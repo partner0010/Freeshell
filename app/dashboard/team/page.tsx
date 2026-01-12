@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Users, UserPlus, Crown, Shield, Mail, Trash2, Edit } from 'lucide-react';
 
@@ -56,19 +56,106 @@ export default function TeamPage() {
   const [isInviting, setIsInviting] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
 
-  const handleInvite = () => {
+  const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
-    // 실제 초대 로직
+    
     setIsInviting(true);
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/team/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: inviteEmail,
+          role: 'member',
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setInviteEmail('');
+        alert(data.message || '초대 이메일이 전송되었습니다!');
+        // 멤버 목록 새로고침
+        loadMembers();
+      } else {
+        alert(data.error || '초대 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      console.error('초대 오류:', error);
+      alert('초대 중 오류가 발생했습니다.');
+    } finally {
       setIsInviting(false);
-      setInviteEmail('');
-      alert('초대 이메일이 전송되었습니다!');
-    }, 1000);
+    }
   };
 
-  const removeMember = (id: string) => {
-    setTeamMembers(teamMembers.filter(m => m.id !== id));
+  const loadMembers = async () => {
+    try {
+      const response = await fetch('/api/team/members');
+      const data = await response.json();
+      
+      if (response.ok && data.members) {
+        setTeamMembers(data.members);
+      }
+    } catch (error) {
+      console.error('멤버 조회 오류:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadMembers();
+  }, []);
+
+  const removeMember = async (id: string) => {
+    if (!confirm('정말 이 멤버를 제거하시겠습니까?')) return;
+
+    try {
+      const response = await fetch(`/api/team/members?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setTeamMembers(teamMembers.filter(m => m.id !== id));
+        alert(data.message || '멤버가 제거되었습니다.');
+      } else {
+        alert(data.error || '멤버 제거 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      console.error('멤버 제거 오류:', error);
+      alert('멤버 제거 중 오류가 발생했습니다.');
+    }
+  };
+
+  const updateMemberRole = async (id: string, newRole: 'admin' | 'member' | 'viewer') => {
+    try {
+      const response = await fetch('/api/team/members', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          memberId: id,
+          role: newRole,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setTeamMembers(teamMembers.map(m => 
+          m.id === id ? { ...m, role: newRole } : m
+        ));
+        alert(data.message || '역할이 업데이트되었습니다.');
+      } else {
+        alert(data.error || '역할 업데이트 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      console.error('역할 업데이트 오류:', error);
+      alert('역할 업데이트 중 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -144,9 +231,16 @@ export default function TeamPage() {
                     <RoleIcon className={`w-5 h-5 ${roleColors[member.role]}`} />
                     <span className="text-sm capitalize">{member.role}</span>
                   </div>
-                  <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                    <Edit className="w-4 h-4" />
-                  </button>
+                  <select
+                    value={member.role}
+                    onChange={(e) => updateMemberRole(member.id, e.target.value as 'admin' | 'member' | 'viewer')}
+                    disabled={member.role === 'owner'}
+                    className="text-xs px-2 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                  >
+                    <option value="admin">관리자</option>
+                    <option value="member">멤버</option>
+                    <option value="viewer">뷰어</option>
+                  </select>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   가입일: {member.joinedAt}

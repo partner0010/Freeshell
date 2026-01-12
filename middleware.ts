@@ -1,83 +1,116 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { rateLimitCheck, getClientIP } from '@/lib/security/rate-limit';
-import { validateInput } from '@/lib/security/input-validation';
-
 /**
  * 보안 미들웨어
- * Rate Limiting, 입력 검증, 보안 헤더 적용
+ * CSRF, 세션 관리, 요청 검증
  */
+import { NextRequest, NextResponse } from 'next/server';
+import { verifySession } from './lib/security/session-enhanced';
+import { rateLimitCheck } from './lib/security/rate-limit';
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 정적 파일 및 Next.js 내부 경로는 제외
+  // 정적 파일은 제외
   if (
-    pathname.startsWith('/_next/') ||
-    pathname.startsWith('/api/_next/') ||
-    pathname.startsWith('/static/') ||
-    pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|woff|woff2|ttf|eot)$/)
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api/status') ||
+    pathname.startsWith('/favicon.ico') ||
+    pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2)$/)
   ) {
     return NextResponse.next();
   }
 
-  // API 라우트에 대한 Rate Limiting
-  if (pathname.startsWith('/api/')) {
-    const rateLimit = await rateLimitCheck(request, 100, 60000); // 1분에 100회
-
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        {
-          error: 'Too many requests',
-          message: 'Rate limit exceeded. Please try again later.',
-        },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': '60',
-            ...Object.fromEntries(rateLimit.headers.entries()),
-          },
-        }
-      );
-    }
-
-    // 응답에 Rate Limit 헤더 추가
-    const response = NextResponse.next();
-    rateLimit.headers.forEach((value, key) => {
-      response.headers.set(key, value);
-    });
-
-    // 보안 헤더 추가
-    response.headers.set('X-Content-Type-Options', 'nosniff');
-    response.headers.set('X-Frame-Options', 'DENY');
-    response.headers.set('X-XSS-Protection', '1; mode=block');
-    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    response.headers.set(
-      'Permissions-Policy',
-      'geolocation=(), microphone=(), camera=()'
+  // Rate Limiting
+  const rateLimit = await rateLimitCheck(request, 100, 60000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429 }
     );
-
-    return response;
   }
 
-  // 일반 페이지에 대한 보안 헤더
-  const response = NextResponse.next();
+  // 공개 경로 (인증 불필요)
+  const publicPaths = [
+    '/',
+    '/about',
+    '/help',
+    '/auth/login',
+    '/auth/signup',
+    '/auth/register',
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/status',
+    '/templates/website', // 템플릿 갤러리는 공개
+  ];
+  const isPublic = publicPaths.some(path => 
+    pathname === path || pathname.startsWith(path + '/')
+  );
 
-  // 보안 헤더
+  // 보호된 경로 확인 (모든 기능은 회원가입 필수)
+  const protectedPaths = [
+    '/admin',
+    '/mypage',
+    '/projects',
+    '/build',
+    '/editor',
+    '/dashboard',
+    '/templates/marketplace', // 마켓플레이스는 회원가입 필수
+  ];
+  const isProtected = !isPublic && (
+    protectedPaths.some(path => pathname.startsWith(path)) ||
+    pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/') && !pathname.startsWith('/api/status')
+  );
+
+  if (isProtected) {
+    // 세션 검증
+    const session = await verifySession(request);
+    if (!session) {
+      // 로그인 페이지로 리다이렉트 (회원가입 강조)
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      loginUrl.searchParams.set('requireSignup', 'true');
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // 관리자 경로는 추가 권한 확인
+    if (pathname.startsWith('/admin')) {
+      if (session.role !== 'admin') {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 403 }
+        );
+      }
+    }
+  }
+
+  // 보안 헤더 추가
+  const response = NextResponse.next();
+  
+  // XSS 방지
   response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-XSS-Protection', '1; mode=block');
+  
+  // Referrer Policy
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Permissions Policy
   response.headers.set(
     'Permissions-Policy',
     'geolocation=(), microphone=(), camera=()'
   );
 
-  // HTTPS 강제 (프로덕션)
-  if (process.env.NODE_ENV === 'production') {
-    response.headers.set(
-      'Strict-Transport-Security',
-      'max-age=31536000; includeSubDomains; preload'
-    );
-  }
+  // Content Security Policy
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // 개발 환경용 (프로덕션에서는 제거)
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https:",
+    "font-src 'self' data:",
+    "connect-src 'self'",
+    "frame-ancestors 'none'",
+  ].join('; ');
+
+  response.headers.set('Content-Security-Policy', csp);
 
   return response;
 }
@@ -86,11 +119,11 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
+     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
-

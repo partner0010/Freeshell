@@ -76,9 +76,17 @@ export default function SignupPage() {
               <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                 회원가입
               </h1>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-3">
                 무료로 시작하고 모든 기능을 이용하세요
               </p>
+              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-3 text-center">
+                <p className="text-sm font-semibold text-green-800">
+                  ✅ 모든 기능 무료 사용 가능
+                </p>
+                <p className="text-xs text-green-600 mt-1">
+                  회원가입은 필수이지만, 모든 기능을 무료로 이용할 수 있습니다
+                </p>
+              </div>
             </div>
 
             {/* 에러 메시지 */}

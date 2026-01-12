@@ -17,11 +17,11 @@ export interface AdminAccessCheckResult {
 /**
  * 관리자 도구 접근 확인
  */
-export function checkAdminAccess(
+export async function checkAdminAccess(
   userId: string,
   tool: 'electronicSignature' | 'systemDiagnostics' | 'debugTools' | 'siteCheck' | 'remoteSolution'
-): AdminAccessCheckResult {
-  const result = planLimitService.checkAdminToolAccess(userId, tool);
+): Promise<AdminAccessCheckResult> {
+  const result = await planLimitService.checkAdminToolAccess(userId, tool);
   // upgradePlan이 'free'가 아닌지 확인
   const upgradePlan = result.upgradePlan && result.upgradePlan !== 'free' 
     ? result.upgradePlan as 'personal' | 'pro' | 'enterprise'
@@ -35,12 +35,12 @@ export function checkAdminAccess(
 /**
  * API 라우트에서 사용하는 접근 확인 헬퍼
  */
-export function getAdminAccessCheckResult(request: NextRequest): {
+export async function getAdminAccessCheckResult(request: NextRequest): Promise<{
   userId?: string;
   tool?: string;
   result?: AdminAccessCheckResult;
   error?: string;
-} {
+}> {
   const searchParams = request.nextUrl.searchParams;
   const userId = searchParams.get('user_id') || request.headers.get('x-user-id');
   const tool = searchParams.get('tool') as 'electronicSignature' | 'systemDiagnostics' | 'debugTools' | 'siteCheck' | 'remoteSolution' | null;
@@ -53,7 +53,7 @@ export function getAdminAccessCheckResult(request: NextRequest): {
     return { userId, error: '도구 이름이 필요합니다.' };
   }
 
-  const result = checkAdminAccess(userId, tool);
+  const result = await checkAdminAccess(userId, tool);
 
   return {
     userId,

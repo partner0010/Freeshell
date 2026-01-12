@@ -36,31 +36,39 @@ export async function GET(request: NextRequest) {
       services: {
         search: {
           name: 'AI 검색 엔진',
-          required: 'GOOGLE_API_KEY',
-          status: process.env.GOOGLE_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
-          fallback: '시뮬레이션된 응답 제공',
-          description: 'Google Gemini API를 사용하여 검색 결과 생성',
+          required: 'GOOGLE_API_KEY (선택사항)',
+          status: process.env.GOOGLE_API_KEY 
+            ? '✅ 사용 가능 (Google Gemini)' 
+            : '✅ 사용 가능 (완전 무료 AI 서비스)',
+          fallback: '완전 무료 AI 서비스 또는 시뮬레이션된 응답 제공',
+          description: 'Google Gemini API 또는 완전 무료 AI 서비스를 사용하여 검색 결과 생성',
         },
         spark: {
           name: 'Spark 워크스페이스',
-          required: 'GOOGLE_API_KEY',
-          status: process.env.GOOGLE_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
-          fallback: '시뮬레이션된 응답 제공',
-          description: 'Google Gemini API를 사용하여 작업 자동화',
+          required: 'GOOGLE_API_KEY (선택사항)',
+          status: process.env.GOOGLE_API_KEY 
+            ? '✅ 사용 가능 (Google Gemini)' 
+            : '✅ 사용 가능 (완전 무료 AI 서비스)',
+          fallback: '완전 무료 AI 서비스 또는 시뮬레이션된 응답 제공',
+          description: 'Google Gemini API 또는 완전 무료 AI 서비스를 사용하여 작업 자동화',
         },
         translate: {
           name: 'AI 번역',
-          required: 'GOOGLE_API_KEY',
-          status: process.env.GOOGLE_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
-          fallback: '원문 반환',
-          description: 'Google Gemini API를 사용하여 번역',
+          required: 'GOOGLE_API_KEY (선택사항)',
+          status: process.env.GOOGLE_API_KEY 
+            ? '✅ 사용 가능 (Google Gemini)' 
+            : '✅ 사용 가능 (완전 무료 AI 서비스)',
+          fallback: '완전 무료 AI 서비스 또는 원문 반환',
+          description: 'Google Gemini API 또는 완전 무료 AI 서비스를 사용하여 번역',
         },
         research: {
           name: '심층 연구',
-          required: 'GOOGLE_API_KEY',
-          status: process.env.GOOGLE_API_KEY ? '✅ 사용 가능' : '❌ API 키 필요',
-          fallback: '시뮬레이션된 연구 결과',
-          description: 'Google Gemini API를 사용하여 심층 분석',
+          required: 'GOOGLE_API_KEY (선택사항)',
+          status: process.env.GOOGLE_API_KEY 
+            ? '✅ 사용 가능 (Google Gemini)' 
+            : '✅ 사용 가능 (완전 무료 AI 서비스)',
+          fallback: '완전 무료 AI 서비스 또는 시뮬레이션된 연구 결과',
+          description: 'Google Gemini API 또는 완전 무료 AI 서비스를 사용하여 심층 분석',
         },
         webSearch: {
           name: '웹 검색',
@@ -86,7 +94,10 @@ export async function GET(request: NextRequest) {
 
     // 권장사항 생성
     if (!process.env.GOOGLE_API_KEY) {
-      status.recommendations.critical.push('GOOGLE_API_KEY를 설정해야 대부분의 AI 기능이 실제로 작동합니다. (무료 티어 제공)');
+      status.recommendations.important.push('GOOGLE_API_KEY를 설정하면 더 정확한 AI 응답을 받을 수 있습니다. (무료 티어 제공)');
+      status.recommendations.important.push('현재는 완전 무료 AI 서비스가 작동 중입니다. API 키 없이도 사용 가능합니다.');
+    } else {
+      status.recommendations.optional.push('✅ Google Gemini API가 설정되어 있어 최고 품질의 AI 응답을 받을 수 있습니다.');
     }
 
     if (!process.env.PEXELS_API_KEY && !process.env.UNSPLASH_ACCESS_KEY && !process.env.PIXABAY_API_KEY) {

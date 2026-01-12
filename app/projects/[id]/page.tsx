@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   FileText, Sparkles, Check, ChevronRight, RefreshCw, Loader2, 
-  ArrowLeft, Download, Copy, AlertCircle, Crown, X, Edit2, Trash2
+  ArrowLeft, Download, Copy, AlertCircle, Crown, X, Edit2, Trash2, Share2, Settings
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -379,12 +379,81 @@ export default function ProjectDetailPage() {
                 <h1 className="text-3xl font-bold text-gray-900">{project.title}</h1>
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(`/api/project/${projectId}/export?format=json`);
+                        if (response.ok) {
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `project-${projectId}.json`;
+                          a.click();
+                          window.URL.revokeObjectURL(url);
+                        } else {
+                          const { toast } = await import('@/lib/utils/toast');
+                          toast.error('프로젝트 내보내기 중 오류가 발생했습니다.');
+                        }
+                      } catch (error) {
+                        console.error('프로젝트 내보내기 오류:', error);
+                        const { toast } = await import('@/lib/utils/toast');
+                        toast.error('프로젝트 내보내기 중 오류가 발생했습니다.');
+                      }
+                    }}
+                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    aria-label="프로젝트 내보내기"
+                    title="프로젝트 내보내기"
+                  >
+                    <Download className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(`/api/project/${projectId}/duplicate`, {
+                          method: 'POST',
+                        });
+                        if (response.ok) {
+                          const data = await response.json();
+                          const { toast } = await import('@/lib/utils/toast');
+                          toast.success(data.message || '프로젝트가 복제되었습니다.');
+                          router.push(`/projects/${data.project.id}`);
+                        } else {
+                          const errorData = await response.json();
+                          const { toast } = await import('@/lib/utils/toast');
+                          toast.error(errorData.error || '프로젝트 복제 중 오류가 발생했습니다.');
+                        }
+                      } catch (error) {
+                        console.error('프로젝트 복제 오류:', error);
+                        const { toast } = await import('@/lib/utils/toast');
+                        toast.error('프로젝트 복제 중 오류가 발생했습니다.');
+                      }
+                    }}
+                    className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                    aria-label="프로젝트 복제"
+                    title="프로젝트 복제"
+                  >
+                    <Copy className="w-5 h-5" />
+                  </button>
+                  <button
                     onClick={() => {
-                      // 편집 모드로 전환 (나중에 구현)
-                      alert('편집 기능은 곧 추가될 예정입니다.');
+                      const newTitle = prompt('프로젝트 제목을 수정하세요:', project.title);
+                      if (newTitle && newTitle !== project.title) {
+                        // 실제로는 API 호출하여 업데이트
+                        fetch(`/api/project/${projectId}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ title: newTitle }),
+                        }).then(() => {
+                          setProject({ ...project, title: newTitle });
+                        }).catch(async () => {
+                          const { toast } = await import('@/lib/utils/toast');
+                          toast.error('프로젝트 수정 중 오류가 발생했습니다.');
+                        });
+                      }
                     }}
                     className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     aria-label="프로젝트 편집"
+                    title="프로젝트 편집"
                   >
                     <Edit2 className="w-5 h-5" />
                   </button>
@@ -412,6 +481,7 @@ export default function ProjectDetailPage() {
                     }}
                     className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     aria-label="프로젝트 삭제"
+                    title="프로젝트 삭제"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>

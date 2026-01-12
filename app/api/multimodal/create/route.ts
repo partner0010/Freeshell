@@ -43,10 +43,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const sanitizedPrompt = validation.sanitized || prompt || '';
+
     // 콘텐츠 생성
     const result = await multimodalAI.generateContent({
       type: type as ContentType,
-      prompt: validation.sanitized,
+      prompt: sanitizedPrompt,
       style,
       format,
       requirements,

@@ -16,14 +16,30 @@ import {
   XCircle,
   AlertCircle,
   Loader2,
-  RefreshCw,
-  TrendingUp
+  RefreshCw
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AutoLearningPanel from '@/components/AutoLearningPanel';
+import AdminStatusWidget from '@/components/AdminStatusWidget';
 
 const adminTools = [
+  {
+    id: 'status',
+    title: '솔루션 상태',
+    description: '전체 시스템 상태 모니터링 및 점검',
+    href: '/admin/status',
+    icon: Activity,
+    color: 'from-green-500 to-green-600',
+  },
+  {
+    id: 'settings',
+    title: '시스템 설정',
+    description: 'SNS API, 광고/배너/팝업 관리',
+    href: '/admin/settings',
+    icon: Settings,
+    color: 'from-indigo-500 to-indigo-600',
+  },
   {
     id: 'signature',
     title: '전자결재',
@@ -65,20 +81,12 @@ const adminTools = [
     color: 'from-red-500 to-red-600',
   },
   {
-    id: 'investment',
-    title: '투자 분석',
-    description: '실시간 주식/코인 분석, HOT 종목, 구매/판매 타이밍 예측',
-    href: '/admin/investment',
-    icon: TrendingUp,
-    color: 'from-emerald-500 to-teal-600',
-  },
-  {
-    id: 'elite-investment',
-    title: '상위 1% 투자 프로그램',
-    description: '전문가급 심층 분석, 기술적/펀더멘털 분석, 리스크 관리, 최적 타이밍',
-    href: '/admin/elite-investment',
-    icon: TrendingUp,
-    color: 'from-purple-500 to-pink-600',
+    id: 'plugins',
+    title: '플러그인 관리',
+    description: '확장 기능 설치 및 관리',
+    href: '/admin/plugins',
+    icon: Settings,
+    color: 'from-pink-500 to-pink-600',
   },
 ];
 
@@ -282,6 +290,11 @@ export default function AdminPage() {
             <p className="text-xl text-gray-700 max-w-2xl mx-auto">
               시스템 관리 및 진단 도구에 접근할 수 있습니다
             </p>
+          </div>
+
+          {/* 상태 위젯 */}
+          <div className="mb-8">
+            <AdminStatusWidget />
           </div>
 
           {/* 관리 도구 그리드 */}

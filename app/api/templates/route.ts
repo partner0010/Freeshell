@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchTemplates, getTemplateById, getPopularTemplates, getTemplatesByCategory } from '@/data/content-templates';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 템플릿 검색 API
  * GET /api/templates?category=xxx&contentType=xxx&platform=xxx&tags=xxx&isPremium=xxx&searchQuery=xxx

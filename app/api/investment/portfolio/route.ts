@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { virtualTrading } from '@/lib/virtual-trading';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 포트폴리오 조회 API
  */

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { investmentAPI } from '@/lib/investment-api';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * HOT 주식 종목 API
  */

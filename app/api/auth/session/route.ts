@@ -1,37 +1,34 @@
 /**
- * 세션 조회 API
+ * 세션 확인 API
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
+import { verifySession } from '@/lib/security/session-enhanced';
 
-export async function GET(req: NextRequest) {
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
-
+    const session = await verifySession(request);
+    
     if (!session) {
-      return NextResponse.json(
-        { authenticated: false, user: null },
-        { status: 200 }
-      );
+      return NextResponse.json({
+        authenticated: false,
+      });
     }
 
-    return NextResponse.json(
-      {
-        authenticated: true,
-        user: session,
+    return NextResponse.json({
+      authenticated: true,
+      user: {
+        id: session.userId,
+        email: session.email,
+        role: session.role,
       },
-      { status: 200 }
-    );
+    });
   } catch (error: any) {
     console.error('[Session API] 오류:', error);
     return NextResponse.json(
-      {
-        authenticated: false,
-        user: null,
-        error: error.message || '알 수 없는 오류',
-      },
+      { authenticated: false, error: '세션 확인 중 오류가 발생했습니다.' },
       { status: 500 }
     );
   }
 }
-

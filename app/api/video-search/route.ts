@@ -36,14 +36,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const sanitizedQuery = validation.sanitized || query || '';
+
     // Pexels, Pixabay 비디오 검색을 병렬로 실행
     const [pexelsResults, pixabayResults] = await Promise.all([
-      searchPexelsVideos(validation.sanitized, Math.min(perPage, 15)),
-      searchPixabayVideos(validation.sanitized, Math.min(perPage, 15)),
+      searchPexelsVideos(sanitizedQuery, Math.min(perPage, 15)),
+      searchPixabayVideos(sanitizedQuery, Math.min(perPage, 15)),
     ]);
 
     const response = {
-      query: validation.sanitized,
+      query: sanitizedQuery,
       results: {
         pexels: pexelsResults,
         pixabay: pixabayResults,

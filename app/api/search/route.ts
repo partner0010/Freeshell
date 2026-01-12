@@ -68,8 +68,15 @@ export async function POST(request: NextRequest) {
     
     const content = trackedResult.text;
     const hasApiKey = !!process.env.GOOGLE_API_KEY;
-    const isRealApiCall = trackedResult.source === 'gemini' || trackedResult.source === 'enhanced';
-    const apiResponseTime = trackedResult.responseTime;
+    // 실제 API 호출 여부를 더 정확하게 판단
+    // 완전 무료 AI 서비스도 실제 AI로 간주
+    const isRealApiCall = trackedResult.source === 'gemini' || 
+                         trackedResult.source === 'enhanced' ||
+                         trackedResult.source === 'huggingface-public' ||
+                         trackedResult.source === 'together-ai' ||
+                         trackedResult.source === 'openrouter-free' ||
+                         (trackedResult.source === 'fallback' && hasApiKey && !content.includes('시뮬레이션') && !content.includes('기본 AI'));
+    const apiResponseTime = trackedResult.responseTime || 0;
 
     // 무한 AI 응답이 있으면 우선 사용
     if (useInfiniteAI && infiniteAIResponse) {
@@ -166,10 +173,46 @@ ${infiniteAIResponse.autonomousDecision}
     };
 
     return NextResponse.json(response);
-  } catch (error) {
-    console.error('Search error:', error);
+  } catch (error: any) {
+    console.error('[Search API] 오류:', {
+      error: error.message,
+      stack: error.stack,
+      hasApiKey: !!process.env.GOOGLE_API_KEY,
+    });
+    
+    // 상세한 에러 정보 제공
+    const hasApiKey = !!process.env.GOOGLE_API_KEY;
+    let errorMessage = '검색 중 오류가 발생했습니다.';
+    let errorDetails = '';
+    
+    if (error.message) {
+      if (error.message.includes('API 키') || error.message.includes('API key')) {
+        errorMessage = 'API 키 인증 오류가 발생했습니다.';
+        errorDetails = 'GOOGLE_API_KEY가 올바른지 확인하세요.';
+      } else if (error.message.includes('429') || error.message.includes('rate limit')) {
+        errorMessage = 'API 사용량 한도에 도달했습니다.';
+        errorDetails = '잠시 후 다시 시도해주세요.';
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorMessage = '네트워크 연결 오류가 발생했습니다.';
+        errorDetails = '인터넷 연결을 확인하세요.';
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
     return NextResponse.json(
-      { error: '검색 중 오류가 발생했습니다.' },
+      { 
+        error: errorMessage,
+        details: errorDetails,
+        hasApiKey: hasApiKey,
+        apiInfo: {
+          isRealApiCall: false,
+          hasApiKey: hasApiKey,
+          message: hasApiKey 
+            ? 'API 호출 중 오류가 발생했습니다.' 
+            : 'GOOGLE_API_KEY를 설정하세요.',
+        },
+      },
       { status: 500 }
     );
   }

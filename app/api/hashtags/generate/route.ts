@@ -21,14 +21,26 @@ export async function POST(request: NextRequest) {
 
     // 사용량 확인 (해시태그 생성은 무료 플랜에서도 제한적으로 제공)
     if (user_id) {
-      // TODO: 실제 사용량 추적 구현
-      // const usageCheck = planLimitService.checkHashtagGenerationLimit(userId, currentCount);
-      // if (!usageCheck.allowed) {
-      //   return NextResponse.json(
-      //     { error: usageCheck.reason, requires_upgrade: true, upgradePlan: usageCheck.upgradePlan },
-      //     { status: 403 }
-      //   );
-      // }
+      const { usageTracker } = await import('@/lib/services/usageTracker');
+      const currentCount = await usageTracker.getUsage(user_id, 'hashtag-generation', 'monthly');
+      
+      // 무료 플랜: 월 50회 제한
+      const maxUsage = 50;
+      if (currentCount >= maxUsage) {
+        return NextResponse.json(
+          { 
+            error: '월 사용량 한도에 도달했습니다. 유료 플랜으로 업그레이드하시면 더 많은 해시태그를 생성할 수 있습니다.',
+            requires_upgrade: true,
+            upgradePlan: 'personal',
+            currentUsage: currentCount,
+            maxUsage,
+          },
+          { status: 403 }
+        );
+      }
+
+      // 사용량 기록
+      await usageTracker.recordUsage(user_id, 'hashtag-generation', 1, 'monthly');
     }
 
     // 해시태그 생성

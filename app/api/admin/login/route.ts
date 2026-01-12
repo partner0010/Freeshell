@@ -5,7 +5,8 @@ import { getSecureEnv } from '@/lib/security/env-security';
 
 /**
  * 관리자 로그인 API
- * 기본 관리자 계정: admin@freeshell.co.kr / Admin123!@#
+ * 관리자 계정: admin@freeshell.co.kr / Admin123!@#
+ * 테스트 계정: test@freeshell.co.kr / Test123!@#
  */
 export async function POST(request: NextRequest) {
   try {
@@ -42,20 +43,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 기본 관리자 계정 (환경 변수에서 가져오거나 기본값 사용)
+    // 관리자 계정 (환경 변수에서 가져오거나 기본값 사용)
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@freeshell.co.kr';
     const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!@#';
+    
+    // 테스트 계정 (환경 변수에서 가져오거나 기본값 사용)
+    const testEmail = process.env.TEST_EMAIL || 'test@freeshell.co.kr';
+    const testPassword = process.env.TEST_PASSWORD || 'Test123!@#';
 
     // 실제로는 bcrypt로 해시된 비밀번호와 비교해야 하지만, 여기서는 간단히 비교
     // 프로덕션에서는 반드시 해시된 비밀번호 사용
-    if (emailValidation.sanitized === adminEmail && passwordValidation.sanitized === adminPassword) {
+    const sanitizedEmail = emailValidation.sanitized;
+    const sanitizedPassword = passwordValidation.sanitized;
+    
+    const isAdmin = sanitizedEmail === adminEmail && sanitizedPassword === adminPassword;
+    const isTest = sanitizedEmail === testEmail && sanitizedPassword === testPassword;
+
+    if (isAdmin || isTest) {
       // 간단한 토큰 생성 (실제로는 JWT 사용 권장)
-      const token = Buffer.from(`${adminEmail}:${Date.now()}`).toString('base64');
+      const token = Buffer.from(`${sanitizedEmail}:${Date.now()}`).toString('base64');
       
       return NextResponse.json({
         success: true,
         token,
         message: '로그인 성공',
+        role: isAdmin ? 'admin' : 'test',
       });
     } else {
       return NextResponse.json(

@@ -7,6 +7,8 @@ import NotificationCenter from "@/components/NotificationCenter";
 import Accessibility from "@/components/Accessibility";
 import MicroInteractions from "@/components/MicroInteractions";
 import Analytics from "@/components/Analytics";
+import AdManager from "@/components/AdManager";
+import ToastContainer from "@/components/ToastContainer";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -91,6 +93,8 @@ export default function RootLayout({
             <main id="main-content">{children}</main>
             <Toaster position="top-right" />
             <NotificationCenter />
+            <ToastContainer />
+            <AdManager />
           </ThemeProvider>
         </ErrorBoundary>
       </body>

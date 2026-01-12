@@ -56,6 +56,8 @@ export default function DiagnosticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<any>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [aiDiagnosis, setAiDiagnosis] = useState<any>(null);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -95,6 +97,25 @@ export default function DiagnosticsPage() {
       });
     } finally {
       setIsTesting(false);
+    }
+  };
+
+  const runAIDiagnosis = async () => {
+    setIsDiagnosing(true);
+    setAiDiagnosis(null);
+    try {
+      const response = await fetch('/api/ai/diagnose');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      setAiDiagnosis(result);
+    } catch (e: any) {
+      setAiDiagnosis({
+        error: `AI 진단 실패: ${e.message}`,
+      });
+    } finally {
+      setIsDiagnosing(false);
     }
   };
 
@@ -317,14 +338,176 @@ export default function DiagnosticsPage() {
           </div>
         </div>
 
+        {/* 종합 AI 진단 섹션 */}
+        <div className="bg-white rounded-lg shadow-md border-2 border-purple-200 p-8 mb-8">
+          <h2 className="text-2xl font-semibold mb-6 flex items-center space-x-3 text-gray-900">
+            <Zap className="w-7 h-7 text-purple-600" />
+            <span>종합 AI 진단</span>
+          </h2>
+          <p className="text-gray-700 mb-6 font-medium">
+            실제 AI 작동 상태를 종합적으로 진단합니다. Google Gemini API 직접 호출, GeminiClient, AIModelManager, 검색 API를 모두 테스트합니다.
+          </p>
+          <button
+            onClick={runAIDiagnosis}
+            disabled={isDiagnosing}
+            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-colors flex items-center justify-center font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+          >
+            {isDiagnosing ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                <span>진단 중...</span>
+              </>
+            ) : (
+              <>
+                <Zap className="w-5 h-5 mr-2" />
+                <span>AI 진단 실행</span>
+              </>
+            )}
+          </button>
+
+          {aiDiagnosis && (
+            <div className="mt-6 space-y-4">
+              {aiDiagnosis.error ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-700 font-semibold">{aiDiagnosis.error}</p>
+                </div>
+              ) : (
+                <>
+                  {/* 요약 */}
+                  <div className={`p-6 rounded-lg border-2 ${
+                    aiDiagnosis.summary.hasWorkingAI
+                      ? 'bg-green-50 border-green-200'
+                      : 'bg-red-50 border-red-200'
+                  }`}>
+                    <h3 className="font-bold text-xl mb-4 text-gray-900">
+                      {aiDiagnosis.summary.hasWorkingAI ? '✅ AI가 정상 작동합니다!' : '❌ AI가 작동하지 않습니다'}
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <span className="text-sm text-gray-600">총 테스트:</span>
+                        <span className="ml-2 font-bold text-gray-900">{aiDiagnosis.summary.totalTests}</span>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-600">성공:</span>
+                        <span className="ml-2 font-bold text-green-700">{aiDiagnosis.summary.passedTests}</span>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-600">실패:</span>
+                        <span className="ml-2 font-bold text-red-700">{aiDiagnosis.summary.failedTests}</span>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-600">작동 여부:</span>
+                        <span className={`ml-2 font-bold ${aiDiagnosis.summary.hasWorkingAI ? 'text-green-700' : 'text-red-700'}`}>
+                          {aiDiagnosis.summary.hasWorkingAI ? '예' : '아니오'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 환경 정보 */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <h4 className="font-semibold text-gray-900 mb-2">환경 정보</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-600">API 키 존재:</span>
+                        <span className={`ml-2 font-semibold ${aiDiagnosis.environment.hasGoogleApiKey ? 'text-green-700' : 'text-red-700'}`}>
+                          {aiDiagnosis.environment.hasGoogleApiKey ? '예' : '아니오'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">키 길이:</span>
+                        <span className="ml-2 font-semibold">{aiDiagnosis.environment.googleApiKeyLength}자</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">키 접두사:</span>
+                        <span className="ml-2 font-mono text-xs">{aiDiagnosis.environment.googleApiKeyPrefix}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">환경:</span>
+                        <span className="ml-2 font-semibold">{aiDiagnosis.environment.nodeEnv}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 테스트 결과 상세 */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-900">테스트 결과 상세:</h4>
+                    {aiDiagnosis.tests.map((test: any, index: number) => (
+                      <div
+                        key={index}
+                        className={`p-4 rounded-lg border-2 ${
+                          test.success
+                            ? 'bg-green-50 border-green-200'
+                            : 'bg-red-50 border-red-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-bold text-gray-900">{test.name}</h5>
+                          <div className="flex items-center gap-2">
+                            {test.success ? (
+                              <span className="text-green-600 font-semibold">✅ 성공</span>
+                            ) : (
+                              <span className="text-red-600 font-semibold">❌ 실패</span>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm font-medium mb-2">{test.message}</p>
+                        <div className="text-sm space-y-1 text-gray-600">
+                          {test.responseTime && (
+                            <p>
+                              <span className="font-semibold">응답 시간:</span>
+                              <span className="ml-2">{test.responseTime}ms</span>
+                            </p>
+                          )}
+                          {test.isSimulation !== undefined && (
+                            <p>
+                              <span className="font-semibold">시뮬레이션 모드:</span>
+                              <span className={`ml-2 font-semibold ${test.isSimulation ? 'text-yellow-700' : 'text-green-700'}`}>
+                                {test.isSimulation ? '예' : '아니오'}
+                              </span>
+                            </p>
+                          )}
+                          {test.responsePreview && (
+                            <p className="mt-2">
+                              <span className="font-semibold">응답 미리보기:</span>
+                              <span className="ml-2">{test.responsePreview}...</span>
+                            </p>
+                          )}
+                          {test.error && (
+                            <p className="text-red-600 font-medium mt-2">
+                              <span className="font-semibold">오류:</span> {test.error}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 권장사항 */}
+                  {aiDiagnosis.recommendations && aiDiagnosis.recommendations.length > 0 && (
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="font-semibold text-blue-900 mb-2">권장 사항:</h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-blue-800">
+                        {aiDiagnosis.recommendations.map((rec: string, idx: number) => (
+                          <li key={idx}>{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* 실제 API 테스트 섹션 */}
         <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 mb-8">
           <h2 className="text-2xl font-semibold mb-6 flex items-center space-x-3 text-gray-900">
             <Zap className="w-7 h-7 text-blue-600" />
-            <span>실제 API 동작 테스트</span>
+            <span>기본 API 테스트</span>
           </h2>
           <p className="text-gray-700 mb-4 font-medium">
-            실제로 Google Gemini API가 작동하는지 테스트합니다. 이 테스트는 실제 API를 호출하여 응답을 확인합니다.
+            기본 API 연결 테스트입니다.
           </p>
           <button
             onClick={runApiTest}

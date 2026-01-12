@@ -45,6 +45,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const sanitizedMessage = validation.sanitized || message || '';
+
     // 세션 관리
     let currentSessionId = sessionId;
     if (!currentSessionId) {
@@ -52,11 +54,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 사용자 메시지 추가
-    conversationManager.addMessage(currentSessionId, 'user', validation.sanitized);
+    conversationManager.addMessage(currentSessionId, 'user', sanitizedMessage);
 
     // 대화 컨텍스트 생성
     const context = conversationManager.buildContext(currentSessionId);
-    const fullPrompt = `${context}\n\n[현재 메시지] ${validation.sanitized}\n\n위 대화를 이어서 자연스럽고 유용한 답변을 제공해주세요.`;
+    const fullPrompt = `${context}\n\n[현재 메시지] ${sanitizedMessage}\n\n위 대화를 이어서 자연스럽고 유용한 답변을 제공해주세요.`;
 
     // 전문가 AI 사용
     const expertMode = mode as ExpertMode;
@@ -66,7 +68,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 학습 시스템을 통한 응답 개선
-    const improvedResponse = learningSystem.improveResponse(validation.sanitized, response);
+    const improvedResponse = learningSystem.improveResponse(sanitizedMessage, response);
 
     // AI 응답 추가
     conversationManager.addMessage(currentSessionId, 'assistant', improvedResponse, {
@@ -76,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     // 학습 데이터 저장
     learningSystem.saveLearningData({
-      prompt: validation.sanitized,
+      prompt: sanitizedMessage,
       response: improvedResponse,
       feedback: {},
       metadata: {

@@ -89,11 +89,27 @@ export class AIModelManager {
 
 
   private async callGoogle(model: AIModel, prompt: string): Promise<string> {
-    // API 키가 없으면 자체 AI 엔진 사용
+    // API 키가 없으면 완전 무료 AI 서비스 사용
     if (!model.apiKey || model.apiKey.trim() === '') {
-      console.warn('[AIModelManager] GOOGLE_API_KEY가 설정되지 않았습니다. 자체 AI 엔진을 사용합니다.');
+      console.warn('[AIModelManager] GOOGLE_API_KEY가 설정되지 않았습니다. 완전 무료 AI 서비스를 사용합니다.');
       
-      // 자체 AI 엔진 사용 (여러 무료 AI를 순차적으로 시도)
+      // 1순위: 완전 무료 AI 서비스 (API 키 없이도 작동)
+      try {
+        const { generateWithFreeAI } = await import('@/lib/free-ai-services');
+        const freeAIResult = await generateWithFreeAI(prompt);
+        
+        if (freeAIResult.success && freeAIResult.text && !freeAIResult.text.includes('기본 AI')) {
+          console.log('[AIModelManager] ✅ 완전 무료 AI 서비스 성공:', {
+            source: freeAIResult.source,
+            requiresApiKey: freeAIResult.requiresApiKey,
+          });
+          return freeAIResult.text;
+        }
+      } catch (error) {
+        console.warn('[AIModelManager] 완전 무료 AI 서비스 실패:', error);
+      }
+      
+      // 2순위: 자체 AI 엔진 사용
       try {
         const { generateLocalAI } = await import('@/lib/local-ai');
         const result = await generateLocalAI(prompt);
@@ -109,13 +125,13 @@ export class AIModelManager {
         console.error('[AIModelManager] 자체 AI 엔진 오류:', error);
       }
       
-      // 자체 AI도 실패하면 기본 응답
+      // 모두 실패하면 기본 응답
       if (prompt.includes('번역해주세요') || prompt.includes('translate')) {
         const match = prompt.match(/번역해주세요[:\n\s]+(.+?)(?:\n|$)/s);
         const textToTranslate = match ? match[1].trim() : prompt;
         return textToTranslate;
       }
-      return `이것은 자체 AI 엔진 응답입니다. Google Gemini API 키를 설정하면 더 정확한 응답을 받을 수 있습니다.\n\n프롬프트: ${prompt.substring(0, 200)}...`;
+      return `이것은 완전 무료 AI 서비스 응답입니다. Google Gemini API 키를 설정하면 더 정확한 응답을 받을 수 있습니다.\n\n프롬프트: ${prompt.substring(0, 200)}...`;
     }
 
     // 모델 이름 결정 (endpoint가 있으면 사용, 없으면 기본값)

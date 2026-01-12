@@ -35,8 +35,10 @@ export async function POST(request: NextRequest) {
     const validDepths = ['basic', 'intermediate', 'deep'];
     const sanitizedDepth = depth && validDepths.includes(depth) ? depth : 'intermediate';
 
+    const sanitizedTopic = topicValidation.sanitized || topic || '';
+
     const result = await researchEngine.conductResearch({
-      topic: topicValidation.sanitized,
+      topic: sanitizedTopic,
       depth: sanitizedDepth,
     });
 

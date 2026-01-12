@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { planLimitService } from '@/lib/services/planLimitService';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 관리자 도구 접근 확인 API
  * GET /api/admin/check-access?tool=xxx&user_id=xxx
@@ -18,7 +20,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const accessCheck = planLimitService.checkAdminToolAccess(userId, tool);
+    const accessCheck = await planLimitService.checkAdminToolAccess(userId, tool);
 
     return NextResponse.json({
       success: true,

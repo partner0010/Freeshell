@@ -122,10 +122,12 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              관리자 계정이 필요하신가요? 시스템 관리자에게 문의하세요.
-            </p>
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <p className="text-xs font-semibold text-blue-900 dark:text-blue-300 mb-2">계정 정보:</p>
+            <div className="text-xs text-blue-700 dark:text-blue-400 space-y-1">
+              <p>• 관리자: admin@freeshell.co.kr / Admin123!@#</p>
+              <p>• 테스트: test@freeshell.co.kr / Test123!@#</p>
+            </div>
           </div>
         </div>
       </motion.div>

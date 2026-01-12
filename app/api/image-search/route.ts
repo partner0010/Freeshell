@@ -36,15 +36,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const sanitizedQuery = validation.sanitized || query || '';
+
     // Pexels, Unsplash, Pixabay 검색을 병렬로 실행
     const [pexelsResults, unsplashResults, pixabayResults] = await Promise.all([
-      searchPexelsImages(validation.sanitized, Math.min(perPage, 20)),
-      searchUnsplashImages(validation.sanitized, Math.min(perPage, 20)),
-      searchPixabayImages(validation.sanitized, Math.min(perPage, 20)),
+      searchPexelsImages(sanitizedQuery, Math.min(perPage, 20)),
+      searchUnsplashImages(sanitizedQuery, Math.min(perPage, 20)),
+      searchPixabayImages(sanitizedQuery, Math.min(perPage, 20)),
     ]);
 
     const response = {
-      query: validation.sanitized,
+      query: sanitizedQuery,
       results: {
         pexels: pexelsResults,
         unsplash: unsplashResults,

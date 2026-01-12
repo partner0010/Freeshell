@@ -1,0 +1,204 @@
+# 최종 정리 계획
+
+## ✅ 유지할 중요 파일
+
+### 필수 설정 파일
+- package.json
+- package-lock.json
+- next.config.js
+- tsconfig.json
+- tailwind.config.ts
+- postcss.config.mjs
+- .gitignore
+- middleware.ts
+- netlify.toml
+- vercel.json
+
+### 필수 폴더
+- app/ (전체)
+- components/ (전체)
+- lib/ (전체)
+- public/ (전체)
+- prisma/ (전체)
+- data/ (전체)
+- types/ (전체)
+- store/ (전체)
+- scripts/ (전체)
+
+### 중요 문서 (유지)
+- README.md
+- ADMIN_MANUAL.md
+- SECURITY_AUDIT.md
+- FINAL_STATUS_AND_IMPROVEMENTS.md
+- COMPREHENSIVE_STATUS_REPORT.md
+- LICENSE
+
+## ❌ 삭제할 파일
+
+### 1. 중복/과거 상태 보고서 (100+ 파일)
+- ACTUAL_WORKING_PROOF.md
+- ADDITIONAL_APIS_SUMMARY.md
+- ADDITIONAL_FREE_APIS.md
+- AI_COMPARISON_GUIDE.md
+- AI_DIAGNOSIS_REPORT.md
+- AI_FIX_SUMMARY.md
+- AI_SELF_EVALUATION.md
+- AI_SERVICE_DIAGNOSTICS.md
+- AI_SETUP.md
+- AI_SOLUTION_FEATURES.md
+- AI_TEST_GUIDE.md
+- AI_VS_CURSOR_COMPARISON.md
+- ALL_SERVICES_STATUS.md
+- API_FIX_SUMMARY.md
+- API_KEY_QUICK_SETUP.md
+- API_SETUP_COMPLETE.md
+- API_TEST_GUIDE.md
+- AUTONOMOUS_AI_GUIDE.md
+- BUILD_FIX.md
+- BUILD_TEST_RESULT.md
+- CHANGELOG.md
+- CHECK_GITHUB.md
+- CHECKLIST.md
+- CLEANUP_NON_WORKING.md
+- CLEANUP_PLAN.md
+- CLEANUP_STATUS.md
+- COMMUNITY_FEATURES_PLAN.md
+- COMMUNITY_IMPLEMENTATION_STATUS.md
+- COMPLETE_AI_IMPLEMENTATION.md
+- COMPLETE_AUTH_REQUIRED_SUMMARY.md
+- COMPLETE_FEATURES_LIST.md
+- COMPLETE_INTEGRATION_STATUS.md
+- COMPREHENSIVE_FREE_APIS.md
+- COMPREHENSIVE_SITE_REVIEW.md
+- COMPREHENSIVE_UPGRADE_PLAN.md
+- CONTENT_CREATION_GUIDE_FEATURE.md
+- CONTENT_GUIDE_UPGRADE_PLAN.md
+- CONTRIBUTING.md
+- CURRENT_AI_FEATURES.md
+- CURRENT_STATUS.md
+- DATABASE_MIGRATION_GUIDE.md
+- DATABASE_SETUP_INSTRUCTIONS.md
+- DEPLOY_SIMPLE.md
+- DEPLOY_TROUBLESHOOTING.md
+- DEPLOY.md
+- DEPLOYMENT_AND_NEXT_STEPS.md
+- DESIGN_AND_API_STATUS.md
+- DESIGN_SYSTEM_REDESIGN.md
+- DESIGN_SYSTEM.md
+- FEATURES_SUMMARY.md
+- FINAL_AI_COMPLETE.md
+- FINAL_CHECK.md
+- FINAL_COMPLETE_SUMMARY.md
+- FINAL_IMPLEMENTATION_STATUS.md
+- FINAL_IMPROVEMENT_CHECKLIST.md
+- FINAL_IMPROVEMENTS_SUMMARY.md
+- FINAL_REPORT.md
+- FINAL_SERVICE_CHECK.md
+- FINAL_STATUS_REPORT.md
+- FINAL_SUMMARY.md
+- FINAL_UPGRADE_SUMMARY.md
+- FINAL_WORKING_FEATURES.md
+- FIND_CONNECTION_STRING.md
+- FIX_ONEDRIVE_ISSUE.md
+- FIXES_AND_IMPROVEMENTS.md
+- FREE_AI_API_SOLUTIONS.md
+- FREE_AI_INTEGRATION_COMPLETE.md
+- FREE_AI_OPTIONS.md
+- FREE_AI_SERVICES_GUIDE.md
+- FREE_APIS_INTEGRATION_PLAN.md
+- FREE_APIS_RESEARCH.md
+- FREE_APIS_SETUP_GUIDE.md
+- GOOGLE_API_KEY_SETUP.md
+- GOOGLE_API_SEARCH_FIX.md
+- HOW_TO_HAVE_SPECIAL_AI.md
+- HOW_TO_TEST_AI.md
+- IMPLEMENTATION_CHECK.md
+- IMPLEMENTATION_PRIORITY.md
+- IMPLEMENTATION_STATUS.md
+- IMPROVEMENT_ROADMAP.md
+- IMPROVEMENTS_SUMMARY.md
+- INFINITE_AI_GUIDE.md
+- LATEST_TRENDS_IMPLEMENTATION.md
+- MISSING_FEATURES_AND_IMPROVEMENTS.md
+- MONETIZATION_STRATEGY.md
+- NETLIFY_API_FIX.md
+- NETLIFY_API_KEY_CHECK.md
+- NETLIFY_API_KEY_SETUP.md
+- NETLIFY_API_KEYS_SETUP.md
+- NEXT_STEPS.md
+- PEXELS_API_QUICK_FIX.md
+- PEXELS_API_SETUP.md
+- PHASE2_AUTH_COMPLETE.md
+- PHASE2_PAYMENT_COMPLETE.md
+- PHASE3_ADMIN_COMPLETE.md
+- PHASE4_TEMPLATE_EXPANSION_COMPLETE.md
+- PIXABAY_API_INTEGRATION.md
+- PRIORITY_IMPLEMENTATION_PLAN.md
+- PROGRESS_SUMMARY.md
+- PROJECT_CREATION_IMPROVEMENTS_COMPLETE.md
+- QUICK_DATABASE_SETUP.md
+- QUICK_START.md
+- README_DEPLOY.md
+- REAL_AI_SETUP.md
+- REAL_API_TEST.md
+- REDESIGN_SUMMARY.md
+- REMOTE_SOLUTION_FIX.md
+- REMOTE_SOLUTION_IMPROVEMENTS.md
+- RESPONSIVE_DESIGN_COMPLETE.md
+- RESPONSIVE_DESIGN_IMPROVEMENTS.md
+- REVOLUTIONARY_AI_GUIDE.md
+- SECURITY_CHECK.md
+- SECURITY.md
+- SELF_AI_IMPLEMENTATION.md
+- SERVICE_FIX_REPORT.md
+- SETUP_COMPLETE.md
+- SITE_REVIEW_AND_FIXES.md
+- SITE_REVIEW_COMPLETE.md
+- SITE_TESTING_CHECKLIST.md
+- SUPABASE_RLS_PRODUCTION.md
+- SUPABASE_SETUP_STEPS.md
+- TEST_CHECKLIST.md
+- UPGRADE_TO_100_POINTS.md
+- UPGRADE_TO_10000_POINTS.md
+- VERIFICATION.md
+- WORK_PROGRESS_SUMMARY.md
+- WORKING_FEATURES_FINAL.md
+- WORKING_FEATURES_ONLY.md
+- 계정 정보.txt
+
+### 2. 사용되지 않는 코드 파일
+- lib/openai.ts (Google Gemini만 사용)
+- lib/video-production.ts (사용 안 함)
+- app/api/audio/ (빈 폴더)
+- app/api/video/ (빈 폴더)
+- app/api/generate/ (빈 폴더)
+- app/test-ai/ (삭제된 페이지)
+
+### 3. 사용되지 않는 API 라우트
+- app/api/ai-benchmark/
+- app/api/ai-comparison/
+- app/api/ai-debug/
+- app/api/ai-diagnostics/
+- app/api/ai-process/
+- app/api/infinite-ai/
+- app/api/real-ai/
+- app/api/revolutionary/
+- app/api/test/
+- app/api/test-api/
+
+### 4. 사용되지 않는 라이브러리 파일
+- lib/ai-benchmark.ts
+- lib/ai-comparison-new.ts
+- lib/ai-comparison.ts
+- lib/autonomous-ai.ts
+- lib/elite-investment-system.ts
+- lib/enhanced-ai-engine.ts
+- lib/expert-ai.ts
+- lib/infinite-ai.ts
+- lib/revolutionary-ai.ts
+- lib/virtual-trading.ts
+
+### 5. 사용되지 않는 페이지
+- app/admin/investment/
+- app/admin/elite-investment/
+- app/test-ai/ (이미 삭제됨)

@@ -19,6 +19,11 @@
 **이메일**: `admin@freeshell.co.kr`  
 **비밀번호**: `Admin123!@#`
 
+### 테스트 계정
+
+**이메일**: `test@freeshell.co.kr`  
+**비밀번호**: `Test123!@#`
+
 ⚠️ **중요**: 프로덕션 환경에서는 반드시 비밀번호를 변경하세요!
 
 ### 비밀번호 변경 방법
@@ -27,6 +32,8 @@
    ```env
    ADMIN_EMAIL=your-admin-email@freeshell.co.kr
    ADMIN_PASSWORD=your-secure-password
+   TEST_EMAIL=your-test-email@freeshell.co.kr
+   TEST_PASSWORD=your-test-password
    ```
 
 2. 비밀번호는 다음 조건을 만족해야 합니다:

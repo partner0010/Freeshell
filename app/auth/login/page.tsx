@@ -3,10 +3,10 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogIn, Mail, Lock, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
+import { LogIn, Mail, Lock, Loader2, AlertCircle, ArrowRight, AlertTriangle, UserPlus } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -16,6 +16,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [requireSignup, setRequireSignup] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('requireSignup') === 'true') {
+      setRequireSignup(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +74,28 @@ export default function LoginPage() {
                 계정에 로그인하여 계속하세요
               </p>
             </div>
+
+            {/* 회원가입 필수 안내 */}
+            {requireSignup && (
+              <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-xl text-blue-800">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold mb-1">회원가입이 필요합니다</p>
+                    <p className="text-sm mb-3">
+                      이 기능을 사용하려면 회원가입이 필요합니다. 모든 기능은 무료로 이용할 수 있습니다.
+                    </p>
+                    <Link
+                      href="/auth/signup"
+                      className="inline-flex items-center gap-2 text-sm font-medium text-blue-700 hover:text-blue-900 underline"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      회원가입하러 가기
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* 에러 메시지 */}
             {error && (

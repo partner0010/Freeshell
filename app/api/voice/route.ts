@@ -25,9 +25,10 @@ export async function POST(request: NextRequest) {
     });
 
     // 전화번호 형식 검증
+    const sanitizedPhone = phoneValidation.sanitized || phoneNumber || '';
     if (phoneValidation.valid) {
       const phonePattern = /^[0-9+\-\s()]+$/;
-      if (!phonePattern.test(phoneValidation.sanitized)) {
+      if (!phonePattern.test(sanitizedPhone)) {
         return NextResponse.json(
           { error: '올바른 전화번호 형식이 아닙니다.' },
           { status: 400 }
@@ -48,6 +49,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const sanitizedPurpose = purposeValidation.sanitized || purpose || '';
+
     // 스크립트 검증 (선택적)
     let sanitizedScript = '';
     if (script) {
@@ -61,7 +64,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      sanitizedScript = scriptValidation.sanitized;
+      sanitizedScript = scriptValidation.sanitized || script || '';
     }
 
     // 실제 구현 시 음성 합성 API (예: ElevenLabs, Google TTS) 사용
@@ -69,10 +72,10 @@ export async function POST(request: NextRequest) {
 
     const response = {
       callId: `call_${Date.now()}`,
-      phoneNumber: phoneValidation.sanitized,
-      purpose: purposeValidation.sanitized,
+      phoneNumber: sanitizedPhone,
+      purpose: sanitizedPurpose,
       status: 'scheduled',
-      script: sanitizedScript || `${purposeValidation.sanitized}에 대한 전화 통화 스크립트가 생성되었습니다.`,
+      script: sanitizedScript || `${sanitizedPurpose}에 대한 전화 통화 스크립트가 생성되었습니다.`,
       estimatedDuration: '5분',
       scheduledAt: new Date().toISOString(),
       voiceSettings: {

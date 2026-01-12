@@ -165,20 +165,47 @@ export async function generateLocalAI(prompt: string): Promise<LocalAIResponse> 
     }
   }
   
-  // 3순위: Hugging Face (무료, API 키 있으면 더 좋음)
+  // 3순위: 완전 무료 AI 서비스 (API 키 없이도 작동)
+  try {
+    const { generateWithFreeAI } = await import('@/lib/free-ai-services');
+    const freeAIResult = await generateWithFreeAI(prompt);
+    
+    if (freeAIResult.success && freeAIResult.text && !freeAIResult.text.includes('기본 AI')) {
+      console.log('[LocalAI] ✅ 완전 무료 AI 서비스 성공:', {
+        source: freeAIResult.source,
+        requiresApiKey: freeAIResult.requiresApiKey,
+      });
+      return {
+        text: freeAIResult.text,
+        source: freeAIResult.source as any,
+        success: true,
+        responseTime: freeAIResult.responseTime,
+      };
+    }
+  } catch (error) {
+    console.warn('[LocalAI] 완전 무료 AI 서비스 실패, 다음 옵션 시도:', error);
+  }
+
+  // 4순위: Hugging Face (API 키 있으면 사용)
   const hfKey = process.env.HUGGINGFACE_API_KEY;
   if (hfKey && hfKey.trim() !== '') {
     try {
-      // 텍스트 생성 모델 사용
+      // 더 나은 텍스트 생성 모델 사용
       const response = await fetch(
-        'https://api-inference.huggingface.co/models/gpt2',
+        'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium',
         {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${hfKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ inputs: prompt, parameters: { max_length: 200 } }),
+          body: JSON.stringify({ 
+            inputs: prompt, 
+            parameters: { 
+              max_length: 200,
+              temperature: 0.7,
+            } 
+          }),
         }
       );
       

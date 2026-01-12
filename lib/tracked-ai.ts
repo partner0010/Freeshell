@@ -282,7 +282,11 @@ const text = data.candidates?.[0]?.content?.parts?.[0]?.text;`,
           );
           
           if (text && !text.includes('시뮬레이션') && !text.includes('API 키를 설정') && !isTemplateResponse) {
-            console.log('[TrackedAI] ✅ 유효한 Gemini API 응답 사용');
+            console.log('[TrackedAI] ✅ 유효한 Gemini API 응답 사용:', {
+              textLength: text.length,
+              responseTime: apiResponseTime,
+              hasApiKey: !!geminiKey,
+            });
             processTracker.addAPICall(processId, 'Google Gemini', true, apiResponseTime);
             
             // API 응답 처리 완료 업데이트
@@ -292,6 +296,7 @@ const text = data.candidates?.[0]?.content?.parts?.[0]?.text;`,
                 responseLength: text.length,
                 responseTime: apiResponseTime,
                 apiCallEnd: new Date().toISOString(),
+                isRealApiCall: true, // 실제 API 호출 표시
               },
             });
             
@@ -412,8 +417,11 @@ return finalResponse;`,
             };
           } else {
             const reason = isTemplateResponse ? 'Template response detected' : 'Empty or invalid response';
-            console.warn('[TrackedAI] ❌ Gemini API 응답 거부:', reason, {
+            console.warn('[TrackedAI] ❌ Gemini API 응답 거부:', {
+              reason,
+              hasText: !!text,
               textLength: text?.length || 0,
+              isTemplate: isTemplateResponse,
               textPreview: text?.substring(0, 100) || '없음',
             });
             processTracker.addAPICall(processId, 'Google Gemini', false, apiResponseTime, reason);
@@ -434,6 +442,35 @@ return finalResponse;`,
           hasApiKey: !!geminiKey,
         });
         processTracker.addAPICall(processId, 'Google Gemini', false, 0, error.message);
+      }
+    } else {
+      // API 키가 없을 때 완전 무료 AI 서비스 시도
+      console.log('[TrackedAI] API 키 없음, 완전 무료 AI 서비스 시도');
+      try {
+        const { generateWithFreeAI } = await import('@/lib/free-ai-services');
+        const freeAIResult = await generateWithFreeAI(prompt);
+        
+        if (freeAIResult.success && freeAIResult.text && !freeAIResult.text.includes('기본 AI')) {
+          console.log('[TrackedAI] ✅ 완전 무료 AI 서비스 성공:', {
+            source: freeAIResult.source,
+            requiresApiKey: freeAIResult.requiresApiKey,
+          });
+          
+          processTracker.addAPICall(processId, freeAIResult.source, true, freeAIResult.responseTime);
+          
+          processTracker.finalize(processId, freeAIResult.text);
+          
+          return {
+            text: freeAIResult.text,
+            processId,
+            process: processTracker.getProcess(processId)!,
+            source: freeAIResult.source,
+            success: true,
+            responseTime: Date.now() - startTime,
+          };
+        }
+      } catch (error) {
+        console.warn('[TrackedAI] 완전 무료 AI 서비스 실패:', error);
       }
     }
 

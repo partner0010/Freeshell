@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const parsedBody = JSON.parse(jsonValidation.sanitized);
+    const sanitizedJson = jsonValidation.sanitized || JSON.stringify(body);
+    const parsedBody = JSON.parse(sanitizedJson);
     const { modelId, prompt, useMultiple } = parsedBody;
 
     // 개별 필드 검증
@@ -77,8 +78,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sanitizedModelId = modelIdValidation.sanitized;
-    const sanitizedPrompt = promptValidation.sanitized;
+    const sanitizedModelId = modelIdValidation.sanitized || modelId || '';
+    const sanitizedPrompt = promptValidation.sanitized || prompt || '';
 
     if (useMultiple && Array.isArray(sanitizedModelId)) {
       // 여러 모델 동시 사용

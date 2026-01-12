@@ -1,42 +1,43 @@
+/**
+ * 스켈레톤 로더 컴포넌트
+ * 로딩 상태를 위한 스켈레톤 UI
+ */
 'use client';
 
-import { motion } from 'framer-motion';
-
-export function SkeletonCard() {
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 animate-pulse">
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-    </div>
-  );
+interface SkeletonLoaderProps {
+  variant?: 'text' | 'card' | 'circle' | 'rect';
+  width?: string;
+  height?: string;
+  className?: string;
+  count?: number;
 }
 
-export function SkeletonSearch() {
-  return (
-    <div className="space-y-4">
-      <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
-        ))}
-      </div>
-    </div>
-  );
-}
+export default function SkeletonLoader({
+  variant = 'rect',
+  width,
+  height,
+  className = '',
+  count = 1,
+}: SkeletonLoaderProps) {
+  const baseClasses = 'skeleton rounded';
 
-export function SkeletonText({ lines = 3 }: { lines?: number }) {
-  return (
-    <div className="space-y-2">
-      {Array.from({ length: lines }).map((_, i) => (
-        <div
-          key={i}
-          className={`h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse ${
-            i === lines - 1 ? 'w-3/4' : 'w-full'
-          }`}
-        />
-      ))}
-    </div>
-  );
-}
+  const variantClasses = {
+    text: 'h-4',
+    card: 'h-48',
+    circle: 'rounded-full',
+    rect: '',
+  };
 
+  const items = Array.from({ length: count }, (_, i) => (
+    <div
+      key={i}
+      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+      style={{
+        width: width || (variant === 'circle' ? height : '100%'),
+        height: height || (variant === 'circle' ? width : undefined),
+      }}
+    />
+  ));
+
+  return <>{items}</>;
+}

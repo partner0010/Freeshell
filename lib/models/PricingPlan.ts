@@ -65,11 +65,11 @@ export const PRICING_PLANS: Record<PlanType, PricingPlan> = {
     },
     features: {
       contentCreation: {
-        maxProjects: 3,
-        maxStepsPerProject: 3, // PLAN, STRUCTURE, DRAFT까지만
-        platformConversion: false,
-        premiumAIModels: false,
-        contentTemplates: 5,
+        maxProjects: -1, // 무제한
+        maxStepsPerProject: 5, // 모든 단계
+        platformConversion: true, // 무료 사용 가능
+        premiumAIModels: true, // 무료 사용 가능
+        contentTemplates: -1, // 무제한
       },
       adminTools: {
         electronicSignature: false,
