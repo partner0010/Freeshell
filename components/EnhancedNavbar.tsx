@@ -16,6 +16,7 @@ export default function EnhancedNavbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
@@ -25,8 +26,14 @@ export default function EnhancedNavbar() {
       setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      // 컴포넌트 언마운트 시 타임아웃 정리
+      if (dropdownTimeout) {
+        clearTimeout(dropdownTimeout);
+      }
+    };
+  }, [dropdownTimeout]);
 
   const navLinks = [
     { 
@@ -101,8 +108,23 @@ export default function EnhancedNavbar() {
                   <div
                     key={link.label}
                     className="relative"
-                    onMouseEnter={() => setActiveDropdown(link.label)}
-                    onMouseLeave={() => setActiveDropdown(null)}
+                    onMouseEnter={() => {
+                      // 기존 타임아웃 취소
+                      if (dropdownTimeout) {
+                        clearTimeout(dropdownTimeout);
+                        setDropdownTimeout(null);
+                      }
+                      // 즉시 드롭다운 표시
+                      setActiveDropdown(link.label);
+                    }}
+                    onMouseLeave={() => {
+                      // 약간의 지연 후 드롭다운 숨김 (마우스 이동 시간 확보)
+                      const timeout = setTimeout(() => {
+                        setActiveDropdown(null);
+                        setDropdownTimeout(null);
+                      }, 200); // 200ms 지연
+                      setDropdownTimeout(timeout);
+                    }}
                   >
                     <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 hover:text-purple-600 transition-all rounded-lg hover:bg-purple-50 whitespace-nowrap group">
                       <link.icon className="w-4 h-4 group-hover:rotate-12 transition-transform" />
@@ -110,16 +132,39 @@ export default function EnhancedNavbar() {
                       <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === link.label ? 'rotate-180' : ''}`} />
                     </button>
                     {activeDropdown === link.label && (
-                      <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200/50 backdrop-blur-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                        {link.dropdown.map((item) => (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            className="block px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors border-b border-gray-100 last:border-0"
-                          >
-                            {item.label}
-                          </Link>
-                        ))}
+                      <div 
+                        className="absolute top-full left-0 pt-2 w-56 z-50"
+                        onMouseEnter={() => {
+                          // 서브메뉴 위에 마우스가 있으면 타임아웃 취소
+                          if (dropdownTimeout) {
+                            clearTimeout(dropdownTimeout);
+                            setDropdownTimeout(null);
+                          }
+                          setActiveDropdown(link.label);
+                        }}
+                        onMouseLeave={() => {
+                          // 서브메뉴를 벗어나면 약간의 지연 후 숨김
+                          const timeout = setTimeout(() => {
+                            setActiveDropdown(null);
+                            setDropdownTimeout(null);
+                          }, 200);
+                          setDropdownTimeout(timeout);
+                        }}
+                      >
+                        {/* 보이지 않는 브릿지 영역 (메인 메뉴와 서브메뉴 사이 간격 채우기) */}
+                        <div className="absolute top-0 left-0 right-0 h-2 -mt-2" />
+                        {/* 실제 서브메뉴 */}
+                        <div className="bg-white rounded-xl shadow-2xl border border-gray-200/50 backdrop-blur-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                          {link.dropdown.map((item) => (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              className="block px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors border-b border-gray-100 last:border-0"
+                            >
+                              {item.label}
+                            </Link>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

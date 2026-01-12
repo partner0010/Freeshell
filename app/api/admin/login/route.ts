@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateInput } from '@/lib/security/input-validation';
 import { rateLimitCheck } from '@/lib/security/rate-limit';
-import { getSecureEnv } from '@/lib/security/env-security';
+import { cookies } from 'next/headers';
+import { loginUser } from '@/lib/security/auth-enhanced';
 
 /**
  * 관리자 로그인 API
@@ -43,38 +44,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 관리자 계정 (환경 변수에서 가져오거나 기본값 사용)
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@freeshell.co.kr';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!@#';
+    // auth-enhanced의 loginUser 사용 (관리자 계정도 일반 로그인과 동일하게 처리)
+    const sanitizedEmail = emailValidation.sanitized!;
+    const sanitizedPassword = passwordValidation.sanitized!;
     
-    // 테스트 계정 (환경 변수에서 가져오거나 기본값 사용)
-    const testEmail = process.env.TEST_EMAIL || 'test@freeshell.co.kr';
-    const testPassword = process.env.TEST_PASSWORD || 'Test123!@#';
+    const result = await loginUser(sanitizedEmail, sanitizedPassword, request);
 
-    // 실제로는 bcrypt로 해시된 비밀번호와 비교해야 하지만, 여기서는 간단히 비교
-    // 프로덕션에서는 반드시 해시된 비밀번호 사용
-    const sanitizedEmail = emailValidation.sanitized;
-    const sanitizedPassword = passwordValidation.sanitized;
-    
-    const isAdmin = sanitizedEmail === adminEmail && sanitizedPassword === adminPassword;
-    const isTest = sanitizedEmail === testEmail && sanitizedPassword === testPassword;
-
-    if (isAdmin || isTest) {
-      // 간단한 토큰 생성 (실제로는 JWT 사용 권장)
-      const token = Buffer.from(`${sanitizedEmail}:${Date.now()}`).toString('base64');
-      
-      return NextResponse.json({
-        success: true,
-        token,
-        message: '로그인 성공',
-        role: isAdmin ? 'admin' : 'test',
-      });
-    } else {
+    if (!result.success) {
       return NextResponse.json(
-        { error: '이메일 또는 비밀번호가 올바르지 않습니다.' },
+        { error: result.error || '이메일 또는 비밀번호가 올바르지 않습니다.' },
         { status: 401 }
       );
     }
+
+    // 세션 쿠키 설정
+    const cookieStore = await cookies();
+    cookieStore.set('session', result.token!, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60, // 7일
+      path: '/',
+    });
+    
+    return NextResponse.json({
+      success: true,
+      token: result.token,
+      message: '로그인 성공',
+    });
   } catch (error: any) {
     console.error('Admin login error:', error);
     return NextResponse.json(

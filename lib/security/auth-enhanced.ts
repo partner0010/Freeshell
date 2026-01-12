@@ -30,8 +30,62 @@ interface User {
 }
 
 // 실제로는 데이터베이스 사용
+// 서버 사이드에서 사용할 수 있는 영구 저장소 (파일 기반 또는 DB)
 let users: Map<string, User> = new Map();
 let loginAttempts: Map<string, { count: number; lockedUntil?: Date }> = new Map();
+
+// 초기화 플래그
+let adminAccountsInitialized = false;
+
+// 초기화 시 관리자 계정 생성 (지연 초기화)
+async function initializeAdminAccounts() {
+  if (adminAccountsInitialized) return;
+  
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@freeshell.co.kr';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!@#';
+  const testEmail = process.env.TEST_EMAIL || 'test@freeshell.co.kr';
+  const testPassword = process.env.TEST_PASSWORD || 'Test123!@#';
+
+  // 관리자 계정이 없으면 생성
+  const existingAdmin = Array.from(users.values()).find(u => u.email === adminEmail);
+  if (!existingAdmin) {
+    const adminPasswordHash = await hash(adminPassword, SALT_ROUNDS);
+    const adminUser: User = {
+      id: 'admin',
+      email: adminEmail,
+      passwordHash: adminPasswordHash,
+      name: '관리자',
+      role: 'admin',
+      emailVerified: true,
+      createdAt: new Date(),
+      loginAttempts: 0,
+      twoFactorEnabled: false,
+    };
+    users.set('admin', adminUser);
+    console.log('[Auth] 관리자 계정 초기화 완료:', adminEmail);
+  }
+
+  // 테스트 계정이 없으면 생성
+  const existingTest = Array.from(users.values()).find(u => u.email === testEmail);
+  if (!existingTest) {
+    const testPasswordHash = await hash(testPassword, SALT_ROUNDS);
+    const testUser: User = {
+      id: 'test',
+      email: testEmail,
+      passwordHash: testPasswordHash,
+      name: '테스트',
+      role: 'admin',
+      emailVerified: true,
+      createdAt: new Date(),
+      loginAttempts: 0,
+      twoFactorEnabled: false,
+    };
+    users.set('test', testUser);
+    console.log('[Auth] 테스트 계정 초기화 완료:', testEmail);
+  }
+
+  adminAccountsInitialized = true;
+}
 
 export async function registerUser(
   email: string,
@@ -40,6 +94,9 @@ export async function registerUser(
   request: NextRequest
 ): Promise<{ success: boolean; error?: string; userId?: string }> {
   try {
+    // 관리자 계정 초기화 (지연 초기화)
+    await initializeAdminAccounts();
+
     // Rate limiting
     const rateLimit = await rateLimitCheck(request, 5, 60000);
     if (!rateLimit.allowed) {
@@ -116,6 +173,9 @@ export async function loginUser(
   request: NextRequest
 ): Promise<{ success: boolean; error?: string; token?: string }> {
   try {
+    // 관리자 계정 초기화 (지연 초기화)
+    await initializeAdminAccounts();
+
     // Rate limiting
     const rateLimit = await rateLimitCheck(request, 10, 60000);
     if (!rateLimit.allowed) {
