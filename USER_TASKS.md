@@ -99,8 +99,8 @@ ollama list
 `.env.local` 파일에 추가:
 
 ```env
-# Groq API (이미 설정됨)
-GROQ_API_KEY=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
+# Groq API (환경 변수에 설정 필요)
+GROQ_API_KEY=your_groq_api_key_here
 
 # Ollama URL (기본값 사용 시 불필요)
 OLLAMA_URL=http://localhost:11434

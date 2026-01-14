@@ -41,9 +41,9 @@ Shell이 완전 무료 AI 우선 구조로 전환되었습니다. 이제 모든 
 
 #### 1. Groq API (가장 빠르고 무료)
 ```env
-GROQ_API_KEY=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
+GROQ_API_KEY=your_groq_api_key_here
 ```
-또는 https://console.groq.com/ 에서 새 API 키 발급
+https://console.groq.com/ 에서 새 API 키 발급
 
 #### 2. Ollama 설치 (완전 무료, 로컬 실행)
 ```bash

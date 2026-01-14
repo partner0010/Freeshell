@@ -20,9 +20,9 @@ export async function generateWithFreeAI(prompt: string): Promise<FreeAIResponse
   const startTime = Date.now();
 
   // 1순위: Groq API (무료 티어, 매우 빠름, 최고 품질) ⚡
-  // 제공된 API 키 또는 환경 변수 사용
+  // 환경 변수에서 API 키 사용 (필수)
   try {
-    const groqKey = process.env.GROQ_API_KEY || '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';
+    const groqKey = process.env.GROQ_API_KEY;
     if (groqKey && groqKey.trim() !== '') {
       const groqResponse = await tryGroqFree(prompt, groqKey);
       if (groqResponse.success) {

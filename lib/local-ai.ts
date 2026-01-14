@@ -131,8 +131,8 @@ export async function generateLocalAI(prompt: string): Promise<LocalAIResponse> 
   }
   
   // 1순위: Groq API (무료 티어, 매우 빠름, 최고 품질) ⚡
-  // 제공된 API 키 또는 환경 변수 사용
-  const groqKey = process.env.GROQ_API_KEY || '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';
+  // 환경 변수에서 API 키 사용 (필수)
+  const groqKey = process.env.GROQ_API_KEY;
   if (groqKey && groqKey.trim() !== '') {
     try {
       // 여러 모델 시도 (가장 좋은 모델부터)
