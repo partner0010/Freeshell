@@ -187,9 +187,42 @@ const response = await fetch(apiUrl, {
       }
     }
 
-    // Google Gemini API 시도
+    // 🆓 무료 우선 전략: 완전 무료 AI 서비스를 먼저 시도
+    // Groq > Ollama > Together > OpenRouter > HuggingFace > Google Gemini
+    let aiResponse = '';
+    let aiSource = 'fallback';
+    let apiResponseTime = 0;
+    
+    try {
+      const { generateWithFreeAI } = await import('@/lib/free-ai-services');
+      
+      // 최적화된 프롬프트 생성 (웹 검색 결과 포함)
+      let finalPrompt = generateOptimizedPrompt(prompt, questionType, requiredInfo);
+      
+      // 웹 검색 결과가 있으면 프롬프트에 추가
+      if (webKnowledge) {
+        finalPrompt = `다음은 웹에서 검색한 최신 정보입니다:\n\n${webKnowledge}\n\n---\n\n위 정보를 참고하여 다음 질문에 대해 전문가(교수/박사) 수준의 상세하고 정확한 답변을 제공해주세요:\n\n${finalPrompt}`;
+      } else {
+        // 전문가 수준의 답변 요청
+        finalPrompt = `당신은 해당 분야의 전문가(교수/박사)입니다. 다음 질문에 대해 상세하고 정확한 답변을 제공해주세요. 일반적인 설명이 아닌 전문가 수준의 깊이 있는 내용을 포함해주세요:\n\n${finalPrompt}`;
+      }
+      
+      const apiStartTime = Date.now();
+      const freeAIResult = await generateWithFreeAI(finalPrompt);
+      apiResponseTime = Date.now() - apiStartTime;
+      
+      if (freeAIResult.success && freeAIResult.text && freeAIResult.text.trim()) {
+        aiResponse = freeAIResult.text;
+        aiSource = freeAIResult.source;
+        console.log(`[TrackedAI] ✅ 무료 AI 성공 (소스: ${freeAIResult.source})`);
+      }
+    } catch (error) {
+      console.warn('[TrackedAI] 무료 AI 실패, Google Gemini 시도:', error);
+    }
+    
+    // Google Gemini API 시도 (백업용, 무료 AI가 실패한 경우에만)
     const geminiKey = process.env.GOOGLE_API_KEY;
-    if (geminiKey && geminiKey.trim() !== '') {
+    if (!aiResponse && geminiKey && geminiKey.trim() !== '') {
       try {
         const apiStartTime = Date.now();
         // 최적화된 프롬프트 생성 (웹 검색 결과 포함)

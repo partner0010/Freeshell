@@ -1,0 +1,81 @@
+{
+  "motion_data_schema": {
+    "image_path": "string (required)",
+    "duration": "float (required, 1.0-60.0)",
+    "expressions": [
+      {
+        "type": "enum (happy, sad, angry, surprised, neutral, excited, calm)",
+        "intensity": "float (0.0-1.0)",
+        "duration": "float (seconds)",
+        "start_time": "float (seconds)"
+      }
+    ],
+    "eye": {
+      "blink_interval": "float (seconds, default: 3.0)",
+      "blink_duration": "float (seconds, default: 0.15)",
+      "gaze_direction": [0.0, 0.0],
+      "gaze_duration": "float (seconds)"
+    },
+    "breath": {
+      "cycle_duration": "float (seconds, default: 3.0)",
+      "intensity": "float (0.0-1.0, default: 0.02)",
+      "start_phase": "float (0.0-1.0, default: 0.0)"
+    },
+    "head": {
+      "nod_enabled": "boolean",
+      "shake_enabled": "boolean",
+      "tilt_angle": "float (degrees)",
+      "rotation_speed": "float (0.0-1.0)",
+      "duration": "float (seconds)"
+    },
+    "body": {
+      "sway_enabled": "boolean",
+      "bounce_enabled": "boolean",
+      "intensity": "float (0.0-1.0)",
+      "frequency": "float (Hz)"
+    },
+    "lip_sync": {
+      "phonemes": [
+        [0.0, "A"]
+      ],
+      "viseme_map": {
+        "A": "open",
+        "E": "open",
+        "I": "smile",
+        "O": "round",
+        "U": "pucker",
+        "M": "closed"
+      }
+    }
+  },
+  "example": {
+    "image_path": "character.jpg",
+    "duration": 5.0,
+    "expressions": [
+      {
+        "type": "happy",
+        "intensity": 0.8,
+        "duration": 5.0,
+        "start_time": 0.0
+      }
+    ],
+    "eye": {
+      "blink_interval": 3.0,
+      "blink_duration": 0.15,
+      "gaze_direction": [0.0, 0.0],
+      "gaze_duration": 2.0
+    },
+    "breath": {
+      "cycle_duration": 3.0,
+      "intensity": 0.02,
+      "start_phase": 0.0
+    },
+    "head": {
+      "nod_enabled": true,
+      "shake_enabled": false,
+      "tilt_angle": 0.0,
+      "rotation_speed": 0.5,
+      "duration": 1.0
+    }
+  }
+}

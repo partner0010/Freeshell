@@ -29,7 +29,7 @@ export default function PricingSuccessPage() {
 
     // 결제 확인
     verifyPayment();
-  }, [sessionId]);
+  }, [sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const verifyPayment = async () => {
     try {

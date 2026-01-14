@@ -7,6 +7,7 @@
 import { useState, useEffect } from 'react';
 import { Code, Eye, Save, Download, FileText, Sparkles, RefreshCw, Package, Monitor, Smartphone, Tablet, BookOpen, History, Bug, HelpCircle, FileCheck, X, Users, Cloud, Layout } from 'lucide-react';
 import EnhancedCodeEditor from './EnhancedCodeEditor';
+import MonacoCodeEditor from './MonacoCodeEditor';
 import RichTextEditor from './RichTextEditor';
 import ComponentLibrary from './ComponentLibrary';
 import ResponsivePreview from './ResponsivePreview';
@@ -19,6 +20,7 @@ import ProjectReview from './ProjectReview';
 import AIRecommendation from './AIRecommendation';
 import AutoFeatureAdder from './AutoFeatureAdder';
 import Navbar from './Navbar';
+import SimpleAIChatPanel from './SimpleAIChatPanel';
 
 interface WebsiteEditorProps {
   initialFiles?: Array<{ name: string; type: string; content: string }>;
@@ -27,7 +29,7 @@ interface WebsiteEditorProps {
   onDownload?: (files: Array<{ name: string; type: string; content: string }>) => void;
 }
 
-type EditorMode = 'code' | 'visual';
+type EditorMode = 'code' | 'visual' | 'monaco';
 
 export default function WebsiteEditor({ initialFiles = [], initialTemplateId, onSave, onDownload }: WebsiteEditorProps) {
   const [files, setFiles] = useState<Array<{ name: string; type: string; content: string }>>(initialFiles);
@@ -49,6 +51,7 @@ export default function WebsiteEditor({ initialFiles = [], initialTemplateId, on
   const [showCloudStorage, setShowCloudStorage] = useState(false);
   const [showCommunitySnippets, setShowCommunitySnippets] = useState(false);
   const [showBlockEditor, setShowBlockEditor] = useState(false);
+  const [showAIChat, setShowAIChat] = useState(false);
   const [roomId] = useState(`room_${Date.now()}`);
   const [userId] = useState(`user_${Date.now()}`);
   const [userName] = useState('User');
@@ -560,8 +563,16 @@ h1 {
         )}
 
         {/* 에디터 영역 */}
-        <div className={`flex-1 ${showPreview ? 'w-1/2' : 'w-full'} transition-all`}>
-          {editorMode === 'code' ? (
+        <div className={`flex-1 ${showPreview || showAIChat ? 'w-1/2' : 'w-full'} transition-all`}>
+          {editorMode === 'monaco' ? (
+            <MonacoCodeEditor
+              files={files}
+              onFilesChange={handleFilesChange}
+              onPreview={handlePreview}
+              onCursorChange={setCursorPosition}
+              onFileChange={setCurrentFileIndex}
+            />
+          ) : editorMode === 'code' ? (
             <EnhancedCodeEditor
               files={files}
               onFilesChange={handleFilesChange}
@@ -589,8 +600,20 @@ h1 {
           )}
         </div>
 
+        {/* AI 튜터 패널 */}
+        {showAIChat && (
+          <div className="w-1/2 h-full">
+            <SimpleAIChatPanel
+              code={files[currentFileIndex]?.content || ''}
+              language={files[currentFileIndex]?.type || 'javascript'}
+              fileName={files[currentFileIndex]?.name || 'code'}
+              onClose={() => setShowAIChat(false)}
+            />
+          </div>
+        )}
+
         {/* 미리보기 영역 */}
-        {showPreview && (
+        {showPreview && !showAIChat && (
           <div className="w-1/2">
             <ResponsivePreview html={previewHtml} />
           </div>

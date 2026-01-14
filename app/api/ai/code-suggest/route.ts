@@ -44,8 +44,15 @@ export async function POST(request: NextRequest) {
 
     const sanitizedCode = validation.sanitized || code || '';
 
-    // AI 코드 분석 프롬프트
-    const analysisPrompt = `당신은 전문 코드 리뷰어입니다. 다음 ${language} 코드를 분석하여 개선 제안을 해주세요.
+    // System Prompt 적용 (코드 편집 전용)
+    const { getSystemPrompt } = await import('@/lib/services/ai-prompt-manager');
+    const systemPrompt = getSystemPrompt('code-editor');
+    
+    // AI 코드 분석 프롬프트 (Diff 형식 강제)
+    const analysisPrompt = `${systemPrompt}
+
+## 현재 작업
+다음 ${language} 코드를 분석하여 개선 제안을 해주세요.
 
 파일명: ${fileName}
 코드:
@@ -53,7 +60,7 @@ export async function POST(request: NextRequest) {
 ${sanitizedCode.substring(0, 10000)}
 \`\`\`
 
-다음 항목을 분석해주세요:
+## 분석 항목
 1. 버그 및 잠재적 오류
 2. 성능 최적화 기회
 3. 코드 품질 개선 사항
@@ -61,22 +68,30 @@ ${sanitizedCode.substring(0, 10000)}
 5. 디자인/UI 개선 제안
 6. 모범 사례 준수 여부
 
+## 응답 형식
 다음 JSON 형식으로 응답해주세요:
 {
   "suggestions": [
     {
       "type": "bug|optimization|improvement|design",
       "message": "제안 내용 (한국어로 설명)",
-      "code": "개선된 코드 (선택사항)",
+      "diff": "diff 형식 코드 (필수)",
       "line": 줄번호 (선택사항),
-      "severity": "high|medium|low"
+      "severity": "high|medium|low",
+      "reason": "수정 이유"
     }
   ]
 }
 
-중요:
+## 중요 규칙
+- **절대 전체 코드를 제공하지 마세요**
+- **반드시 diff 형식으로만 수정을 제안하세요**
+- diff 형식 예시:
+\`\`\`diff
+- 기존 코드 라인
++ 수정된 코드 라인
+\`\`\`
 - 실용적이고 구체적인 제안만 제공
-- 코드가 이미 좋으면 제안을 적게 제공
 - 각 제안은 명확하고 실행 가능해야 함`;
 
     let suggestions: any[] = [];
@@ -109,6 +124,18 @@ ${sanitizedCode.substring(0, 10000)}
               if (jsonMatch) {
                 const parsed = JSON.parse(jsonMatch[0]);
                 suggestions = parsed.suggestions || [];
+                
+                // Diff 추출 및 검증
+                const { extractDiffFromAIResponse } = await import('@/lib/services/diff-manager');
+                for (const suggestion of suggestions) {
+                  if (suggestion.diff) {
+                    const diffs = extractDiffFromAIResponse(suggestion.diff);
+                    if (diffs) {
+                      suggestion.diffs = diffs;
+                      suggestion.hasDiff = true;
+                    }
+                  }
+                }
               }
             } catch (error) {
               console.warn('JSON 파싱 실패:', error);
@@ -130,6 +157,18 @@ ${sanitizedCode.substring(0, 10000)}
             if (jsonMatch) {
               const parsed = JSON.parse(jsonMatch[0]);
               suggestions = parsed.suggestions || [];
+              
+              // Diff 추출 및 검증
+              const { extractDiffFromAIResponse } = await import('@/lib/services/diff-manager');
+              for (const suggestion of suggestions) {
+                if (suggestion.diff) {
+                  const diffs = extractDiffFromAIResponse(suggestion.diff);
+                  if (diffs) {
+                    suggestion.diffs = diffs;
+                    suggestion.hasDiff = true;
+                  }
+                }
+              }
             }
           } catch (error) {
             console.warn('JSON 파싱 실패:', error);

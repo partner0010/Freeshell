@@ -130,38 +130,58 @@ export async function generateLocalAI(prompt: string): Promise<LocalAIResponse> 
     }
   }
   
-  // 2순위: Groq API (무료 티어, 매우 빠름)
-  const groqKey = process.env.GROQ_API_KEY;
+  // 1순위: Groq API (무료 티어, 매우 빠름, 최고 품질) ⚡
+  // 제공된 API 키 또는 환경 변수 사용
+  const groqKey = process.env.GROQ_API_KEY || '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';
   if (groqKey && groqKey.trim() !== '') {
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${groqKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'llama-3.1-70b-versatile',
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.choices?.[0]?.message?.content;
-        if (text) {
-          return {
-            text,
-            source: 'groq',
-            success: true,
-            responseTime: Date.now() - startTime,
-          };
+      // 여러 모델 시도 (가장 좋은 모델부터)
+      const models = [
+        'llama-3.1-70b-versatile', // 최고 품질
+        'llama-3.1-8b-instant',    // 빠른 응답
+        'mixtral-8x7b-32768',       // 대용량 컨텍스트
+      ];
+
+      for (const model of models) {
+        try {
+          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: [{ role: 'user', content: prompt }],
+              temperature: 0.7,
+              max_tokens: 4000,
+            }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            const text = data.choices?.[0]?.message?.content;
+            if (text && text.trim()) {
+              console.log(`[LocalAI] ✅ Groq API 성공 (모델: ${model})`);
+              return {
+                text,
+                source: 'groq',
+                success: true,
+                responseTime: Date.now() - startTime,
+              };
+            }
+          } else if (response.status === 429) {
+            // Rate limit, 다음 모델 시도
+            console.warn(`[LocalAI] Groq 모델 ${model} rate limit, 다음 모델 시도...`);
+            continue;
+          }
+        } catch (error) {
+          console.warn(`[LocalAI] Groq 모델 ${model} 오류:`, error);
+          continue;
         }
       }
     } catch (error) {
-      console.warn('[LocalAI] Groq 실패, 다음 옵션 시도:', error);
+      console.warn('[LocalAI] Groq 전체 실패, 다음 옵션 시도:', error);
     }
   }
   

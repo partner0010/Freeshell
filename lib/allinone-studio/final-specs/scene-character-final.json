@@ -1,0 +1,545 @@
+{
+  "scene": {
+    "id": "scene-001",
+    "name": "오프닝 씬",
+    "duration": 10.5,
+    "order": 0,
+    "background": {
+      "type": "image",
+      "source": "https://example.com/backgrounds/sunset-city.jpg",
+      "description": "도시의 석양 배경",
+      "opacity": 1.0,
+      "blur": 0,
+      "brightness": 1.0,
+      "contrast": 1.0
+    },
+    "camera": {
+      "angle": "front",
+      "position": {
+        "x": 0,
+        "y": 1.6,
+        "z": 5
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "zoom": 1.0,
+      "fov": 60,
+      "motion": {
+        "type": "static",
+        "keyframes": []
+      },
+      "focus": {
+        "target": "char-001",
+        "distance": 3,
+        "aperture": 2.8
+      }
+    },
+    "characters": [
+      {
+        "characterId": "char-001",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        },
+        "visible": true,
+        "layer": 1
+      }
+    ],
+    "dialogues": [
+      {
+        "id": "dialogue-001",
+        "speakerId": "char-001",
+        "text": "안녕하세요! 오늘은 특별한 이야기를 들려드릴게요.",
+        "emotion": "happy",
+        "expression": "expr-happy",
+        "voiceTone": "cheerful",
+        "timing": {
+          "start": 0.0,
+          "duration": 3.0,
+          "pauseAfter": 0.5
+        },
+        "lipSync": {
+          "enabled": true,
+          "data": [0.0, 0.2, 0.5, 0.3, 0.1, 0.4, 0.6, 0.2, 0.0]
+        }
+      }
+    ],
+    "music": {
+      "type": "bgm",
+      "track": "https://example.com/music/upbeat-001.mp3",
+      "genre": "upbeat",
+      "volume": 0.3,
+      "loop": true,
+      "fadeIn": 1.0,
+      "fadeOut": 1.0,
+      "startTime": 0.0
+    },
+    "effects": [
+      {
+        "type": "particle",
+        "name": "sparkles",
+        "position": {
+          "x": 0,
+          "y": 2,
+          "z": 0
+        },
+        "timing": {
+          "start": 2.0,
+          "duration": 3.0
+        },
+        "intensity": 0.5
+      }
+    ],
+    "lighting": {
+      "type": "natural",
+      "direction": "front",
+      "intensity": 0.8,
+      "color": "#ffd700",
+      "shadows": true
+    },
+    "transition": {
+      "type": "fade",
+      "duration": 0.5,
+      "direction": "in"
+    }
+  },
+  "character": {
+    "id": "char-001",
+    "name": "루나",
+    "type": "3d",
+    "gender": "female",
+    "ageRange": "adult",
+    "style": "anime",
+    "model": {
+      "type": "glb",
+      "url": "https://example.com/models/character-001.glb",
+      "format": "gltf-binary"
+    },
+    "appearance": {
+      "face": {
+        "shape": "oval",
+        "skinColor": "#ffe4c4",
+        "eyeColor": "#4a90e2",
+        "hairColor": "#ff69b4"
+      },
+      "hair": {
+        "style": "long",
+        "color": "#ff69b4",
+        "length": "shoulder"
+      },
+      "body": {
+        "type": "slim",
+        "height": 165
+      },
+      "clothes": {
+        "top": "흰색 블라우스",
+        "bottom": "청바지",
+        "shoes": "운동화"
+      }
+    },
+    "voice": {
+      "type": "female",
+      "age": "adult",
+      "tone": "soft",
+      "voiceId": "female-soft-001",
+      "speed": 1.0,
+      "pitch": 1.0,
+      "volume": 1.0
+    },
+    "expressions": [
+      {
+        "id": "expr-happy",
+        "name": "happy",
+        "emotionState": "happy",
+        "blendshapes": {
+          "smile": 0.8,
+          "eyeSquint": 0.3,
+          "mouthSmile": 0.7,
+          "browInnerUp": 0.2
+        },
+        "intensity": 1.0,
+        "transitionDuration": 0.3
+      },
+      {
+        "id": "expr-sad",
+        "name": "sad",
+        "emotionState": "sad",
+        "blendshapes": {
+          "frown": 0.6,
+          "sadness": 0.7,
+          "browDown": 0.4,
+          "eyeBlinkLeft": 0.3,
+          "eyeBlinkRight": 0.3
+        },
+        "intensity": 1.0,
+        "transitionDuration": 0.3
+      },
+      {
+        "id": "expr-angry",
+        "name": "angry",
+        "emotionState": "angry",
+        "blendshapes": {
+          "anger": 0.8,
+          "frown": 0.7,
+          "browDown": 0.6,
+          "mouthFrown": 0.5
+        },
+        "intensity": 1.0,
+        "transitionDuration": 0.3
+      },
+      {
+        "id": "expr-surprised",
+        "name": "surprised",
+        "emotionState": "surprised",
+        "blendshapes": {
+          "surprise": 0.9,
+          "eyeWide": 0.8,
+          "mouthOpen": 0.5,
+          "browInnerUp": 0.7
+        },
+        "intensity": 1.0,
+        "transitionDuration": 0.2
+      },
+      {
+        "id": "expr-neutral",
+        "name": "neutral",
+        "emotionState": "neutral",
+        "blendshapes": {},
+        "intensity": 1.0,
+        "transitionDuration": 0.3
+      }
+    ],
+    "gestures": [
+      {
+        "id": "gesture-idle",
+        "name": "idle",
+        "type": "idle",
+        "loop": true,
+        "duration": 0,
+        "animation": "idle-001"
+      },
+      {
+        "id": "gesture-talk",
+        "name": "talk",
+        "type": "talk",
+        "loop": true,
+        "duration": 0,
+        "animation": "talk-001"
+      },
+      {
+        "id": "gesture-wave",
+        "name": "wave",
+        "type": "gesture",
+        "loop": false,
+        "duration": 2.0,
+        "animation": "wave-001"
+      },
+      {
+        "id": "gesture-point",
+        "name": "point",
+        "type": "gesture",
+        "loop": false,
+        "duration": 1.5,
+        "animation": "point-001"
+      }
+    ],
+    "emotionState": {
+      "current": "neutral",
+      "intensity": 0.0,
+      "transitions": [
+        {
+          "from": "neutral",
+          "to": "happy",
+          "duration": 0.3
+        },
+        {
+          "from": "happy",
+          "to": "neutral",
+          "duration": 0.3
+        }
+      ]
+    }
+  },
+  "dialogue": {
+    "id": "dialogue-001",
+    "sceneId": "scene-001",
+    "speakerId": "char-001",
+    "text": "안녕하세요! 오늘은 특별한 이야기를 들려드릴게요.",
+    "emotion": "happy",
+    "expression": "expr-happy",
+    "voiceTone": "cheerful",
+    "timing": {
+      "start": 0.0,
+      "duration": 3.0,
+      "pauseAfter": 0.5
+    },
+    "voice": {
+      "text": "안녕하세요! 오늘은 특별한 이야기를 들려드릴게요.",
+      "voiceId": "female-soft-001",
+      "speed": 1.0,
+      "pitch": 1.0,
+      "volume": 1.0,
+      "audioUrl": "https://example.com/audio/dialogue-001.mp3"
+    },
+    "lipSync": {
+      "enabled": true,
+      "data": [0.0, 0.2, 0.5, 0.3, 0.1, 0.4, 0.6, 0.2, 0.0],
+      "method": "auto"
+    },
+    "gesture": {
+      "id": "gesture-talk",
+      "startTime": 0.0,
+      "duration": 3.0
+    },
+    "camera": {
+      "focus": "character",
+      "angle": "close-up",
+      "zoom": 1.2
+    }
+  },
+  "sceneExample": {
+    "id": "scene-001",
+    "name": "오프닝 씬",
+    "duration": 10.5,
+    "order": 0,
+    "background": {
+      "type": "image",
+      "source": "https://example.com/backgrounds/sunset-city.jpg",
+      "description": "도시의 석양 배경",
+      "opacity": 1.0
+    },
+    "camera": {
+      "angle": "front",
+      "position": { "x": 0, "y": 1.6, "z": 5 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "zoom": 1.0,
+      "fov": 60,
+      "motion": { "type": "static", "keyframes": [] },
+      "focus": { "target": "char-001", "distance": 3 }
+    },
+    "characters": [
+      {
+        "characterId": "char-001",
+        "position": { "x": 0, "y": 0, "z": 0 },
+        "rotation": { "x": 0, "y": 0, "z": 0 },
+        "scale": { "x": 1.0, "y": 1.0, "z": 1.0 },
+        "visible": true,
+        "layer": 1
+      }
+    ],
+    "dialogues": [
+      {
+        "id": "dialogue-001",
+        "speakerId": "char-001",
+        "text": "안녕하세요! 오늘은 특별한 이야기를 들려드릴게요.",
+        "emotion": "happy",
+        "expression": "expr-happy",
+        "voiceTone": "cheerful",
+        "timing": { "start": 0.0, "duration": 3.0, "pauseAfter": 0.5 },
+        "lipSync": { "enabled": true, "data": [0.0, 0.2, 0.5, 0.3, 0.1, 0.4, 0.6, 0.2, 0.0] }
+      }
+    ],
+    "music": {
+      "type": "bgm",
+      "track": "https://example.com/music/upbeat-001.mp3",
+      "genre": "upbeat",
+      "volume": 0.3,
+      "loop": true,
+      "fadeIn": 1.0,
+      "fadeOut": 1.0,
+      "startTime": 0.0
+    },
+    "effects": [
+      {
+        "type": "particle",
+        "name": "sparkles",
+        "position": { "x": 0, "y": 2, "z": 0 },
+        "timing": { "start": 2.0, "duration": 3.0 },
+        "intensity": 0.5
+      }
+    ],
+    "lighting": {
+      "type": "natural",
+      "direction": "front",
+      "intensity": 0.8,
+      "color": "#ffd700",
+      "shadows": true
+    },
+    "transition": {
+      "type": "fade",
+      "duration": 0.5,
+      "direction": "in"
+    }
+  },
+  "characterExample": {
+    "id": "char-001",
+    "name": "루나",
+    "type": "3d",
+    "gender": "female",
+    "ageRange": "adult",
+    "style": "anime",
+    "model": {
+      "type": "glb",
+      "url": "https://example.com/models/character-001.glb",
+      "format": "gltf-binary"
+    },
+    "appearance": {
+      "face": {
+        "shape": "oval",
+        "skinColor": "#ffe4c4",
+        "eyeColor": "#4a90e2",
+        "hairColor": "#ff69b4"
+      },
+      "hair": {
+        "style": "long",
+        "color": "#ff69b4",
+        "length": "shoulder"
+      },
+      "body": {
+        "type": "slim",
+        "height": 165
+      },
+      "clothes": {
+        "top": "흰색 블라우스",
+        "bottom": "청바지",
+        "shoes": "운동화"
+      }
+    },
+    "voice": {
+      "type": "female",
+      "age": "adult",
+      "tone": "soft",
+      "voiceId": "female-soft-001",
+      "speed": 1.0,
+      "pitch": 1.0,
+      "volume": 1.0
+    },
+    "expressions": [
+      {
+        "id": "expr-happy",
+        "name": "happy",
+        "emotionState": "happy",
+        "blendshapes": {
+          "smile": 0.8,
+          "eyeSquint": 0.3,
+          "mouthSmile": 0.7,
+          "browInnerUp": 0.2
+        },
+        "intensity": 1.0,
+        "transitionDuration": 0.3
+      },
+      {
+        "id": "expr-sad",
+        "name": "sad",
+        "emotionState": "sad",
+        "blendshapes": {
+          "frown": 0.6,
+          "sadness": 0.7,
+          "browDown": 0.4,
+          "eyeBlinkLeft": 0.3,
+          "eyeBlinkRight": 0.3
+        },
+        "intensity": 1.0,
+        "transitionDuration": 0.3
+      },
+      {
+        "id": "expr-angry",
+        "name": "angry",
+        "emotionState": "angry",
+        "blendshapes": {
+          "anger": 0.8,
+          "frown": 0.7,
+          "browDown": 0.6,
+          "mouthFrown": 0.5
+        },
+        "intensity": 1.0,
+        "transitionDuration": 0.3
+      },
+      {
+        "id": "expr-surprised",
+        "name": "surprised",
+        "emotionState": "surprised",
+        "blendshapes": {
+          "surprise": 0.9,
+          "eyeWide": 0.8,
+          "mouthOpen": 0.5,
+          "browInnerUp": 0.7
+        },
+        "intensity": 1.0,
+        "transitionDuration": 0.2
+      },
+      {
+        "id": "expr-neutral",
+        "name": "neutral",
+        "emotionState": "neutral",
+        "blendshapes": {},
+        "intensity": 1.0,
+        "transitionDuration": 0.3
+      }
+    ],
+    "gestures": [
+      {
+        "id": "gesture-idle",
+        "name": "idle",
+        "type": "idle",
+        "loop": true,
+        "duration": 0,
+        "animation": "idle-001"
+      },
+      {
+        "id": "gesture-talk",
+        "name": "talk",
+        "type": "talk",
+        "loop": true,
+        "duration": 0,
+        "animation": "talk-001"
+      },
+      {
+        "id": "gesture-wave",
+        "name": "wave",
+        "type": "gesture",
+        "loop": false,
+        "duration": 2.0,
+        "animation": "wave-001"
+      },
+      {
+        "id": "gesture-point",
+        "name": "point",
+        "type": "gesture",
+        "loop": false,
+        "duration": 1.5,
+        "animation": "point-001"
+      }
+    ],
+    "emotionState": {
+      "current": "neutral",
+      "intensity": 0.0,
+      "transitions": [
+        {
+          "from": "neutral",
+          "to": "happy",
+          "duration": 0.3
+        },
+        {
+          "from": "happy",
+          "to": "neutral",
+          "duration": 0.3
+        }
+      ]
+    }
+  }
+}

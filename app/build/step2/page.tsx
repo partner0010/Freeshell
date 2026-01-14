@@ -35,7 +35,7 @@ export default function BuildStep2Page() {
       // AI 추천 템플릿 가져오기 (실제로는 API 호출)
       fetchRecommendedTemplates(q);
     }
-  }, [searchParams]);
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchRecommendedTemplates = async (searchQuery: string) => {
     try {

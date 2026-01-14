@@ -1,0 +1,345 @@
+{
+  "expression": {
+    "id": "expr-happy",
+    "name": "happy",
+    "emotionState": "happy",
+    "blendshapes": {
+      "smile": 0.8,
+      "eyeSquint": 0.3,
+      "mouthSmile": 0.7,
+      "browInnerUp": 0.2,
+      "cheekPuff": 0.1
+    },
+    "intensity": 1.0,
+    "transitionDuration": 0.3,
+    "targets": [
+      {
+        "name": "smile",
+        "value": 0.8,
+        "type": "additive"
+      },
+      {
+        "name": "eyeSquint",
+        "value": 0.3,
+        "type": "additive"
+      }
+    ]
+  },
+  "emotionState": {
+    "current": "happy",
+    "intensity": 0.8,
+    "transitions": [
+      {
+        "from": "neutral",
+        "to": "happy",
+        "duration": 0.3,
+        "easing": "ease-out"
+      },
+      {
+        "from": "happy",
+        "to": "neutral",
+        "duration": 0.3,
+        "easing": "ease-in"
+      }
+    ],
+    "states": {
+      "happy": {
+        "expressionId": "expr-happy",
+        "intensity": 0.8,
+        "duration": 0
+      },
+      "sad": {
+        "expressionId": "expr-sad",
+        "intensity": 0.7,
+        "duration": 0
+      },
+      "angry": {
+        "expressionId": "expr-angry",
+        "intensity": 0.9,
+        "duration": 0
+      },
+      "surprised": {
+        "expressionId": "expr-surprised",
+        "intensity": 1.0,
+        "duration": 0
+      },
+      "neutral": {
+        "expressionId": "expr-neutral",
+        "intensity": 0.0,
+        "duration": 0
+      }
+    }
+  },
+  "lipSync": {
+    "dialogueId": "dialogue-001",
+    "audioUrl": "https://example.com/audio/dialogue-001.mp3",
+    "duration": 3.0,
+    "sampleRate": 44100,
+    "phonemes": [
+      {
+        "phoneme": "SIL",
+        "start": 0.0,
+        "duration": 0.1,
+        "intensity": 0.0
+      },
+      {
+        "phoneme": "AA",
+        "start": 0.1,
+        "duration": 0.2,
+        "intensity": 0.8
+      },
+      {
+        "phoneme": "EH",
+        "start": 0.3,
+        "duration": 0.15,
+        "intensity": 0.7
+      },
+      {
+        "phoneme": "IH",
+        "start": 0.45,
+        "duration": 0.1,
+        "intensity": 0.6
+      }
+    ],
+    "visemes": [
+      {
+        "viseme": "silence",
+        "start": 0.0,
+        "duration": 0.1,
+        "blendshape": {
+          "mouthClosed": 1.0,
+          "mouthOpen": 0.0
+        }
+      },
+      {
+        "viseme": "aa",
+        "start": 0.1,
+        "duration": 0.2,
+        "blendshape": {
+          "mouthOpen": 0.8,
+          "jawOpen": 0.6,
+          "mouthSmile": 0.2
+        }
+      },
+      {
+        "viseme": "ee",
+        "start": 0.3,
+        "duration": 0.15,
+        "blendshape": {
+          "mouthOpen": 0.4,
+          "mouthSmile": 0.6,
+          "jawOpen": 0.3
+        }
+      }
+    ],
+    "frames": [
+      {
+        "time": 0.0,
+        "blendshape": {
+          "mouthClosed": 1.0,
+          "mouthOpen": 0.0
+        }
+      },
+      {
+        "time": 0.033,
+        "blendshape": {
+          "mouthClosed": 0.8,
+          "mouthOpen": 0.2
+        }
+      },
+      {
+        "time": 0.066,
+        "blendshape": {
+          "mouthClosed": 0.2,
+          "mouthOpen": 0.8,
+          "jawOpen": 0.6
+        }
+      }
+    ]
+  },
+  "eyeControl": {
+    "enabled": true,
+    "target": "character",
+    "behavior": {
+      "blink": {
+        "enabled": true,
+        "interval": {
+          "min": 2.0,
+          "max": 5.0
+        },
+        "duration": 0.15
+      },
+      "gaze": {
+        "enabled": true,
+        "target": "camera",
+        "smoothness": 0.8
+      },
+      "pupil": {
+        "enabled": true,
+        "size": 0.5,
+        "reactivity": 0.7
+      }
+    },
+    "states": {
+      "idle": {
+        "blink": true,
+        "gaze": "forward",
+        "pupilSize": 0.5
+      },
+      "talking": {
+        "blink": true,
+        "gaze": "camera",
+        "pupilSize": 0.6
+      },
+      "surprised": {
+        "blink": false,
+        "gaze": "forward",
+        "pupilSize": 0.9
+      }
+    }
+  },
+  "gesture": {
+    "id": "gesture-wave",
+    "name": "wave",
+    "type": "gesture",
+    "trigger": {
+      "type": "dialogue",
+      "condition": "dialogue.emotion === 'happy'",
+      "timing": {
+        "start": 0.0,
+        "duration": 2.0
+      }
+    },
+    "animation": {
+      "type": "keyframe",
+      "tracks": [
+        {
+          "target": "bone.LeftArm.rotation",
+          "keyframes": [
+            {
+              "time": 0.0,
+              "value": { "x": 0, "y": 0, "z": 0 },
+              "interpolation": "linear"
+            },
+            {
+              "time": 0.5,
+              "value": { "x": 0, "y": 0, "z": 1.57 },
+              "interpolation": "ease-out"
+            },
+            {
+              "time": 1.0,
+              "value": { "x": 0, "y": 0, "z": 0 },
+              "interpolation": "ease-in"
+            }
+          ]
+        }
+      ],
+      "duration": 2.0,
+      "loop": false
+    }
+  },
+  "dialogueIntegration": {
+    "dialogueId": "dialogue-001",
+    "characterId": "char-001",
+    "text": "안녕하세요!",
+    "emotion": "happy",
+    "expression": {
+      "id": "expr-happy",
+      "startTime": 0.0,
+      "duration": 3.0,
+      "intensity": 0.8
+    },
+    "lipSync": {
+      "enabled": true,
+      "data": [0.0, 0.2, 0.5, 0.3, 0.1, 0.4, 0.6, 0.2, 0.0],
+      "startTime": 0.0
+    },
+    "gesture": {
+      "id": "gesture-talk",
+      "startTime": 0.0,
+      "duration": 3.0,
+      "loop": true
+    },
+    "eyeControl": {
+      "state": "talking",
+      "gaze": "camera"
+    },
+    "timing": {
+      "start": 0.0,
+      "duration": 3.0,
+      "expressionTransition": 0.3,
+      "gestureTransition": 0.2
+    }
+  },
+  "expressionSet": {
+    "basic": [
+      {
+        "id": "expr-happy",
+        "name": "happy",
+        "emotionState": "happy",
+        "blendshapes": {
+          "smile": 0.8,
+          "eyeSquint": 0.3,
+          "mouthSmile": 0.7
+        }
+      },
+      {
+        "id": "expr-sad",
+        "name": "sad",
+        "emotionState": "sad",
+        "blendshapes": {
+          "frown": 0.6,
+          "sadness": 0.7,
+          "browDown": 0.4
+        }
+      },
+      {
+        "id": "expr-angry",
+        "name": "angry",
+        "emotionState": "angry",
+        "blendshapes": {
+          "anger": 0.8,
+          "frown": 0.7,
+          "browDown": 0.6
+        }
+      },
+      {
+        "id": "expr-surprised",
+        "name": "surprised",
+        "emotionState": "surprised",
+        "blendshapes": {
+          "surprise": 0.9,
+          "eyeWide": 0.8,
+          "mouthOpen": 0.5
+        }
+      },
+      {
+        "id": "expr-neutral",
+        "name": "neutral",
+        "emotionState": "neutral",
+        "blendshapes": {}
+      }
+    ],
+    "extended": [
+      {
+        "id": "expr-excited",
+        "name": "excited",
+        "emotionState": "excited",
+        "blendshapes": {
+          "smile": 1.0,
+          "eyeWide": 0.7,
+          "mouthOpen": 0.6
+        }
+      },
+      {
+        "id": "expr-calm",
+        "name": "calm",
+        "emotionState": "calm",
+        "blendshapes": {
+          "smile": 0.3,
+          "eyeSquint": 0.2
+        }
+      }
+    ]
+  }
+}

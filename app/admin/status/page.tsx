@@ -4,7 +4,7 @@
  */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Activity, 
   Shield, 
@@ -85,6 +85,34 @@ export default function AdminStatusPage() {
   const [showReports, setShowReports] = useState(false);
   const [reportsList, setReportsList] = useState<any[]>([]);
 
+  const loadLatestReport = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/health-check?limit=1');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.reports && data.reports.length > 0) {
+          setLatestReport(data.reports[0]);
+        }
+      }
+    } catch (error) {
+      console.error('리포트 로드 실패:', error);
+    }
+  }, []);
+
+  const loadAnalytics = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `/api/admin/analytics?start=${selectedDate.start}&end=${selectedDate.end}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setAnalytics(data.data);
+      }
+    } catch (error) {
+      console.error('분석 데이터 로드 실패:', error);
+    }
+  }, [selectedDate]);
+
   useEffect(() => {
     loadLatestReport();
     loadAnalytics();
@@ -97,7 +125,7 @@ export default function AdminStatusPage() {
       }, 30000); // 30초마다 갱신
       return () => clearInterval(interval);
     }
-  }, [autoRefresh, selectedDate]);
+  }, [autoRefresh, selectedDate, loadLatestReport, loadAnalytics]);
 
   const loadReports = async () => {
     try {
@@ -143,33 +171,6 @@ export default function AdminStatusPage() {
     }
   };
 
-  const loadLatestReport = async () => {
-    try {
-      const response = await fetch('/api/admin/health-check?limit=1');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.reports && data.reports.length > 0) {
-          setLatestReport(data.reports[0]);
-        }
-      }
-    } catch (error) {
-      console.error('리포트 로드 실패:', error);
-    }
-  };
-
-  const loadAnalytics = async () => {
-    try {
-      const response = await fetch(
-        `/api/admin/analytics?start=${selectedDate.start}&end=${selectedDate.end}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setAnalytics(data.data);
-      }
-    } catch (error) {
-      console.error('분석 데이터 로드 실패:', error);
-    }
-  };
 
   const runHealthCheck = async () => {
     setIsRunningCheck(true);

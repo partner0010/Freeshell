@@ -31,12 +31,12 @@ export class GeminiClient {
     maxTokens?: number;
     temperature?: number;
   }): Promise<string> {
-    // API 키가 없으면 완전 무료 AI 서비스 사용
+    // 🆓 무료 우선 전략: Google API 키가 없어도 완전 무료 AI 서비스 사용
     if (!this.apiKey || this.apiKey.trim() === '') {
-      console.warn('[GeminiClient] API 키가 없어 완전 무료 AI 서비스 사용');
+      console.log('[GeminiClient] 🆓 무료 AI 우선 모드: 완전 무료 AI 서비스를 사용합니다.');
       
       try {
-        // 1순위: 완전 무료 AI 서비스 (API 키 없이도 작동)
+        // 1순위: 완전 무료 AI 서비스 (Groq > Ollama > Together > OpenRouter > HuggingFace)
         const { generateWithFreeAI } = await import('@/lib/free-ai-services');
         const freeAIResult = await generateWithFreeAI(prompt);
         
@@ -44,6 +44,7 @@ export class GeminiClient {
           console.log('[GeminiClient] ✅ 완전 무료 AI 서비스 성공:', {
             source: freeAIResult.source,
             requiresApiKey: freeAIResult.requiresApiKey,
+            responseTime: freeAIResult.responseTime,
           });
           return freeAIResult.text;
         }

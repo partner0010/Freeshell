@@ -96,6 +96,7 @@ export default function ProjectDetailPage() {
       fetchProject();
       fetchStepResults();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   useEffect(() => {

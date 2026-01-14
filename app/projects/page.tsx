@@ -61,7 +61,7 @@ export default function ProjectsPage() {
     if (userId) {
       fetchProjects();
     }
-  }, [userId]);
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchProjects = async () => {
     if (!userId) return;

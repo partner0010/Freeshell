@@ -1,0 +1,169 @@
+{
+  "scenes": [
+    {
+      "id": "scene_001",
+      "duration": 5.0,
+      "background": {
+        "type": "image",
+        "source": "/assets/backgrounds/kitchen.jpg",
+        "motion": "static"
+      },
+      "characters": [
+        {
+          "id": "char_001",
+          "name": "고양이",
+          "image_path": "/assets/characters/cat_cooking.png",
+          "position": {
+            "x": 0.5,
+            "y": 0.3,
+            "z": 0.0
+          },
+          "scale": 1.2,
+          "emotion": "happy",
+          "motion": "zoom_in"
+        }
+      ],
+      "voice": {
+        "text": "안녕하세요! 오늘은 맛있는 파스타를 만들어볼게요.",
+        "file_path": "/assets/voices/scene_001_voice.mp3",
+        "start_time": 0.0,
+        "duration": 4.5,
+        "emotion": "excited",
+        "speaker_id": "char_001"
+      },
+      "subtitles": [
+        {
+          "text": "안녕하세요! 오늘은 맛있는 파스타를 만들어볼게요.",
+          "start_time": 0.0,
+          "duration": 4.5,
+          "position": "bottom",
+          "style": {
+            "font_size": 28,
+            "font_color": "#FFFFFF",
+            "background_color": "rgba(0,0,0,0.7)",
+            "font_family": "Arial"
+          }
+        }
+      ],
+      "effects": ["sparkle"],
+      "transition": "fade"
+    },
+    {
+      "id": "scene_002",
+      "duration": 8.0,
+      "background": {
+        "type": "image",
+        "source": "/assets/backgrounds/kitchen.jpg",
+        "motion": "pan_right"
+      },
+      "characters": [
+        {
+          "id": "char_001",
+          "name": "고양이",
+          "image_path": "/assets/characters/cat_cooking.png",
+          "position": {
+            "x": 0.3,
+            "y": 0.5,
+            "z": 0.0
+          },
+          "scale": 1.0,
+          "emotion": "happy",
+          "motion": "static"
+        }
+      ],
+      "voice": {
+        "text": "먼저 파스타 면을 끓는 물에 넣고, 소스를 준비할게요.",
+        "file_path": "/assets/voices/scene_002_voice.mp3",
+        "start_time": 0.0,
+        "duration": 7.5,
+        "emotion": "calm",
+        "speaker_id": "char_001"
+      },
+      "subtitles": [
+        {
+          "text": "먼저 파스타 면을 끓는 물에 넣고,",
+          "start_time": 0.0,
+          "duration": 3.5,
+          "position": "bottom",
+          "style": {
+            "font_size": 28,
+            "font_color": "#FFFFFF",
+            "background_color": "rgba(0,0,0,0.7)",
+            "font_family": "Arial"
+          }
+        },
+        {
+          "text": "소스를 준비할게요.",
+          "start_time": 3.5,
+          "duration": 4.0,
+          "position": "bottom",
+          "style": {
+            "font_size": 28,
+            "font_color": "#FFFFFF",
+            "background_color": "rgba(0,0,0,0.7)",
+            "font_family": "Arial"
+          }
+        }
+      ],
+      "effects": [],
+      "transition": "fade"
+    },
+    {
+      "id": "scene_003",
+      "duration": 6.0,
+      "background": {
+        "type": "image",
+        "source": "/assets/backgrounds/kitchen.jpg",
+        "motion": "static"
+      },
+      "characters": [
+        {
+          "id": "char_001",
+          "name": "고양이",
+          "image_path": "/assets/characters/cat_cooking.png",
+          "position": {
+            "x": 0.7,
+            "y": 0.4,
+            "z": 0.0
+          },
+          "scale": 1.1,
+          "emotion": "excited",
+          "motion": "zoom_out"
+        }
+      ],
+      "voice": {
+        "text": "완성! 맛있게 드세요!",
+        "file_path": "/assets/voices/scene_003_voice.mp3",
+        "start_time": 0.0,
+        "duration": 5.5,
+        "emotion": "happy",
+        "speaker_id": "char_001"
+      },
+      "subtitles": [
+        {
+          "text": "완성! 맛있게 드세요!",
+          "start_time": 0.0,
+          "duration": 5.5,
+          "position": "bottom",
+          "style": {
+            "font_size": 32,
+            "font_color": "#FFFF00",
+            "background_color": "rgba(0,0,0,0.8)",
+            "font_family": "Arial"
+          }
+        }
+      ],
+      "effects": ["confetti"],
+      "transition": null
+    }
+  ],
+  "metadata": {
+    "total_duration": 19.0,
+    "resolution": {
+      "width": 1080,
+      "height": 1920
+    },
+    "fps": 30,
+    "audio_sample_rate": 44100
+  }
+}

@@ -4,7 +4,7 @@
  */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Settings, 
   Save, 
@@ -58,11 +58,7 @@ export default function AdminSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/settings');
       if (response.ok) {
@@ -79,7 +75,12 @@ export default function AdminSettingsPage() {
       setSnsConfigs(getDefaultSNSConfigs());
       setAdConfigs(getDefaultAdConfigs());
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+
 
   const getDefaultSNSConfigs = (): SNSConfig[] => [
     {
@@ -366,9 +367,9 @@ export default function AdminSettingsPage() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       {config.type === 'banner' ? (
-                        <Image className="w-6 h-6 text-purple-600" />
+                        <Image className="w-6 h-6 text-purple-600" aria-hidden="true" />
                       ) : (
-                        <MessageSquare className="w-6 h-6 text-purple-600" />
+                        <MessageSquare className="w-6 h-6 text-purple-600" aria-hidden="true" />
                       )}
                       <div>
                         <h3 className="text-lg font-bold text-gray-900">{config.title}</h3>

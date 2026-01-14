@@ -1,75 +1,51 @@
+/**
+ * 템플릿 조회/검색 API
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { searchTemplates, getTemplateById, getPopularTemplates, getTemplatesByCategory } from '@/data/content-templates';
+import { templateStorage } from '@/lib/templates/template-storage';
+import { TemplateFilter } from '@/lib/templates/template-schema';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * 템플릿 검색 API
- * GET /api/templates?category=xxx&contentType=xxx&platform=xxx&tags=xxx&isPremium=xxx&searchQuery=xxx
- */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    
-    const filters = {
-      category: searchParams.get('category') || undefined,
-      contentType: searchParams.get('contentType') || undefined,
-      platform: searchParams.get('platform') || undefined,
-      tags: searchParams.get('tags')?.split(',') || undefined,
-      isPremium: searchParams.get('isPremium') === 'true' ? true : searchParams.get('isPremium') === 'false' ? false : undefined,
-      searchQuery: searchParams.get('searchQuery') || undefined,
+
+    const filter: TemplateFilter = {
+      type: searchParams.get('type') as any,
+      category: searchParams.get('category') as any,
+      tags: searchParams.get('tags')?.split(',').filter(Boolean),
+      search: searchParams.get('search') || undefined,
+      limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 100,
+      offset: searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0,
     };
 
-    // 특수 쿼리
-    const action = searchParams.get('action');
-    
-    if (action === 'popular') {
-      const limit = parseInt(searchParams.get('limit') || '10');
-      const templates = getPopularTemplates(limit);
-      return NextResponse.json({
-        success: true,
-        templates,
-        count: templates.length,
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    if (action === 'category') {
-      const category = searchParams.get('category');
-      if (!category) {
+    // ID로 조회
+    const id = searchParams.get('id');
+    if (id) {
+      const template = templateStorage.get(id);
+      if (!template) {
         return NextResponse.json(
-          { error: 'category 파라미터가 필요합니다.' },
-          { status: 400 }
+          { error: '템플릿을 찾을 수 없습니다.' },
+          { status: 404 }
         );
       }
-      const templates = getTemplatesByCategory(category);
-      return NextResponse.json({
-        success: true,
-        templates,
-        count: templates.length,
-        timestamp: new Date().toISOString(),
-      });
+      return NextResponse.json({ template });
     }
 
-    // 일반 검색
-    const templates = searchTemplates(filters);
+    // 검색/필터
+    const templates = templateStorage.search(filter);
 
     return NextResponse.json({
-      success: true,
       templates,
       count: templates.length,
-      filters,
-      timestamp: new Date().toISOString(),
+      total: templateStorage.count(),
     });
   } catch (error: any) {
-    console.error('[Templates API] 오류:', error);
+    console.error('템플릿 조회 API 오류:', error);
     return NextResponse.json(
-      {
-        error: '템플릿 검색 중 오류가 발생했습니다.',
-        message: error.message || '알 수 없는 오류',
-      },
+      { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
     );
   }
 }
-

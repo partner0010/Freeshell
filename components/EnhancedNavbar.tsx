@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Menu, X, Sparkles, ChevronDown, Search, Bell, User } from 'lucide-react';
+import { Menu, X, Sparkles, ChevronDown, Search, Bell, User, Film } from 'lucide-react';
 import AuthButton from './AuthButton';
 import { useAuth } from '@/lib/hooks/useAuth';
 import NotificationSystem from './NotificationSystem';
@@ -50,6 +50,11 @@ export default function EnhancedNavbar() {
       href: '/editor', 
       label: '에디터',
       icon: Sparkles,
+    },
+    {
+      href: '/allinone-studio',
+      label: '올인원 스튜디오',
+      icon: Film,
     },
     {
       label: '템플릿',

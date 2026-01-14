@@ -28,7 +28,7 @@ export default function FallbackPage() {
     } else {
       fetchDefaultTemplates();
     }
-  }, [searchParams]);
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchTemplates = async (searchQuery: string) => {
     setIsLoading(true);

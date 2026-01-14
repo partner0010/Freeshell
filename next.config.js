@@ -21,6 +21,34 @@ const nextConfig = {
   
   // 웹팩 최적화
   webpack: (config, { isServer, webpack }) => {
+    // Monaco Editor는 클라이언트 사이드 전용이므로 서버 사이드에서 완전히 제외
+    // 클라이언트 사이드에서도 빌드 시점 분석 방지
+    config.plugins = config.plugins || [];
+    
+    // 서버 사이드에서 Monaco Editor 관련 모듈 무시
+    if (isServer) {
+      config.plugins.push(
+        new webpack.IgnorePlugin({
+          resourceRegExp: /^@monaco-editor\/react$/,
+        }),
+        new webpack.IgnorePlugin({
+          resourceRegExp: /^monaco-editor$/,
+        })
+      );
+      
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@monaco-editor/react': false,
+        'monaco-editor': false,
+      };
+    } else {
+      // 클라이언트 사이드에서도 빌드 시점에 모듈을 찾지 않도록 설정
+      // 런타임에만 동적으로 로드되도록
+      config.resolve.alias = {
+        ...config.resolve.alias,
+      };
+    }
+    
     // 서버 사이드에서도 모듈을 올바르게 해결
     if (isServer) {
       // 서버 사이드에서 외부 모듈 해결 개선

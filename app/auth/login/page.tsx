@@ -45,8 +45,9 @@ export default function LoginPage() {
         throw new Error(data.error || '로그인에 실패했습니다.');
       }
 
-      // 로그인 성공
-      router.push('/projects');
+      // 로그인 성공 - 메인 화면으로 이동
+      const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/';
+      router.push(redirectUrl);
       router.refresh();
     } catch (err: any) {
       setError(err.message || '로그인 중 오류가 발생했습니다.');

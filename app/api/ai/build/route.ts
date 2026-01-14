@@ -92,10 +92,26 @@ export async function POST(request: NextRequest) {
 
     let generatedCode = '';
     let isRealApiCall = false;
+    let aiSource = 'fallback';
     const hasApiKey = !!process.env.GOOGLE_API_KEY;
 
-    // Google Gemini API 시도
-    if (hasApiKey) {
+    // 🆓 무료 우선 전략: 완전 무료 AI 서비스를 먼저 시도
+    // Groq > Ollama > Together > OpenRouter > HuggingFace > Google Gemini
+    try {
+      const freeAIResult = await generateWithFreeAI(buildPrompt);
+      if (freeAIResult.success && freeAIResult.text && freeAIResult.text.trim()) {
+        generatedCode = freeAIResult.text;
+        aiSource = freeAIResult.source;
+        // 무료 AI 서비스도 실제 AI로 간주
+        isRealApiCall = freeAIResult.source !== 'fallback';
+        console.log(`[Build API] ✅ 무료 AI 성공 (소스: ${freeAIResult.source})`);
+      }
+    } catch (error) {
+      console.warn('[Build API] 무료 AI 실패, Google Gemini 시도:', error);
+    }
+
+    // Google Gemini API 시도 (백업용, 무료 AI가 실패한 경우에만)
+    if (!generatedCode && process.env.GOOGLE_API_KEY) {
       try {
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${process.env.GOOGLE_API_KEY}`,
@@ -117,23 +133,13 @@ export async function POST(request: NextRequest) {
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (text) {
             generatedCode = text;
+            aiSource = 'gemini';
             isRealApiCall = true;
+            console.log('[Build API] ✅ Google Gemini 성공');
           }
         }
       } catch (error) {
-        console.warn('[Build API] Gemini 실패, 완전 무료 AI 시도:', error);
-      }
-    }
-
-    // 완전 무료 AI 서비스 시도
-    if (!generatedCode) {
-      try {
-        const freeAIResult = await generateWithFreeAI(buildPrompt);
-        if (freeAIResult.success && freeAIResult.text) {
-          generatedCode = freeAIResult.text;
-        }
-      } catch (error) {
-        console.warn('[Build API] 완전 무료 AI 실패:', error);
+        console.warn('[Build API] Google Gemini 실패:', error);
       }
     }
 

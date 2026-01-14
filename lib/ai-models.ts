@@ -89,11 +89,12 @@ export class AIModelManager {
 
 
   private async callGoogle(model: AIModel, prompt: string): Promise<string> {
-    // API 키가 없으면 완전 무료 AI 서비스 사용
+    // 🆓 무료 우선 전략: Google API 키가 없어도 완전 무료 AI 서비스 사용
+    // 모든 사람이 무료로 사용할 수 있도록 최적화
     if (!model.apiKey || model.apiKey.trim() === '') {
-      console.warn('[AIModelManager] GOOGLE_API_KEY가 설정되지 않았습니다. 완전 무료 AI 서비스를 사용합니다.');
+      console.log('[AIModelManager] 🆓 무료 AI 우선 모드: 완전 무료 AI 서비스를 사용합니다.');
       
-      // 1순위: 완전 무료 AI 서비스 (API 키 없이도 작동)
+      // 1순위: 완전 무료 AI 서비스 (Groq > Ollama > Together > OpenRouter > HuggingFace)
       try {
         const { generateWithFreeAI } = await import('@/lib/free-ai-services');
         const freeAIResult = await generateWithFreeAI(prompt);
@@ -102,6 +103,7 @@ export class AIModelManager {
           console.log('[AIModelManager] ✅ 완전 무료 AI 서비스 성공:', {
             source: freeAIResult.source,
             requiresApiKey: freeAIResult.requiresApiKey,
+            responseTime: freeAIResult.responseTime,
           });
           return freeAIResult.text;
         }
@@ -131,7 +133,7 @@ export class AIModelManager {
         const textToTranslate = match ? match[1].trim() : prompt;
         return textToTranslate;
       }
-      return `이것은 완전 무료 AI 서비스 응답입니다. Google Gemini API 키를 설정하면 더 정확한 응답을 받을 수 있습니다.\n\n프롬프트: ${prompt.substring(0, 200)}...`;
+      return `🆓 이것은 완전 무료 AI 서비스 응답입니다. Groq API나 Ollama를 설정하면 GPT/Gemini 수준의 고품질 응답을 받을 수 있습니다.\n\n프롬프트: ${prompt.substring(0, 200)}...`;
     }
 
     // 모델 이름 결정 (endpoint가 있으면 사용, 없으면 기본값)

@@ -23,6 +23,7 @@ interface AISuggestion {
   code?: string;
   line?: number;
   severity?: 'high' | 'medium' | 'low';
+  diffs?: Array<{ type: 'add' | 'remove' | 'replace'; line: number; content: string }>;
 }
 
 export default function EnhancedCodeEditor({ files, onFilesChange, onPreview, onCursorChange, onFileChange }: CodeEditorProps) {
@@ -145,8 +146,25 @@ export default function EnhancedCodeEditor({ files, onFilesChange, onPreview, on
     }
   }, [files, activeFile]);
 
-  // 제안 적용
+  // 제안 적용 (Diff 기반)
   const applySuggestion = useCallback((suggestion: AISuggestion) => {
+    // Diff가 있으면 Diff 기반 적용
+    if (suggestion.diffs && suggestion.diffs.length > 0) {
+      try {
+        const { applyDiff } = require('@/lib/services/diff-manager');
+        const newFiles = [...files];
+        const originalCode = newFiles[activeFile].content;
+        const modifiedCode = applyDiff(originalCode, suggestion.diffs);
+        newFiles[activeFile].content = modifiedCode;
+        onFilesChange(newFiles);
+        setSuggestions(suggestions.filter(s => s !== suggestion));
+        return;
+      } catch (error) {
+        console.error('Diff 적용 오류:', error);
+      }
+    }
+
+    // 기존 방식 (Diff가 없는 경우)
     if (!suggestion.code) return;
 
     const newFiles = [...files];
