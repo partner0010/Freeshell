@@ -166,6 +166,51 @@ export default function DashboardPage() {
           </Card>
         </div>
 
+        {/* 수익화 대시보드 */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>수익화 대시보드</CardTitle>
+                <CardDescription>크레딧, 구독, 수익 현황을 확인하세요</CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push("/dashboard/billing")}
+              >
+                자세히 보기
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 border border-neutral-200 rounded-lg">
+                <div className="text-sm text-neutral-600 mb-1">현재 플랜</div>
+                <div className="text-2xl font-bold text-primary-600 mb-2">Pro</div>
+                <div className="text-xs text-neutral-500">월 $29</div>
+              </div>
+              <div className="p-4 border border-neutral-200 rounded-lg">
+                <div className="text-sm text-neutral-600 mb-1">남은 크레딧</div>
+                <div className="text-2xl font-bold text-secondary-600 mb-2">50</div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => router.push("/dashboard/billing")}
+                >
+                  크레딧 충전
+                </Button>
+              </div>
+              <div className="p-4 border border-neutral-200 rounded-lg">
+                <div className="text-sm text-neutral-600 mb-1">이번 달 수익</div>
+                <div className="text-2xl font-bold text-success-600 mb-2">$120</div>
+                <div className="text-xs text-neutral-500">전월 대비 +15%</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* 빠른 액션 */}
         <Card>
           <CardHeader>

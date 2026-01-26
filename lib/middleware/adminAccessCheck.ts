@@ -19,7 +19,7 @@ export interface AdminAccessCheckResult {
  */
 export async function checkAdminAccess(
   userId: string,
-  tool: 'electronicSignature' | 'systemDiagnostics' | 'debugTools' | 'siteCheck' | 'remoteSolution'
+  tool: 'systemDiagnostics' | 'debugTools' | 'siteCheck' | 'remoteSolution'
 ): Promise<AdminAccessCheckResult> {
   const result = await planLimitService.checkAdminToolAccess(userId, tool);
   // upgradePlan이 'free'가 아닌지 확인
@@ -43,7 +43,7 @@ export async function getAdminAccessCheckResult(request: NextRequest): Promise<{
 }> {
   const searchParams = request.nextUrl.searchParams;
   const userId = searchParams.get('user_id') || request.headers.get('x-user-id');
-  const tool = searchParams.get('tool') as 'electronicSignature' | 'systemDiagnostics' | 'debugTools' | 'siteCheck' | 'remoteSolution' | null;
+  const tool = searchParams.get('tool') as 'systemDiagnostics' | 'debugTools' | 'siteCheck' | 'remoteSolution' | null;
 
   if (!userId) {
     return { error: '사용자 ID가 필요합니다.' };

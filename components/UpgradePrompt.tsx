@@ -186,12 +186,6 @@ export default function UpgradePrompt({
               <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <h4 className="font-semibold text-gray-900 mb-2">관리자 도구</h4>
                 <ul className="space-y-2 text-sm text-gray-700">
-                  {requiredPlanData.features.adminTools.electronicSignature && (
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-green-600" />
-                      <span>전자결재</span>
-                    </li>
-                  )}
                   {requiredPlanData.features.adminTools.systemDiagnostics && (
                     <li className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-green-600" />

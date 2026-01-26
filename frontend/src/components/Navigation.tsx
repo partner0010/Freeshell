@@ -59,4 +59,5 @@ export const PLATFORM_NAV_ITEMS: NavItem[] = [
   { label: "라이브러리", href: "/library", icon: "📚" },
   { label: "피드", href: "/feed", icon: "🌐" },
   { label: "전문가", href: "/experts", icon: "👥" },
+  { label: "쿠폰", href: "/coupons", icon: "🎁" },
 ];

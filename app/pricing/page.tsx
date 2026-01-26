@@ -243,12 +243,6 @@ export default function PricingPage() {
                       <div className="mb-6 pt-4 border-t border-gray-200">
                         <h4 className="text-sm font-semibold text-gray-900 mb-3">관리자 도구</h4>
                         <ul className="space-y-2 text-sm">
-                          {plan.features.adminTools.electronicSignature && (
-                            <li className="flex items-center gap-2 text-gray-700">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                              <span>전자결재</span>
-                            </li>
-                          )}
                           {plan.features.adminTools.systemDiagnostics && (
                             <li className="flex items-center gap-2 text-gray-700">
                               <Check className="w-4 h-4 text-green-600 flex-shrink-0" />

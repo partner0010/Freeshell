@@ -67,6 +67,11 @@ try:
 except ImportError:
     feed_router = None
 
+try:
+    from backend.coupon.router import router as coupon_router
+except ImportError:
+    coupon_router = None
+
 logger = get_logger(__name__)
 
 
@@ -148,6 +153,8 @@ if orchestrator_router:
     app.include_router(orchestrator_router)
 if feed_router:
     app.include_router(feed_router)
+if coupon_router:
+    app.include_router(coupon_router, prefix="/api/coupon", tags=["coupon"])
 
 
 @app.get("/")

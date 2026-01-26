@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const tool = searchParams.get('tool') as 'electronicSignature' | 'systemDiagnostics' | 'debugTools' | 'siteCheck' | 'remoteSolution';
+    const tool = searchParams.get('tool') as 'systemDiagnostics' | 'debugTools' | 'siteCheck' | 'remoteSolution';
     const userId = searchParams.get('user_id');
 
     if (!tool || !userId) {

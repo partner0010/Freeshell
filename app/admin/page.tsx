@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Settings, 
-  FileSignature, 
   Activity, 
   Bug, 
   SearchCheck, 
@@ -16,7 +15,8 @@ import {
   XCircle,
   AlertCircle,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Gift
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -39,14 +39,6 @@ const adminTools = [
     href: '/admin/settings',
     icon: Settings,
     color: 'from-indigo-500 to-indigo-600',
-  },
-  {
-    id: 'signature',
-    title: '전자결재',
-    description: '전자서명 및 문서 승인 관리 시스템',
-    href: '/signature',
-    icon: FileSignature,
-    color: 'from-blue-500 to-blue-600',
   },
   {
     id: 'diagnostics',
@@ -87,6 +79,14 @@ const adminTools = [
     href: '/admin/plugins',
     icon: Settings,
     color: 'from-pink-500 to-pink-600',
+  },
+  {
+    id: 'coupons',
+    title: '쿠폰 관리',
+    description: '쿠폰 생성 및 관리',
+    href: '/admin/coupons',
+    icon: Gift,
+    color: 'from-purple-500 to-purple-600',
   },
 ];
 

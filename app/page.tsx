@@ -1,6 +1,6 @@
 /**
- * 리뉴얼된 홈페이지
- * AI로 웹사이트와 앱 만들기 기능을 메인으로 재구성
+ * 올인원 콘텐츠 제작 플랫폼 - 메인 페이지
+ * AI 기반 콘텐츠 생성에 집중
  */
 'use client';
 
@@ -12,94 +12,83 @@ import KeyboardShortcuts from '@/components/KeyboardShortcuts';
 import BookmarkManager from '@/components/BookmarkManager';
 import CommandPalette from '@/components/CommandPalette';
 import { 
-  Code, 
   Sparkles, 
   ArrowRight, 
   Zap, 
   MessageCircle, 
-  Send, 
   Loader2,
   CheckCircle,
-  FileText,
-  Hash,
-  Search,
+  Film,
+  Video,
+  Music,
+  Image,
   Globe,
   Shield,
   Play,
-  Download,
-  Eye,
   Star,
-  TrendingUp
+  TrendingUp,
+  Wand2,
+  Layers
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Home() {
   const router = useRouter();
-  const [buildInput, setBuildInput] = useState('');
+  const [contentPrompt, setContentPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
 
-  const handleBuild = (e?: React.FormEvent) => {
+  const handleCreateContent = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!buildInput.trim() || isGenerating) return;
-    router.push(`/build/step1?query=${encodeURIComponent(buildInput.trim())}`);
+    if (!contentPrompt.trim() || isGenerating) return;
+    router.push(`/allinone-studio/create?prompt=${encodeURIComponent(contentPrompt.trim())}`);
   };
 
-  const features = [
+  const contentTypes = [
     {
-      id: 'build',
-      title: 'AI로 웹사이트와 앱 만들기',
-      description: '자연어로 설명하면 AI가 웹사이트나 웹 앱을 생성합니다',
-      icon: Code,
-      color: 'from-blue-600 to-purple-600',
-      href: '/build',
-      badge: 'NEW',
+      id: 'shortform',
+      title: '숏폼 영상',
+      description: 'AI가 스토리, 캐릭터, 애니메이션을 자동 생성하는 숏폼 영상',
+      icon: Video,
+      color: 'from-purple-600 to-pink-600',
+      href: '/allinone-studio/create?type=shortform',
+      badge: '인기',
       highlight: true
     },
     {
-      id: 'content',
-      title: 'AI 콘텐츠 제작',
-      description: '5단계 AI 파이프라인으로 전문적인 콘텐츠를 제작하세요',
+      id: 'video',
+      title: '영상 콘텐츠',
+      description: '전문적인 영상 콘텐츠를 AI로 자동 제작',
+      icon: Film,
+      color: 'from-blue-600 to-cyan-600',
+      href: '/allinone-studio/create?type=video',
+      badge: null
+    },
+    {
+      id: 'animation',
+      title: '애니메이션',
+      description: '3D 캐릭터와 애니메이션을 포함한 동영상 제작',
       icon: Sparkles,
-      color: 'from-purple-600 to-pink-600',
-      href: '/projects/new',
-      badge: null
-    },
-    {
-      id: 'search',
-      title: 'AI 검색 엔진',
-      description: '실시간으로 맞춤형 검색 결과 페이지를 생성합니다',
-      icon: Search,
-      color: 'from-blue-500 to-cyan-500',
-      href: '#search',
-      badge: null
-    },
-    {
-      id: 'templates',
-      title: '템플릿 라이브러리',
-      description: '50개 이상의 실제 사용 가능한 콘텐츠 템플릿',
-      icon: FileText,
       color: 'from-pink-500 to-rose-500',
-      href: '/templates',
-      badge: '50+'
+      href: '/allinone-studio/create?type=animation',
+      badge: null
     },
     {
-      id: 'hashtag',
-      title: '해시태그 생성기',
-      description: 'AI가 최적의 해시태그를 자동으로 생성해드립니다',
-      icon: Hash,
-      color: 'from-purple-500 to-indigo-500',
-      href: '#hashtag',
-      badge: null
+      id: 'movie',
+      title: '영화 제작',
+      description: '장편 영화 수준의 콘텐츠를 AI로 생성',
+      icon: Layers,
+      color: 'from-indigo-600 to-purple-600',
+      href: '/allinone-studio/create?type=movie',
+      badge: 'NEW'
     }
   ];
 
   const examples = [
-    '블로그 웹사이트를 만들어줘',
-    '간단한 투두리스트 웹 앱을 만들어줘',
-    '포트폴리오 웹사이트를 만들어줘',
-    '계산기 웹 앱을 만들어줘',
-    '랜딩 페이지를 만들어줘'
+    '행복한 고양이가 춤추는 숏폼 영상',
+    '제품 소개 애니메이션 영상',
+    '교육용 3D 캐릭터 영상',
+    '브랜드 스토리텔링 영상',
+    '음악과 함께하는 뮤직비디오'
   ];
 
   return (
@@ -134,48 +123,48 @@ export default function Home() {
         <div className="max-w-6xl mx-auto relative z-10">
           {/* 배지 */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-bold shadow-lg mb-6">
-              <Sparkles className="w-4 h-4" />
-              <span>완전 무료 • 즉시 사용 가능</span>
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold shadow-lg mb-6">
+              <Wand2 className="w-4 h-4" />
+              <span>완전 무료 • AI 자동 생성</span>
             </div>
           </div>
 
           {/* 메인 타이틀 */}
           <div className="text-center mb-12">
             <h1 className="text-6xl md:text-7xl lg:text-8xl font-extrabold mb-6 tracking-tight">
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                AI로 웹사이트와 앱 만들기
+              <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 bg-clip-text text-transparent">
+                올인원 콘텐츠 제작 플랫폼
               </span>
             </h1>
             <p className="text-2xl md:text-3xl text-white mb-4 max-w-3xl mx-auto leading-relaxed font-medium drop-shadow-lg">
-              자연어로 설명하면 AI가 웹사이트나 웹 앱을 생성합니다
+              AI가 스토리, 캐릭터, 애니메이션을 자동으로 생성하는 콘텐츠 제작 도구
             </p>
             <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed drop-shadow">
-              코드 작성 없이 몇 분 만에 완전한 웹사이트와 웹 앱을 만들어보세요
+              몇 분 만에 전문적인 숏폼 영상, 애니메이션, 영화를 만들어보세요
             </p>
           </div>
 
-          {/* 인라인 빌더 인터페이스 */}
+          {/* 콘텐츠 생성 인터페이스 */}
           <div className="max-w-4xl mx-auto mb-12">
             <div className="bg-white rounded-3xl shadow-2xl border-2 border-gray-200 overflow-hidden">
               {/* 입력 영역 */}
-              <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
-                <form onSubmit={handleBuild} className="flex gap-4">
+              <div className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-gray-200">
+                <form onSubmit={handleCreateContent} className="flex gap-4">
                   <div className="flex-1 relative">
                     <MessageCircle className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
-                      value={buildInput}
-                      onChange={(e) => setBuildInput(e.target.value)}
-                      placeholder="예: 블로그 웹사이트를 만들어줘"
-                      className="w-full pl-12 pr-4 py-4 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-gray-900 text-lg"
+                      value={contentPrompt}
+                      onChange={(e) => setContentPrompt(e.target.value)}
+                      placeholder="예: 행복한 고양이가 춤추는 숏폼 영상을 만들어주세요"
+                      className="w-full pl-12 pr-4 py-4 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none text-gray-900 text-lg"
                       disabled={isGenerating}
                     />
                   </div>
                   <button
                     type="submit"
-                    disabled={!buildInput.trim() || isGenerating}
-                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                    disabled={!contentPrompt.trim() || isGenerating}
+                    className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold text-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
                   >
                     {isGenerating ? (
                       <>
@@ -185,7 +174,7 @@ export default function Home() {
                     ) : (
                       <>
                         <Sparkles className="w-5 h-5" />
-                        <span>웹사이트/앱 만들기</span>
+                        <span>콘텐츠 생성</span>
                         <ArrowRight className="w-5 h-5" />
                       </>
                     )}
@@ -201,13 +190,13 @@ export default function Home() {
                     <button
                       key={idx}
                       onClick={() => {
-                        setBuildInput(example);
+                        setContentPrompt(example);
                         setTimeout(() => {
                           const form = document.querySelector('form');
                           if (form) form.requestSubmit();
                         }, 100);
                       }}
-                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-purple-500 hover:text-purple-600 hover:bg-purple-50 transition-all"
                     >
                       {example}
                     </button>
@@ -223,7 +212,7 @@ export default function Home() {
               { icon: Zap, text: '빠른 생성' },
               { icon: Globe, text: '완전 무료' },
               { icon: Shield, text: '안전한' },
-              { icon: Code, text: '실행 가능한 코드' }
+              { icon: Wand2, text: 'AI 자동화' }
             ].map((feature, index) => {
               const Icon = feature.icon;
               return (
@@ -231,7 +220,7 @@ export default function Home() {
                   key={index}
                   className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <Icon className="w-4 h-4 text-blue-600" />
+                  <Icon className="w-4 h-4 text-purple-600" />
                   <span className="text-sm font-medium text-gray-700">{feature.text}</span>
                 </div>
               );
@@ -244,56 +233,56 @@ export default function Home() {
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              모든 기능을 한 곳에서
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-6 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 bg-clip-text text-transparent">
+              다양한 콘텐츠 타입 지원
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              AI를 활용한 다양한 도구들을 만나보세요
+              AI가 자동으로 생성하는 전문적인 콘텐츠를 만나보세요
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature) => {
-              const Icon = feature.icon;
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {contentTypes.map((contentType) => {
+              const Icon = contentType.icon;
               return (
                 <Link
-                  key={feature.id}
-                  href={feature.href}
+                  key={contentType.id}
+                  href={contentType.href}
                   className={`group relative bg-white rounded-2xl shadow-lg border-2 transition-all hover:shadow-2xl p-8 transform hover:-translate-y-2 ${
-                    feature.highlight 
-                      ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-purple-50' 
-                      : 'border-gray-200 hover:border-blue-500'
+                    contentType.highlight 
+                      ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50' 
+                      : 'border-gray-200 hover:border-purple-500'
                   }`}
                 >
                   {/* 배지 */}
-                  {feature.badge && (
-                    <span className="absolute top-5 right-5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-bold rounded-full shadow-md">
-                      {feature.badge}
+                  {contentType.badge && (
+                    <span className="absolute top-5 right-5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold rounded-full shadow-md">
+                      {contentType.badge}
                     </span>
                   )}
 
                   {/* 아이콘 */}
-                  <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg`}>
+                  <div className={`w-16 h-16 bg-gradient-to-br ${contentType.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg`}>
                     <Icon className="w-8 h-8 text-white" />
                   </div>
 
                   {/* 내용 */}
                   <h3 className={`text-2xl font-bold mb-4 transition-colors ${
-                    feature.highlight ? 'text-blue-900' : 'text-gray-900 group-hover:text-blue-600'
+                    contentType.highlight ? 'text-purple-900' : 'text-gray-900 group-hover:text-purple-600'
                   }`}>
-                    {feature.title}
+                    {contentType.title}
                   </h3>
                   <p className="text-gray-600 mb-6 leading-relaxed text-base">
-                    {feature.description}
+                    {contentType.description}
                   </p>
 
                   {/* 링크 */}
                   <div className={`flex items-center font-semibold transition-all ${
-                    feature.highlight ? 'text-blue-700' : 'text-blue-600 group-hover:gap-3'
+                    contentType.highlight ? 'text-purple-700' : 'text-purple-600 group-hover:gap-3'
                   }`}>
                     <span>시작하기</span>
                     <ArrowRight className={`w-5 h-5 ml-2 transition-transform ${
-                      feature.highlight ? '' : 'group-hover:translate-x-2'
+                      contentType.highlight ? '' : 'group-hover:translate-x-2'
                     }`} />
                   </div>
                 </Link>
@@ -307,11 +296,11 @@ export default function Home() {
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-6 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 bg-clip-text text-transparent">
               어떻게 작동하나요?
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              3단계로 간단하게 웹사이트와 앱을 만들어보세요
+              6단계 AI 파이프라인으로 전문적인 콘텐츠를 자동 생성합니다
             </p>
           </div>
 
@@ -319,24 +308,24 @@ export default function Home() {
             {[
               {
                 step: '1',
-                title: '설명하기',
-                description: '원하는 웹사이트나 웹 앱을 자연어로 설명하세요',
+                title: '스토리 & 스크립트',
+                description: 'AI가 자동으로 스토리와 스크립트를 생성합니다',
                 icon: MessageCircle,
-                color: 'from-blue-500 to-blue-600'
-              },
-              {
-                step: '2',
-                title: 'AI가 생성',
-                description: 'AI가 자동으로 완전한 웹사이트/앱 코드를 생성합니다',
-                icon: Sparkles,
                 color: 'from-purple-500 to-purple-600'
               },
               {
-                step: '3',
-                title: '사용하기',
-                description: '생성된 웹사이트/앱을 미리보기하고 다운로드하세요',
-                icon: CheckCircle,
+                step: '2',
+                title: '캐릭터 생성',
+                description: '3D 캐릭터와 디자인을 자동으로 생성합니다',
+                icon: Sparkles,
                 color: 'from-pink-500 to-pink-600'
+              },
+              {
+                step: '3',
+                title: '렌더링 & 완성',
+                description: '최종 영상을 렌더링하고 다운로드하세요',
+                icon: CheckCircle,
+                color: 'from-rose-500 to-rose-600'
               }
             ].map((item, index) => {
               const Icon = item.icon;
@@ -382,15 +371,15 @@ export default function Home() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
             {[
-              { text: '무제한 웹사이트/앱 생성', icon: Code },
-              { text: '무제한 AI 검색', icon: Search },
-              { text: '해시태그 생성', icon: Hash },
-              { text: '템플릿 라이브러리', icon: FileText }
+              { text: '무제한 콘텐츠 생성', icon: Film },
+              { text: 'AI 자동화', icon: Wand2 },
+              { text: '3D 캐릭터', icon: Sparkles },
+              { text: '음성 & 음악', icon: Music }
             ].map((item, idx) => {
               const Icon = item.icon;
               return (
-                <div key={idx} className="px-5 py-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-gray-200 hover:border-blue-500 transition-all shadow-sm hover:shadow-md">
-                  <Icon className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                <div key={idx} className="px-5 py-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-gray-200 hover:border-purple-500 transition-all shadow-sm hover:shadow-md">
+                  <Icon className="w-6 h-6 text-purple-600 mx-auto mb-2" />
                   <div className="text-sm font-semibold text-gray-700">{item.text}</div>
                 </div>
               );
@@ -413,16 +402,16 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/build/step1"
+              href="/allinone-studio/create"
               className="group px-10 py-5 bg-white text-purple-600 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all hover:scale-105 flex items-center gap-2"
             >
-              <Code className="w-6 h-6" />
-              <span>AI로 웹사이트/앱 만들기</span>
+              <Film className="w-6 h-6" />
+              <span>콘텐츠 생성 시작</span>
               <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               href="/templates"
-              className="px-10 py-5 bg-transparent border-2 border-white text-white rounded-2xl font-semibold text-lg hover:bg-white hover:text-blue-600 transition-all"
+              className="px-10 py-5 bg-transparent border-2 border-white text-white rounded-2xl font-semibold text-lg hover:bg-white hover:text-purple-600 transition-all"
             >
               템플릿 둘러보기
             </Link>

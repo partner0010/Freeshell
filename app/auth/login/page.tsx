@@ -45,10 +45,16 @@ export default function LoginPage() {
         throw new Error(data.error || '로그인에 실패했습니다.');
       }
 
-      // 로그인 성공 - 메인 화면으로 이동
+      // 로그인 성공 - 세션 쿠키가 설정되기까지 약간의 딜레이 후 리다이렉트
       const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/';
-      router.push(redirectUrl);
-      router.refresh();
+      
+      // 쿠키가 설정되기까지 약간의 시간을 두고 페이지를 새로고침하여 인증 상태 업데이트
+      // 서버에서 쿠키를 설정하는 데 시간이 필요할 수 있음
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // 페이지를 완전히 새로고침하여 인증 상태를 즉시 반영
+      // router.push와 router.refresh()만으로는 쿠키가 즉시 반영되지 않을 수 있음
+      window.location.href = redirectUrl;
     } catch (err: any) {
       setError(err.message || '로그인 중 오류가 발생했습니다.');
     } finally {

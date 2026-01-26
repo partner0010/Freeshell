@@ -41,26 +41,25 @@ export default function EnhancedNavbar() {
       label: '홈',
       icon: Sparkles,
     },
-    { 
-      href: '/build/step1', 
-      label: '웹사이트/앱 만들기',
-      icon: Sparkles,
+    {
+      href: '/allinone-studio/create',
+      label: '콘텐츠 생성',
+      icon: Film,
     },
-    { 
-      href: '/editor', 
-      label: '에디터',
+    {
+      href: '/feed',
+      label: '피드',
       icon: Sparkles,
     },
     {
-      href: '/allinone-studio',
-      label: '올인원 스튜디오',
-      icon: Film,
+      href: '/experts',
+      label: '전문가',
+      icon: Sparkles,
     },
     {
       label: '템플릿',
       icon: Sparkles,
       dropdown: [
-        { href: '/templates/website', label: '웹사이트 템플릿' },
         { href: '/templates', label: '콘텐츠 템플릿' },
       ],
     },

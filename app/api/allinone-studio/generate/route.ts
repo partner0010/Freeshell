@@ -74,6 +74,21 @@ export async function POST(request: NextRequest) {
         const voiceContext = previousResults || [];
         userPrompt = `다음 정보를 바탕으로 음성과 음악을 생성해주세요:\n\n${JSON.stringify(voiceContext)}\n\n요구사항: ${prompt}`;
         break;
+      case 'render':
+        // 렌더링 단계는 실제 렌더링 서버에서 처리해야 함
+        // 임시로 시뮬레이션 결과 반환
+        return NextResponse.json({
+          success: true,
+          step: 'render',
+          result: {
+            videoUrl: null, // 실제 렌더링 완료 시 URL 설정
+            thumbnail: null,
+            duration: 30,
+            status: 'completed',
+            message: '렌더링이 완료되었습니다. (시뮬레이션)',
+          },
+          source: 'fallback',
+        });
       default:
         return NextResponse.json(
           { error: '지원하지 않는 단계입니다.' },
@@ -93,15 +108,31 @@ export async function POST(request: NextRequest) {
         aiResponse = freeAIResult.text;
         aiSource = freeAIResult.source;
       } else {
+        console.error('[AllInOne Studio] AI 응답 생성 실패:', {
+          success: freeAIResult.success,
+          source: freeAIResult.source,
+          hasText: !!freeAIResult.text,
+        });
         return NextResponse.json(
-          { error: 'AI 응답 생성 실패' },
+          { 
+            error: 'AI 응답 생성 실패',
+            details: 'AI 서비스에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.',
+            source: freeAIResult.source,
+          },
           { status: 500 }
         );
       }
-    } catch (error) {
-      console.error('AI 생성 오류:', error);
+    } catch (error: any) {
+      console.error('[AllInOne Studio] AI 생성 오류:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
       return NextResponse.json(
-        { error: 'AI 응답 생성 중 오류가 발생했습니다.' },
+        { 
+          error: 'AI 응답 생성 중 오류가 발생했습니다.',
+          details: error.message || '네트워크 연결을 확인해주세요.',
+        },
         { status: 500 }
       );
     }

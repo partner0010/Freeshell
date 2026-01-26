@@ -22,7 +22,6 @@ export interface PricingPlan {
     };
     // 관리자 기능 (유료 서비스)
     adminTools: {
-      electronicSignature: boolean; // 전자결재
       systemDiagnostics: boolean; // 시스템 진단
       debugTools: boolean; // 디버그 도구
       siteCheck: boolean; // 사이트 검사
@@ -72,7 +71,6 @@ export const PRICING_PLANS: Record<PlanType, PricingPlan> = {
         contentTemplates: -1, // 무제한
       },
       adminTools: {
-        electronicSignature: false,
         systemDiagnostics: false,
         debugTools: false,
         siteCheck: false,
@@ -119,7 +117,6 @@ export const PRICING_PLANS: Record<PlanType, PricingPlan> = {
         contentTemplates: 20,
       },
       adminTools: {
-        electronicSignature: true, // 기본 기능만
         systemDiagnostics: true, // 월 10회 제한
         debugTools: false,
         siteCheck: true, // 월 10회 제한
@@ -166,7 +163,6 @@ export const PRICING_PLANS: Record<PlanType, PricingPlan> = {
         contentTemplates: -1, // 무제한
       },
       adminTools: {
-        electronicSignature: true, // 고급 기능
         systemDiagnostics: true, // 월 100회
         debugTools: true, // 디버그 도구 사용 가능
         siteCheck: true, // 월 100회
@@ -213,7 +209,6 @@ export const PRICING_PLANS: Record<PlanType, PricingPlan> = {
         contentTemplates: -1,
       },
       adminTools: {
-        electronicSignature: true, // 모든 고급 기능
         systemDiagnostics: true, // 무제한
         debugTools: true,
         siteCheck: true, // 무제한

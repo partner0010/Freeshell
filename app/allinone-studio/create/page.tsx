@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
 import AuthRequired from '@/components/AuthRequired';
-import { Sparkles, Loader2, Play, Check } from 'lucide-react';
+import { Sparkles, Loader2, Play, Check, ArrowRight, Layers } from 'lucide-react';
 
 type ContentType = 'shortform' | 'video' | 'animation' | 'movie';
 
@@ -66,29 +66,80 @@ export default function CreateContentPage() {
         ));
 
         // API 호출
-        const response = await fetch('/api/allinone-studio/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type,
-            prompt,
-            step: step.id,
-            previousResults: steps.slice(0, i).map(s => s.result).filter(Boolean),
-          }),
-        });
+        try {
+          const response = await fetch('/api/allinone-studio/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type,
+              prompt,
+              step: step.id,
+              previousResults: steps.slice(0, i).map(s => s.result).filter(Boolean),
+            }),
+          });
 
-        if (response.ok) {
-          const data = await response.json();
-          
-          setSteps(prev => prev.map((s, idx) => 
-            idx === i 
-              ? { ...s, status: 'completed', result: data.result }
-              : s
-          ));
-        } else {
+          if (response.ok) {
+            const data = await response.json();
+            
+            // 단계 결과 저장
+            setSteps(prev => prev.map((s, idx) => 
+              idx === i 
+                ? { ...s, status: 'completed', result: data.result }
+                : s
+            ));
+
+            // 렌더링 단계 완료 시 비디오 URL 생성 (시뮬레이션)
+            if (step.id === 'render' && data.result) {
+              // 실제로는 렌더링 서버에서 비디오 URL을 받아와야 함
+              // 임시로 시뮬레이션 - 실제 구현 시 렌더링 서버 API 호출
+              console.log('[AllInOne Studio] 렌더링 완료:', data.result);
+              
+              // 렌더링 결과에서 비디오 URL 추출 (실제 구현 시)
+              const videoUrl = data.result?.videoUrl || data.result?.output?.video || null;
+              if (videoUrl) {
+                // 프로젝트에 비디오 URL 저장
+                const projectId = `project-${Date.now()}`;
+                try {
+                  await fetch('/api/allinone-studio/project', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      id: projectId,
+                      name: prompt.substring(0, 50) || '새 프로젝트',
+                      type,
+                      prompt,
+                      steps: steps.reduce((acc, s, idx) => {
+                        acc[s.id] = {
+                          status: idx <= i ? (idx === i ? 'completed' : s.status) : 'pending',
+                          result: idx === i ? data.result : s.result,
+                        };
+                        return acc;
+                      }, {} as Record<string, any>),
+                      status: 'completed',
+                      videoUrl,
+                      thumbnail: data.result?.thumbnail || null,
+                    }),
+                  });
+                } catch (e) {
+                  console.error('프로젝트 저장 실패:', e);
+                }
+              }
+            }
+          } else {
+            const errorData = await response.json().catch(() => ({ error: '알 수 없는 오류' }));
+            console.error('API 오류:', errorData);
+            setSteps(prev => prev.map((s, idx) => 
+              idx === i ? { ...s, status: 'error' } : s
+            ));
+            alert(`생성 실패: ${errorData.error || '서버 오류가 발생했습니다.'}`);
+            break;
+          }
+        } catch (fetchError: any) {
+          console.error('Fetch 오류:', fetchError);
           setSteps(prev => prev.map((s, idx) => 
             idx === i ? { ...s, status: 'error' } : s
           ));
+          alert(`생성 실패: ${fetchError.message || '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.'}`);
           break;
         }
 
@@ -96,9 +147,55 @@ export default function CreateContentPage() {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // 모든 단계 완료 후 프로젝트 페이지로 이동
+      // 모든 단계 완료 후 프로젝트 저장 및 페이지로 이동
       const projectId = `project-${Date.now()}`;
-      router.push(`/allinone-studio/project/${projectId}`);
+      
+      // 최종 상태 확인
+      const allCompleted = steps.every(s => s.status === 'completed');
+      const hasError = steps.some(s => s.status === 'error');
+      const finalStatus = hasError ? 'error' : allCompleted ? 'completed' : 'generating';
+      
+      // 렌더링 결과에서 비디오 URL 추출
+      const renderStep = steps.find(s => s.id === 'render');
+      const videoUrl = renderStep?.result?.videoUrl || renderStep?.result?.output?.video || null;
+      const thumbnail = renderStep?.result?.thumbnail || null;
+      
+      // 프로젝트 저장
+      try {
+        const saveResponse = await fetch('/api/allinone-studio/project', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: projectId,
+            name: prompt.substring(0, 50) || '새 프로젝트',
+            type,
+            prompt,
+            steps: steps.reduce((acc, step) => {
+              acc[step.id] = {
+                status: step.status,
+                result: step.result,
+              };
+              return acc;
+            }, {} as Record<string, any>),
+            status: finalStatus,
+            videoUrl,
+            thumbnail,
+          }),
+        });
+
+        if (saveResponse.ok) {
+          const savedData = await saveResponse.json();
+          // 프로젝트 페이지로 이동
+          router.push(`/allinone-studio/project/${projectId}`);
+        } else {
+          // 저장 실패해도 프로젝트 페이지로 이동 (임시 저장)
+          router.push(`/allinone-studio/project/${projectId}`);
+        }
+      } catch (saveError) {
+        console.error('프로젝트 저장 실패:', saveError);
+        // 저장 실패해도 프로젝트 페이지로 이동
+        router.push(`/allinone-studio/project/${projectId}`);
+      }
     } catch (error) {
       console.error('생성 오류:', error);
       alert('콘텐츠 생성 중 오류가 발생했습니다.');
@@ -108,57 +205,89 @@ export default function CreateContentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-          콘텐츠 생성
-        </h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* 헤더 */}
+        <div className="text-center mb-12">
+          <h1 className="text-5xl md:text-6xl font-extrabold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">
+            AI 콘텐츠 생성
+          </h1>
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            AI가 자동으로 스토리, 캐릭터, 애니메이션을 생성하는 전문적인 콘텐츠를 만들어보세요
+          </p>
+        </div>
 
-        {/* 프롬프트 입력 */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 border border-white/20">
-          <label className="block text-sm font-semibold mb-2">
+        {/* 프롬프트 입력 카드 */}
+        <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 mb-8 border border-white/20 shadow-2xl">
+          <label className="block text-lg font-semibold mb-4 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-purple-400" />
             무엇을 만들고 싶으신가요?
           </label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="예: 행복한 고양이가 춤추는 숏폼 영상을 만들어주세요"
-            className="w-full h-32 px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full h-40 px-6 py-4 bg-white/10 border-2 border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-lg resize-none transition-all"
             disabled={isGenerating}
           />
           <div className="mt-4 flex items-center gap-2 text-sm text-gray-400">
             <Sparkles className="w-4 h-4" />
-            <span>AI가 자동으로 스토리, 캐릭터, 장면을 생성합니다</span>
+            <span>AI가 자동으로 스토리, 캐릭터, 장면, 애니메이션을 생성합니다</span>
           </div>
         </div>
 
-        {/* 생성 단계 */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 mb-8">
-          <h2 className="text-xl font-bold mb-6">생성 단계</h2>
+        {/* 생성 단계 카드 */}
+        <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl mb-8">
+          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+            <Layers className="w-6 h-6 text-purple-400" />
+            생성 단계
+          </h2>
           <div className="space-y-4">
             {steps.map((step, index) => (
               <div
                 key={step.id}
-                className="flex items-center gap-4 p-4 bg-white/5 rounded-lg"
+                className={`flex items-center gap-4 p-5 rounded-xl transition-all ${
+                  step.status === 'processing' 
+                    ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-2 border-purple-500/50' 
+                    : step.status === 'completed'
+                    ? 'bg-green-500/10 border-2 border-green-500/50'
+                    : step.status === 'error'
+                    ? 'bg-red-500/10 border-2 border-red-500/50'
+                    : 'bg-white/5 border-2 border-white/10'
+                }`}
               >
                 <div className="flex-shrink-0">
                   {step.status === 'completed' && (
-                    <Check className="w-6 h-6 text-green-500" />
+                    <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                      <Check className="w-6 h-6 text-white" />
+                    </div>
                   )}
                   {step.status === 'processing' && (
-                    <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                    <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    </div>
                   )}
                   {step.status === 'pending' && (
-                    <div className="w-6 h-6 rounded-full border-2 border-gray-500"></div>
+                    <div className="w-10 h-10 rounded-full border-2 border-gray-500 flex items-center justify-center">
+                      <span className="text-gray-400 font-semibold">{index + 1}</span>
+                    </div>
                   )}
                   {step.status === 'error' && (
-                    <div className="w-6 h-6 rounded-full bg-red-500"></div>
+                    <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+                      <span className="text-white font-bold">✕</span>
+                    </div>
                   )}
                 </div>
                 <div className="flex-1">
-                  <div className="font-medium">{step.name}</div>
+                  <div className="font-semibold text-lg">{step.name}</div>
                   {step.status === 'processing' && (
-                    <div className="text-sm text-gray-400">처리 중...</div>
+                    <div className="text-sm text-purple-300 mt-1">AI가 생성 중입니다...</div>
+                  )}
+                  {step.status === 'completed' && (
+                    <div className="text-sm text-green-300 mt-1">완료되었습니다</div>
+                  )}
+                  {step.status === 'error' && (
+                    <div className="text-sm text-red-300 mt-1">오류가 발생했습니다</div>
                   )}
                 </div>
               </div>
@@ -170,17 +299,18 @@ export default function CreateContentPage() {
         <button
           onClick={handleGenerate}
           disabled={isGenerating || !prompt.trim()}
-          className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+          className="w-full py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 rounded-xl font-bold text-xl hover:from-purple-700 hover:via-pink-700 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 shadow-2xl hover:shadow-purple-500/50 transform hover:scale-105 disabled:hover:scale-100"
         >
           {isGenerating ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              생성 중...
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <span>콘텐츠 생성 중...</span>
             </>
           ) : (
             <>
-              <Play className="w-5 h-5" />
-              콘텐츠 생성 시작
+              <Play className="w-6 h-6" />
+              <span>콘텐츠 생성 시작</span>
+              <ArrowRight className="w-6 h-6" />
             </>
           )}
         </button>

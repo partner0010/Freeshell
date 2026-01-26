@@ -54,7 +54,7 @@ export class PlanLimitService {
    */
   async checkAdminToolAccess(
     userId: string,
-    tool: 'electronicSignature' | 'systemDiagnostics' | 'debugTools' | 'siteCheck' | 'remoteSolution'
+    tool: 'systemDiagnostics' | 'debugTools' | 'siteCheck' | 'remoteSolution'
   ): Promise<{
     allowed: boolean;
     reason?: string;
@@ -79,16 +79,6 @@ export class PlanLimitService {
 
     // 각 도구별 접근 확인
     switch (tool) {
-      case 'electronicSignature':
-        if (!planFeatures.electronicSignature) {
-          return {
-            allowed: false,
-            reason: '전자결재 기능은 유료 플랜에서만 이용 가능합니다.',
-            requiresUpgrade: true,
-            upgradePlan: 'personal',
-          };
-        }
-        break;
 
       case 'systemDiagnostics':
         if (!planFeatures.systemDiagnostics) {

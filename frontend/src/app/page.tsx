@@ -107,39 +107,49 @@ export default function HomePage() {
                 title: "스튜디오",
                 description: "AI Orchestrator 기반의 강력한 콘텐츠 제작 도구",
                 features: ["프롬프트 분석", "자동 계획 생성", "다양한 콘텐츠 타입"],
+                href: "/create",
               },
               {
                 icon: "📚",
                 title: "라이브러리",
                 description: "내 콘텐츠를 체계적으로 관리하고 분석",
                 features: ["프로젝트 관리", "에셋 라이브러리", "성능 분석"],
+                href: "/library",
               },
               {
                 icon: "🌐",
                 title: "피드",
                 description: "커뮤니티와 콘텐츠를 공유하고 발견",
                 features: ["인기 콘텐츠", "팔로우 시스템", "댓글 및 좋아요"],
+                href: "/feed",
               },
               {
                 icon: "👥",
                 title: "전문가",
                 description: "필요할 때 전문가의 도움을 받으세요",
                 features: ["전문가 매칭", "원격 지원", "커스텀 서비스"],
+                href: "/experts",
               },
               {
                 icon: "💵",
                 title: "수익화",
                 description: "콘텐츠로 수익을 창출하고 성장",
                 features: ["구독 모델", "광고 수익", "전문가 수수료"],
+                href: "/dashboard",
               },
               {
                 icon: "🔄",
                 title: "순환 생태계",
                 description: "모든 기능이 하나로 연결된 생태계",
                 features: ["자동 공유", "추천 시스템", "성장 지원"],
+                href: "/dashboard",
               },
             ].map((feature) => (
-              <Card key={feature.title} className="hover:shadow-lg transition-shadow">
+              <Card 
+                key={feature.title} 
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => feature.href && router.push(feature.href)}
+              >
                 <CardHeader>
                   <div className="text-4xl mb-2">{feature.icon}</div>
                   <CardTitle>{feature.title}</CardTitle>
@@ -154,6 +164,20 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
+                  {feature.href && (
+                    <div className="mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(feature.href!);
+                        }}
+                      >
+                        바로가기 →
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -200,6 +224,16 @@ export default function HomePage() {
               <li>
                 <a href="/dashboard" className="hover:text-primary-600">
                   대시보드
+                </a>
+              </li>
+              <li>
+                <a href="/feed" className="hover:text-primary-600">
+                  피드
+                </a>
+              </li>
+              <li>
+                <a href="/experts" className="hover:text-primary-600">
+                  전문가
                 </a>
               </li>
               <li>
