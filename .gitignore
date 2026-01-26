@@ -27,6 +27,14 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+# 환경별 설정 파일 (보안상 제외)
+.env.development
+.env.staging
+.env.production
+# 예제 파일은 포함 (커밋 가능)
+!.env.development.example
+!.env.staging.example
+!.env.production.example
 
 # admin credentials (보안)
 ADMIN_CREDENTIALS.md

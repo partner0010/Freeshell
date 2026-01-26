@@ -54,4 +54,22 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     """토큰 응답"""
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
+
+
+class RefreshTokenRequest(BaseModel):
+    """Refresh Token 요청"""
+    refresh_token: str
+
+
+class UserResponse(BaseModel):
+    """사용자 응답"""
+    id: str
+    email: EmailStr
+    username: str
+    role: UserRole
+    plan: str
+    credits: int
+    created_at: datetime
+    is_active: bool

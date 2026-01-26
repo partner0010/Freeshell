@@ -1,3 +1,12 @@
+from fastapi import FastAPI
+
+
+app = FastAPI(title="Backend API")
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
 """
 FastAPI 메인 서버 (통합 플랫폼)
 """
@@ -22,9 +31,41 @@ from .api.monetization_routes import router as monetization_router
 from .api.spatial_routes import router as spatial_router
 from .api.websocket_routes import router as websocket_router
 from .api.performance_routes import router as performance_router
+from app.api.v1.router import api_router
 from .middleware.security_middleware import SecurityHeadersMiddleware
 from .database.connection import init_db
 from .utils.logger import get_logger
+
+# 새 모듈 구조 라우터
+try:
+    from backend.content.router import router as content_router
+except ImportError:
+    content_router = None
+
+try:
+    from backend.character.router import router as character_router
+except ImportError:
+    character_router = None
+
+try:
+    from backend.vault.router import router as vault_router
+except ImportError:
+    vault_router = None
+
+try:
+    from backend.spatial.router import router as spatial_router_new
+except ImportError:
+    spatial_router_new = None
+
+try:
+    from backend.orchestrator.router import router as orchestrator_router
+except ImportError:
+    orchestrator_router = None
+
+try:
+    from backend.feed.router import router as feed_router
+except ImportError:
+    feed_router = None
 
 logger = get_logger(__name__)
 
@@ -72,8 +113,12 @@ app.add_middleware(SecurityHeadersMiddleware)
 from .middleware.rate_limit_middleware import RateLimitMiddleware
 app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 
+# 성능 모니터링 미들웨어
+from .middleware.performance_middleware import PerformanceMiddleware
+app.add_middleware(PerformanceMiddleware)
+
 # 라우터 등록
-app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(auth_router)  # auth_router에 이미 /api/v1/auth prefix 포함
 app.include_router(main_router, prefix="/api", tags=["api"])
 app.include_router(integrated_router, prefix="/api/shortform", tags=["shortform"])
 app.include_router(admin_router, prefix="/api/admin", tags=["admin"])
@@ -88,6 +133,21 @@ app.include_router(monetization_router, prefix="/api/monetization", tags=["monet
 app.include_router(spatial_router, prefix="/api/spatial", tags=["spatial"])
 app.include_router(websocket_router, prefix="/api/ws", tags=["websocket"])
 app.include_router(performance_router, prefix="/api/performance", tags=["performance"])
+app.include_router(api_router, prefix="/api/v1")
+
+# 새 모듈 구조 라우터
+if content_router:
+    app.include_router(content_router)
+if character_router:
+    app.include_router(character_router)
+if vault_router:
+    app.include_router(vault_router)
+if spatial_router_new:
+    app.include_router(spatial_router_new)
+if orchestrator_router:
+    app.include_router(orchestrator_router)
+if feed_router:
+    app.include_router(feed_router)
 
 
 @app.get("/")

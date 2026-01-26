@@ -1,189 +1,302 @@
-# 구현 로드맵
+# 추가 기능 구현 로드맵
 
-## 전체 구조
-
-```
-orchestrator/
-├── core/              # AI Orchestrator (완료)
-├── video/             # 숏폼 생성 (완료)
-├── motion/            # 이미지→모션 (완료)
-├── ethics/            # 윤리 시스템 (완료)
-├── expert/            # 전문가 시스템 (완료)
-├── revenue/           # 수익 시스템 (완료)
-└── integration.py    # 통합 (완료)
-```
-
-## 완료된 모듈
-
-### ✅ 1. AI Orchestrator
-- **위치**: `orchestrator/core/`
-- **상태**: 완료
-- **기능**: Intent 분석, Task Plan, Step 실행, Engine 선택, Fallback
-
-### ✅ 2. 숏폼 생성 파이프라인
-- **위치**: `orchestrator/video/`
-- **상태**: 완료
-- **기능**: Scene JSON, FFmpeg 렌더링, GPU/CPU 분기
-
-### ✅ 3. 이미지→모션 시스템
-- **위치**: `orchestrator/motion/`
-- **상태**: 완료
-- **기능**: 모션 데이터, AI/Rule 하이브리드, Scene 통합
-
-### ✅ 4. Ethics Guard
-- **위치**: `orchestrator/ethics/`
-- **상태**: 완료
-- **기능**: 윤리 가이드라인, 동의 확인, 위험 평가, 차단 플로우
-
-### ✅ 5. 전문가 시스템
-- **위치**: `orchestrator/expert/`
-- **상태**: 완료
-- **기능**: 전문가 매칭, 원격 지원, 수익 분배
-
-### ✅ 6. 수익 시스템
-- **위치**: `orchestrator/revenue/`
-- **상태**: 완료
-- **기능**: 크레딧 시스템, 가격 전략, 수익 예측, 전환 전략
-
-## 다음 단계
-
-### Phase 1: 통합 및 테스트 (1-2주)
-
-#### 1.1 통합 테스트
-- [ ] `UnifiedPlatform` 통합 테스트
-- [ ] 엔진 간 연동 테스트
-- [ ] Guard 시스템 검증
-- [ ] 크레딧 시스템 연동
-
-#### 1.2 API 엔드포인트
-- [ ] FastAPI 서버 구현
-- [ ] RESTful API 정의
-- [ ] WebSocket (실시간 채팅)
-- [ ] 인증/인가 시스템
-
-#### 1.3 데이터베이스
-- [ ] 스키마 설계
-- [ ] ORM 설정
-- [ ] 마이그레이션
-- [ ] 초기 데이터
-
-### Phase 2: 프론트엔드 (2-4주)
-
-#### 2.1 Unified Content Studio
-- [ ] 메인 대시보드
-- [ ] 콘텐츠 생성 UI
-- [ ] 템플릿 선택
-- [ ] 실시간 미리보기
-
-#### 2.2 전문가 매칭 UI
-- [ ] 요청 생성 폼
-- [ ] 전문가 목록
-- [ ] 채팅 인터페이스
-- [ ] 결제 화면
-
-#### 2.3 크레딧 관리 UI
-- [ ] 크레딧 표시
-- [ ] 플랜 선택
-- [ ] 업그레이드 제안
-- [ ] 결제 통합
-
-### Phase 3: MVP 완성 (4-6주)
-
-#### 3.1 핵심 기능 완성
-- [ ] 숏폼 생성 완성
-- [ ] 이미지→모션 완성
-- [ ] 전문가 매칭 완성
-- [ ] 크레딧 시스템 완성
-
-#### 3.2 보안 및 최적화
-- [ ] 보안 강화
-- [ ] 성능 최적화
-- [ ] 에러 처리
-- [ ] 로깅 및 모니터링
-
-#### 3.3 테스트 및 버그 수정
-- [ ] 단위 테스트
-- [ ] 통합 테스트
-- [ ] 사용자 테스트
-- [ ] 버그 수정
-
-### Phase 4: 베타 출시 (6-8주)
-
-#### 4.1 베타 준비
-- [ ] 베타 사용자 모집
-- [ ] 문서화
-- [ ] 튜토리얼
-- [ ] 지원 시스템
-
-#### 4.2 베타 출시
-- [ ] 제한적 출시
-- [ ] 피드백 수집
-- [ ] 모니터링
-- [ ] 빠른 개선
-
-## 우선순위
-
-### 높음 (즉시)
-1. 통합 테스트
-2. API 엔드포인트
-3. 기본 프론트엔드
-
-### 중간 (1-2개월)
-4. 전문가 매칭 UI
-5. 크레딧 시스템 UI
-6. 보안 강화
-
-### 낮음 (2-3개월)
-7. 고급 기능
-8. 마켓플레이스
-9. 기업용 기능
-
-## 기술 스택
-
-### Backend
-- Python 3.10+
-- FastAPI
-- SQLAlchemy
-- Pydantic
-
-### Frontend
-- Next.js 14
-- React
-- TypeScript
-- Tailwind CSS
-
-### Infrastructure
-- Docker
-- PostgreSQL
-- Redis
-- AWS/GCP
-
-## 성공 기준
-
-### 기술적
-- [ ] 모든 핵심 기능 동작
-- [ ] AI 성공률 > 80%
-- [ ] Fallback 동작 확인
-- [ ] 평균 응답 시간 < 5초
-
-### 비즈니스
-- [ ] 1,000명 사용자 (3개월)
-- [ ] 20% 유료 전환율
-- [ ] 월 $10,000 수익
-- [ ] 90% 이상 만족도
-
-## 리스크 관리
-
-### 기술적 리스크
-- AI 실패율 높음 → Fallback 시스템
-- 서버 비용 증가 → 크레딧 시스템
-- 보안 취약점 → Ethics Guard
-
-### 비즈니스 리스크
-- 사용자 부족 → 무료 플랜
-- 전환율 낮음 → 전환 전략
-- 경쟁사 → 차별화 요소
+**작성 일시**: 2026-01-25  
+**목표**: 피드, 전문가, 라이브러리 기능 구현  
+**전체 기간**: 4주
 
 ---
 
-**이 로드맵은 지속적으로 업데이트됩니다.**
+## 전체 계획 개요
+
+### 구현할 기능
+1. **콘텐츠 피드 페이지** (`/feed`): 커뮤니티 기능
+2. **전문가 마켓플레이스** (`/experts`): 전문가 매칭
+3. **라이브러리 페이지** (`/library`): 콘텐츠 관리
+
+### 단계별 계획
+- **Phase 1**: 공통 백엔드 구조 (1주)
+- **Phase 2**: Content 모듈 구현 (3일)
+- **Phase 3**: Feed 모듈 구현 (3일)
+- **Phase 4**: Library 모듈 구현 (3일)
+- **Phase 5**: Experts 모듈 구현 (3일)
+- **Phase 6**: 프론트엔드 UI 구현 (1주)
+
+---
+
+## Phase 1: 공통 백엔드 구조 (1주)
+
+### 목표
+모듈화된 백엔드 구조 구축 및 공통 기능 통합
+
+### 작업 내용
+
+#### 1.1 Core 모듈 생성
+```
+backend/core/
+├── __init__.py
+├── db.py          # DB 연결 (기존 database/connection.py 통합)
+├── auth.py        # 인증/인가
+└── permissions.py # 권한 관리
+```
+
+#### 1.2 기존 코드 통합
+- `backend/database/connection.py` → `backend/core/db.py`로 통합
+- `backend/app/db/session.py` → `backend/core/db.py`로 통합
+- 인증 로직 통합 → `backend/core/auth.py`
+
+#### 1.3 디렉토리 구조 생성
+```
+backend/
+├── core/          # ✅ Phase 1
+├── content/       # Phase 2
+├── feed/          # Phase 3
+├── library/       # Phase 4
+└── experts/       # Phase 5
+```
+
+### 체크리스트
+- [ ] `core/__init__.py` 생성
+- [ ] `core/db.py` 구현 (기존 코드 통합)
+- [ ] `core/auth.py` 구현
+- [ ] `core/permissions.py` 구현
+- [ ] 기존 코드에서 새 구조로 import 변경
+- [ ] 테스트 및 검증
+
+---
+
+## Phase 2: Content 모듈 (3일)
+
+### 목표
+콘텐츠 관리 기능 모듈화
+
+### 작업 내용
+
+#### 2.1 모델 정의
+- 기존 `database/models.py`의 `Content`, `Project` 모델 활용
+- 필요시 확장
+
+#### 2.2 모듈 구조
+```
+backend/content/
+├── __init__.py
+├── models.py      # 기존 모델 import
+├── schemas.py     # Pydantic 스키마
+├── service.py     # 비즈니스 로직
+└── router.py      # API 엔드포인트
+```
+
+#### 2.3 API 엔드포인트
+- `GET /api/v1/content` - 콘텐츠 목록
+- `GET /api/v1/content/{id}` - 콘텐츠 상세
+- `POST /api/v1/content` - 콘텐츠 생성
+- `PUT /api/v1/content/{id}` - 콘텐츠 수정
+- `DELETE /api/v1/content/{id}` - 콘텐츠 삭제
+
+### 체크리스트
+- [ ] `content/__init__.py` 생성
+- [ ] `content/models.py` (기존 모델 import)
+- [ ] `content/schemas.py` 구현
+- [ ] `content/service.py` 구현
+- [ ] `content/router.py` 구현
+- [ ] `main.py`에 라우터 등록
+- [ ] 테스트
+
+---
+
+## Phase 3: Feed 모듈 (3일)
+
+### 목표
+커뮤니티 피드 기능 구현
+
+### 작업 내용
+
+#### 3.1 모델 정의
+```python
+# feed/models.py
+- FeedItem (비디오, 프로젝트 등)
+- FeedInteraction (좋아요, 댓글, 공유)
+- FeedRecommendation (AI 추천)
+```
+
+#### 3.2 모듈 구조
+```
+backend/feed/
+├── __init__.py
+├── models.py
+├── schemas.py
+├── service.py     # 피드 생성, 추천 로직
+└── router.py
+```
+
+#### 3.3 API 엔드포인트
+- `GET /api/v1/feed` - 피드 조회 (개인화)
+- `GET /api/v1/feed/trending` - 트렌딩 피드
+- `POST /api/v1/feed/{id}/like` - 좋아요
+- `POST /api/v1/feed/{id}/comment` - 댓글 작성
+- `POST /api/v1/feed/{id}/share` - 공유
+
+### 체크리스트
+- [ ] `feed/__init__.py` 생성
+- [ ] `feed/models.py` 구현
+- [ ] `feed/schemas.py` 구현
+- [ ] `feed/service.py` 구현 (기존 recommendation_service 통합)
+- [ ] `feed/router.py` 구현
+- [ ] `main.py`에 라우터 등록
+- [ ] 테스트
+
+---
+
+## Phase 4: Library 모듈 (3일)
+
+### 목표
+라이브러리 (내 콘텐츠 관리) 기능 구현
+
+### 작업 내용
+
+#### 4.1 모델 정의
+```python
+# library/models.py
+- LibraryItem (콘텐츠 참조)
+- Collection (컬렉션/폴더)
+- LibraryTag (태그)
+```
+
+#### 4.2 모듈 구조
+```
+backend/library/
+├── __init__.py
+├── models.py
+├── schemas.py
+├── service.py     # 라이브러리 관리 로직
+└── router.py
+```
+
+#### 4.3 API 엔드포인트
+- `GET /api/v1/library` - 라이브러리 목록
+- `GET /api/v1/library/collections` - 컬렉션 목록
+- `POST /api/v1/library/collections` - 컬렉션 생성
+- `POST /api/v1/library/{id}/add` - 콘텐츠 추가
+- `DELETE /api/v1/library/{id}` - 콘텐츠 삭제
+- `GET /api/v1/library/search` - 검색
+
+### 체크리스트
+- [ ] `library/__init__.py` 생성
+- [ ] `library/models.py` 구현
+- [ ] `library/schemas.py` 구현
+- [ ] `library/service.py` 구현
+- [ ] `library/router.py` 구현
+- [ ] `main.py`에 라우터 등록
+- [ ] 테스트
+
+---
+
+## Phase 5: Experts 모듈 (3일)
+
+### 목표
+전문가 마켓플레이스 기능 구현
+
+### 작업 내용
+
+#### 5.1 모델 정의
+```python
+# experts/models.py
+- Expert (전문가 프로필)
+- ExpertRequest (요청)
+- ExpertReview (리뷰)
+- ExpertSkill (기술 스택)
+```
+
+#### 5.2 모듈 구조
+```
+backend/experts/
+├── __init__.py
+├── models.py
+├── schemas.py
+├── service.py     # 전문가 매칭 로직
+└── router.py
+```
+
+#### 5.3 API 엔드포인트
+- `GET /api/v1/experts` - 전문가 목록
+- `GET /api/v1/experts/{id}` - 전문가 상세
+- `POST /api/v1/experts/{id}/request` - 요청 생성
+- `GET /api/v1/experts/requests` - 내 요청 목록
+- `POST /api/v1/experts/{id}/review` - 리뷰 작성
+
+### 체크리스트
+- [ ] `experts/__init__.py` 생성
+- [ ] `experts/models.py` 구현
+- [ ] `experts/schemas.py` 구현
+- [ ] `experts/service.py` 구현
+- [ ] `experts/router.py` 구현
+- [ ] `main.py`에 라우터 등록
+- [ ] 테스트
+
+---
+
+## Phase 6: 프론트엔드 UI (1주)
+
+### 목표
+각 기능의 프론트엔드 페이지 구현
+
+### 작업 내용
+
+#### 6.1 Feed 페이지 (`/feed`)
+- 피드 목록 UI
+- 좋아요, 댓글, 공유 기능
+- 무한 스크롤
+- 필터 및 정렬
+
+#### 6.2 Library 페이지 (`/library`)
+- 콘텐츠 그리드/리스트 뷰
+- 컬렉션 관리
+- 검색 및 필터
+- 태그 관리
+
+#### 6.3 Experts 페이지 (`/experts`)
+- 전문가 목록
+- 전문가 프로필
+- 요청 생성 폼
+- 리뷰 시스템
+
+### 체크리스트
+- [ ] `/feed` 페이지 구현
+- [ ] `/library` 페이지 구현
+- [ ] `/experts` 페이지 구현
+- [ ] API 연동
+- [ ] 반응형 디자인
+- [ ] 테스트
+
+---
+
+## 통합 및 테스트
+
+### 통합 작업
+- [ ] 모든 모듈을 `main.py`에 통합
+- [ ] 기존 API와의 호환성 확인
+- [ ] 인증/권한 통합 확인
+
+### 테스트
+- [ ] 단위 테스트 (각 모듈)
+- [ ] 통합 테스트 (API 엔드포인트)
+- [ ] E2E 테스트 (프론트엔드)
+
+---
+
+## 예상 일정
+
+| Phase | 작업 | 기간 |
+|-------|------|------|
+| Phase 1 | 공통 백엔드 구조 | 1주 |
+| Phase 2 | Content 모듈 | 3일 |
+| Phase 3 | Feed 모듈 | 3일 |
+| Phase 4 | Library 모듈 | 3일 |
+| Phase 5 | Experts 모듈 | 3일 |
+| Phase 6 | 프론트엔드 UI | 1주 |
+| **총계** | | **4주** |
+
+---
+
+## 다음 단계
+
+**지금 시작**: Phase 1 - 공통 백엔드 구조 구현

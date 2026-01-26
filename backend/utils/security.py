@@ -3,12 +3,12 @@
 """
 
 import os
-import hashlib
 import secrets
 import re
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 import jwt
+import bcrypt
 from functools import wraps
 
 from .logger import get_logger
@@ -17,8 +17,10 @@ logger = get_logger(__name__)
 
 # 환경 변수에서 시크릿 키 가져오기 (기본값은 개발용)
 SECRET_KEY = os.getenv('SECRET_KEY', secrets.token_urlsafe(32))
+REFRESH_SECRET_KEY = os.getenv('REFRESH_SECRET_KEY', secrets.token_urlsafe(32))
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 15  # 15분
+REFRESH_TOKEN_EXPIRE_DAYS = 7  # 7일
 
 
 class SecurityManager:
@@ -26,46 +28,74 @@ class SecurityManager:
     
     @staticmethod
     def hash_password(password: str) -> str:
-        """비밀번호 해시 (bcrypt 스타일)"""
-        salt = secrets.token_hex(16)
-        hash_obj = hashlib.sha256()
-        hash_obj.update((password + salt).encode())
-        return f"{salt}:{hash_obj.hexdigest()}"
+        """비밀번호 해시 (bcrypt)"""
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+        return hashed.decode('utf-8')
     
     @staticmethod
     def verify_password(password: str, hashed: str) -> bool:
-        """비밀번호 검증"""
+        """비밀번호 검증 (bcrypt)"""
         try:
-            salt, hash_value = hashed.split(':')
-            hash_obj = hashlib.sha256()
-            hash_obj.update((password + salt).encode())
-            return hash_obj.hexdigest() == hash_value
-        except:
+            return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+        except Exception as e:
+            logger.error(f"Password verification error: {e}")
             return False
     
     @staticmethod
     def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
-        """JWT 토큰 생성"""
+        """Access Token 생성 (15분)"""
         to_encode = data.copy()
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
             expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        to_encode.update({"exp": expire})
+        to_encode.update({
+            "exp": expire,
+            "iat": datetime.utcnow(),
+            "type": "access"
+        })
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
     
     @staticmethod
-    def verify_token(token: str) -> Optional[Dict[str, Any]]:
+    def create_refresh_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+        """Refresh Token 생성 (7일)"""
+        to_encode = data.copy()
+        if expires_delta:
+            expire = datetime.utcnow() + expires_delta
+        else:
+            expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        to_encode.update({
+            "exp": expire,
+            "iat": datetime.utcnow(),
+            "type": "refresh"
+        })
+        encoded_jwt = jwt.encode(to_encode, REFRESH_SECRET_KEY, algorithm=ALGORITHM)
+        return encoded_jwt
+    
+    @staticmethod
+    def verify_token(token: str, is_refresh: bool = False) -> Optional[Dict[str, Any]]:
         """JWT 토큰 검증"""
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            secret = REFRESH_SECRET_KEY if is_refresh else SECRET_KEY
+            payload = jwt.decode(token, secret, algorithms=[ALGORITHM])
+            
+            # 토큰 타입 확인
+            token_type = payload.get("type")
+            if is_refresh and token_type != "refresh":
+                logger.warning("Invalid refresh token type")
+                return None
+            if not is_refresh and token_type != "access":
+                logger.warning("Invalid access token type")
+                return None
+                
             return payload
         except jwt.ExpiredSignatureError:
             logger.warning("Token expired")
             return None
-        except jwt.InvalidTokenError:
-            logger.warning("Invalid token")
+        except jwt.InvalidTokenError as e:
+            logger.warning(f"Invalid token: {e}")
             return None
     
     @staticmethod
@@ -105,7 +135,26 @@ class SecurityManager:
         """Rate Limiting (간단한 메모리 기반)"""
         # 실제로는 Redis 등을 사용해야 함
         # 여기서는 기본 구조만 제공
-        return True  # TODO: Redis 기반 구현 필요
+        # Redis 기반 구현
+        try:
+            from backend.services.cache_service import CacheService
+            cache_service = CacheService()
+            
+            # Redis에서 토큰 확인
+            cached_token = await cache_service.get(f"token:{token}")
+            if cached_token:
+                return True
+            
+            # 토큰이 유효하면 Redis에 캐싱 (1시간)
+            if self.verify_token(token):
+                await cache_service.set(f"token:{token}", {"valid": True}, ttl=3600)
+                return True
+            
+            return False
+        except Exception as e:
+            logger.warning(f"Redis token verification failed, using fallback: {e}")
+            # Fallback: 기본 검증
+            return self.verify_token(token) is not None
 
 
 def require_auth(f):

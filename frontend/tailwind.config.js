@@ -1,0 +1,123 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: "class",
+  content: ["./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          400: "#A78BFA",
+          500: "#8B5CF6",
+          600: "#7C3AED",
+          700: "#6D28D9",
+        },
+        secondary: {
+          400: "#22D3EE",
+          500: "#06B6D4",
+          600: "#0891B2",
+          700: "#0E7490",
+        },
+        accent: {
+          400: "#FBBF24",
+          500: "#F59E0B",
+          600: "#D97706",
+        },
+        neutral: {
+          50: "#F9FAFB",
+          100: "#F3F4F6",
+          200: "#E5E7EB",
+          300: "#D1D5DB",
+          400: "#9CA3AF",
+          500: "#6B7280",
+          600: "#4B5563",
+          700: "#374151",
+          800: "#1F2937",
+          900: "#111827",
+        },
+        success: {
+          400: "#4ADE80",
+          500: "#22C55E",
+          600: "#16A34A",
+        },
+        error: {
+          400: "#F87171",
+          500: "#EF4444",
+          600: "#DC2626",
+        },
+        warning: {
+          400: "#FBBF24",
+          500: "#F59E0B",
+          600: "#D97706",
+        },
+        info: {
+          400: "#60A5FA",
+          500: "#3B82F6",
+          600: "#2563EB",
+        },
+      },
+      fontFamily: {
+        heading: ["Pretendard", "system-ui", "sans-serif"],
+        body: ["Pretendard", "system-ui", "sans-serif"],
+        code: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "monospace"],
+      },
+      fontSize: {
+        heading: ["1.5rem", { lineHeight: "2rem" }],
+        subheading: ["1.125rem", { lineHeight: "1.75rem" }],
+        body: ["0.875rem", { lineHeight: "1.5rem" }],
+        caption: ["0.75rem", { lineHeight: "1rem" }],
+        code: ["0.75rem", { lineHeight: "1rem" }],
+      },
+      spacing: {
+        0: "0px",
+        1: "8px",
+        2: "16px",
+        3: "24px",
+        4: "32px",
+        5: "40px",
+        6: "48px",
+        7: "56px",
+        8: "64px",
+        9: "72px",
+        10: "80px",
+        12: "96px",
+        14: "112px",
+        16: "128px",
+      },
+      borderRadius: {
+        xs: "4px",
+        sm: "8px",
+        md: "12px",
+        lg: "16px",
+        xl: "20px",
+        full: "9999px",
+      },
+      boxShadow: {
+        sm: "0 1px 2px 0 rgb(15 23 42 / 0.06)",
+        md: "0 4px 12px -2px rgb(15 23 42 / 0.12)",
+        lg: "0 12px 28px -8px rgb(15 23 42 / 0.18)",
+      },
+      zIndex: {
+        dropdown: "40",
+        overlay: "50",
+        modal: "60",
+        toast: "70",
+        tooltip: "80",
+      },
+      transitionDuration: {
+        fast: "150ms",
+        normal: "200ms",
+        slow: "300ms",
+      },
+      transitionTimingFunction: {
+        "ease-out": "cubic-bezier(0.2, 0, 0, 1)",
+        "ease-in-out": "cubic-bezier(0.4, 0, 0.2, 1)",
+      },
+      maxWidth: {
+        content: "1200px",
+        reading: "720px",
+        narrow: "560px",
+      },
+    },
+  },
+  plugins: [],
+};

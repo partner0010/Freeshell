@@ -2,7 +2,7 @@
 데이터베이스 모델
 """
 
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, JSON, ForeignKey, Float, Table
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, JSON, ForeignKey, Float, Table, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -44,10 +44,17 @@ class User(Base):
     avatar_path = Column(String, nullable=True)
     cover_image_path = Column(String, nullable=True)
     
+    # 구독 및 크레딧 정보
+    plan = Column(String, default='free')  # free, basic, premium, enterprise
+    credits = Column(Integer, default=0)
+    
     # 관계
     videos = relationship('Video', back_populates='user', cascade='all, delete-orphan')
     archives = relationship('Archive', back_populates='user', cascade='all, delete-orphan')
     characters = relationship('Character', back_populates='user', cascade='all, delete-orphan')
+    projects = relationship('Project', back_populates='user', cascade='all, delete-orphan')
+    usage_logs = relationship('UsageLog', back_populates='user', cascade='all, delete-orphan')
+    api_keys = relationship('APIKey', back_populates='user', cascade='all, delete-orphan')
     
     # 팔로우 관계
     following = relationship(
@@ -204,20 +211,60 @@ class ActivityLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
+class NotificationRead(Base):
+    """알림 읽음 상태"""
+    __tablename__ = 'notification_reads'
+    
+    id = Column(String, primary_key=True, default=generate_id)
+    user_id = Column(String, ForeignKey('users.id'), nullable=False, index=True)
+    activity_id = Column(String, ForeignKey('activity_logs.id'), nullable=False, index=True)
+    read_at = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    __table_args__ = (
+        Index('idx_notification_reads_user_activity', 'user_id', 'activity_id', unique=True),
+    )
+
+
+class Plan(Base):
+    """플랜 모델"""
+    __tablename__ = 'plans'
+    
+    id = Column(String, primary_key=True, default=generate_id)
+    name = Column(String, nullable=False, unique=True)
+    type = Column(String, nullable=False, unique=True)  # free, pro, business
+    price = Column(Float, default=0.0)
+    currency = Column(String, default='USD')
+    video_limit = Column(Integer, nullable=True)  # None = 무제한
+    max_resolution = Column(String, default='720p')  # 720p, 1080p, 4K
+    watermark = Column(Boolean, default=True)
+    priority_processing = Column(Boolean, default=False)
+    api_access = Column(Boolean, default=False)
+    dedicated_support = Column(Boolean, default=False)
+    features = Column(JSON, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 관계
+    subscriptions = relationship('Subscription', back_populates='plan')
+
+
 class Subscription(Base):
     """구독 모델"""
     __tablename__ = 'subscriptions'
     
     id = Column(String, primary_key=True, default=generate_id)
     user_id = Column(String, ForeignKey('users.id'), nullable=False, index=True)
-    plan_type = Column(String, nullable=False)  # free, basic, premium, enterprise
+    plan_id = Column(String, ForeignKey('plans.id'), nullable=False, index=True)
     status = Column(String, default='active')  # active, cancelled, expired
     started_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 관계
     user = relationship('User')
+    plan = relationship('Plan', back_populates='subscriptions')
 
 
 class CreditTransaction(Base):
@@ -233,3 +280,111 @@ class CreditTransaction(Base):
     
     # 관계
     user = relationship('User')
+
+
+class Project(Base):
+    """프로젝트 모델"""
+    __tablename__ = 'projects'
+    
+    id = Column(String, primary_key=True, default=generate_id)
+    user_id = Column(String, ForeignKey('users.id'), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    status = Column(String, default='active')  # active, archived, deleted
+    type = Column(String, nullable=True)  # project type
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    # 관계
+    user = relationship('User', back_populates='projects')
+    contents = relationship('Content', back_populates='project', cascade='all, delete-orphan')
+    prompts = relationship('Prompt', back_populates='project', cascade='all, delete-orphan')
+    
+    __table_args__ = (
+        Index('idx_projects_user_status', 'user_id', 'status'),
+        Index('idx_projects_created', 'created_at'),
+    )
+
+
+class Prompt(Base):
+    """프롬프트 모델"""
+    __tablename__ = 'prompts'
+    
+    id = Column(String, primary_key=True, default=generate_id)
+    project_id = Column(String, ForeignKey('projects.id'), nullable=False, index=True)
+    raw_input = Column(Text, nullable=False)
+    analyzed_data = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # 관계
+    project = relationship('Project', back_populates='prompts')
+
+
+class Content(Base):
+    """콘텐츠 모델"""
+    __tablename__ = 'contents'
+    
+    id = Column(String, primary_key=True, default=generate_id)
+    project_id = Column(String, ForeignKey('projects.id'), nullable=False, index=True)
+    type = Column(String, nullable=False)  # video, image, audio, text, etc.
+    url = Column(String, nullable=True)
+    metadata = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    # 관계
+    project = relationship('Project', back_populates='contents')
+    
+    __table_args__ = (
+        Index('idx_contents_project_type', 'project_id', 'type'),
+        Index('idx_contents_created', 'created_at'),
+    )
+
+
+class UsageLog(Base):
+    """사용량 로그 모델"""
+    __tablename__ = 'usage_logs'
+    
+    id = Column(String, primary_key=True, default=generate_id)
+    user_id = Column(String, ForeignKey('users.id'), nullable=False, index=True)
+    action = Column(String, nullable=False)  # action type
+    cost = Column(Float, default=0.0)  # cost in credits
+    metadata = Column(JSON, nullable=True)  # 추가 정보 (API 이름, 모델 등)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    # 관계
+    user = relationship('User', back_populates='usage_logs')
+    
+    __table_args__ = (
+        Index('idx_usage_logs_user_created', 'user_id', 'created_at'),
+        {'sqlite_autoincrement': True},
+    )
+
+
+class DailyCost(Base):
+    """일일 비용 집계 모델"""
+    __tablename__ = 'daily_costs'
+    
+    id = Column(String, primary_key=True, default=generate_id)
+    date = Column(DateTime, nullable=False, index=True, unique=True)
+    total_cost = Column(Float, default=0.0)
+    breakdown = Column(JSON, nullable=True)  # {action: cost, ...}
+    user_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    __table_args__ = (
+        Index('idx_daily_costs_date', 'date'),
+    )
+
+
+class APIKey(Base):
+    """API 키 모델"""
+    __tablename__ = 'api_keys'
+    
+    id = Column(String, primary_key=True, default=generate_id)
+    user_id = Column(String, ForeignKey('users.id'), nullable=False, index=True)
+    service = Column(String, nullable=False)  # service name
+    key_encrypted = Column(String, nullable=False)  # encrypted API key
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # 관계
+    user = relationship('User', back_populates='api_keys')
