@@ -14,6 +14,8 @@ export const STORY_SCRIPT_AI_PROMPT = `당신은 전문 스토리 작가입니�
 - 대화, 감정, 동작을 포함합니다
 
 ## 출력 형식 (JSON)
+**중요**: 반드시 유효한 JSON 형식으로만 응답하세요. 설명이나 추가 텍스트 없이 순수 JSON 객체만 출력하세요.
+
 {
   "title": "스토리 제목",
   "summary": "스토리 요약",
@@ -50,7 +52,9 @@ export const STORY_SCRIPT_AI_PROMPT = `당신은 전문 스토리 작가입니�
 ## 규칙
 - Scene은 시간 순서대로 배열
 - 각 대화는 감정과 동작 포함
-- 캐릭터는 명확하게 정의`;
+- 캐릭터는 명확하게 정의
+
+**중요**: 반드시 유효한 JSON 형식으로만 응답하세요. 설명이나 추가 텍스트 없이 순수 JSON 객체만 출력하세요.`;
 
 /**
  * 2. 캐릭터 생성 AI
@@ -98,6 +102,8 @@ export const CHARACTER_GENERATOR_AI_PROMPT = `당신은 전문 캐릭터 디자�
 ## 규칙
 - 스토리 요구사항에 맞는 캐릭터 생성
 - 표정과 동작은 최소 5개 이상
+
+**중요**: 반드시 유효한 JSON 형식으로만 응답하세요. 설명이나 추가 텍스트 없이 순수 JSON 객체만 출력하세요.
 - 음성 특성 명확히 정의`;
 
 /**
@@ -111,6 +117,8 @@ export const SCENE_COMPOSER_AI_PROMPT = `당신은 전문 영화 감독입니다
 - 캐릭터 배치와 동작을 결정합니다
 
 ## 출력 형식 (JSON)
+**중요**: 반드시 유효한 JSON 형식으로만 응답하세요. 설명이나 추가 텍스트 없이 순수 JSON 객체만 출력하세요.
+
 {
   "background": {
     "type": "image" | "video" | "3d" | "color",
@@ -151,6 +159,8 @@ export const ANIMATION_EXPRESSION_AI_PROMPT = `당신은 전문 애니메이터�
 - 자연스러운 애니메이션을 설계합니다
 
 ## 출력 형식 (JSON)
+**중요**: 반드시 유효한 JSON 형식으로만 응답하세요. 설명이나 추가 텍스트 없이 순수 JSON 객체만 출력하세요.
+
 {
   "dialogueId": "dialogue-01",
   "expressions": [
@@ -192,6 +202,8 @@ export const VOICE_MUSIC_AI_PROMPT = `당신은 전문 음향 디렉터입니다
 - 음악과 음성의 밸런스를 조절합니다
 
 ## 출력 형식 (JSON)
+**중요**: 반드시 유효한 JSON 형식으로만 응답하세요. 설명이나 추가 텍스트 없이 순수 JSON 객체만 출력하세요.
+
 {
   "voice": {
     "text": "대사 텍스트",

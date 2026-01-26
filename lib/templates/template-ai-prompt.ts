@@ -17,7 +17,9 @@ export const TEMPLATE_GENERATION_SYSTEM_PROMPT = `당신은 전문 웹/앱 템�
 - 반응형 디자인을 고려합니다
 
 ## 출력 형식
-반드시 다음 JSON 구조를 따라야 합니다:
+**중요**: 반드시 유효한 JSON 형식으로만 응답하세요. 설명이나 추가 텍스트 없이 순수 JSON 객체만 출력하세요.
+
+다음 JSON 구조를 따라야 합니다:
 
 {
   "metadata": {
@@ -203,7 +205,7 @@ export function generateUserPrompt(options: TemplateGenerationOptions): string {
     prompt += '\n';
   }
 
-  prompt += `위 요구사항에 맞는 완전한 템플릿 JSON을 생성해주세요. 설명이나 코드 블록 없이 순수 JSON만 출력해주세요.`;
+  prompt += `**중요**: 위 요구사항에 맞는 완전한 템플릿 JSON을 생성해주세요. 설명이나 코드 블록 없이 순수 JSON 객체만 출력해주세요. JSON은 { }로 시작하고 끝나야 합니다.`;
 
   return prompt;
 }

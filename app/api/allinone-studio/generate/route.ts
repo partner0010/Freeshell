@@ -9,6 +9,83 @@ import { AI_ROLES } from '@/lib/allinone-studio/ai-roles';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * 폴백 결과 생성 (JSON 파싱 실패 시)
+ */
+function createFallbackResult(step: string, prompt: string, rawResponse: string): any {
+  const baseResult = {
+    step,
+    prompt,
+    rawResponse: rawResponse.substring(0, 1000),
+    note: 'AI 응답을 JSON으로 변환하지 못했습니다. 원본 응답을 포함합니다.',
+  };
+
+  switch (step) {
+    case 'story':
+      return {
+        ...baseResult,
+        title: prompt.substring(0, 50) || '생성된 스토리',
+        summary: rawResponse.substring(0, 500) || '스토리 설명',
+        scenes: [
+          {
+            id: 'scene-01',
+            name: '첫 장면',
+            description: rawResponse.substring(0, 200) || '장면 설명',
+            background: '기본 배경',
+            characters: [],
+            dialogues: [],
+            duration: 30,
+          },
+        ],
+        characters: [],
+      };
+    case 'character':
+      return {
+        ...baseResult,
+        id: 'char-01',
+        name: '캐릭터',
+        gender: 'male',
+        style: 'anime',
+        appearance: {
+          face: rawResponse.substring(0, 100) || '얼굴 설명',
+          hair: '기본 헤어',
+          clothes: '기본 옷',
+        },
+        voice: {
+          type: 'male',
+          age: 'adult',
+          tone: 'natural',
+        },
+        expressions: [],
+        motions: [],
+      };
+    case 'scene':
+      return {
+        ...baseResult,
+        scene_number: 1,
+        description: rawResponse.substring(0, 400) || '장면 설명',
+        elements: [],
+        background: '기본 배경',
+      };
+    case 'animation':
+      return {
+        ...baseResult,
+        animations: [],
+        expressions: [],
+        transitions: [],
+      };
+    case 'voice':
+      return {
+        ...baseResult,
+        voice_style: 'natural',
+        music: null,
+        sound_effects: [],
+      };
+    default:
+      return baseResult;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Rate Limiting
@@ -96,8 +173,8 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // AI 응답 생성
-    const finalPrompt = `${systemPrompt}\n\n## 사용자 요구사항\n${userPrompt}\n\n위 요구사항에 따라 JSON 형식으로 응답해주세요. 설명 없이 순수 JSON만 출력해주세요.`;
+    // AI 응답 생성 (더 명확한 JSON 요청)
+    const finalPrompt = `${systemPrompt}\n\n## 사용자 요구사항\n${userPrompt}\n\n**중요**: 반드시 유효한 JSON 형식으로만 응답해주세요. 설명이나 추가 텍스트 없이 순수 JSON 객체만 출력해주세요. JSON은 { }로 시작하고 끝나야 합니다.`;
 
     let aiResponse = '';
     let aiSource = 'fallback';
@@ -137,24 +214,70 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // JSON 파싱
+    // JSON 파싱 (강화된 로직)
     let result;
     try {
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0]);
-      } else {
-        result = JSON.parse(aiResponse);
+      // 1. 코드 블록 제거 (```json ... ```)
+      let cleanedResponse = aiResponse;
+      const codeBlockMatch = aiResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (codeBlockMatch) {
+        cleanedResponse = codeBlockMatch[1];
       }
-    } catch (error) {
-      console.error('JSON 파싱 오류:', error);
-      return NextResponse.json(
-        { 
-          error: 'AI 응답을 파싱할 수 없습니다.',
-          rawResponse: aiResponse.substring(0, 500),
-        },
-        { status: 500 }
-      );
+      
+      // 2. JSON 객체 추출 (여러 시도)
+      let jsonString = null;
+      
+      // 시도 1: 코드 블록 내부에서 JSON 찾기
+      const jsonInCodeBlock = cleanedResponse.match(/\{[\s\S]*\}/);
+      if (jsonInCodeBlock) {
+        jsonString = jsonInCodeBlock[0];
+      }
+      
+      // 시도 2: 전체 응답에서 JSON 찾기
+      if (!jsonString) {
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          jsonString = jsonMatch[0];
+        }
+      }
+      
+      // 시도 3: 직접 파싱 시도
+      if (!jsonString) {
+        jsonString = cleanedResponse.trim();
+      }
+      
+      // 시도 4: 첫 번째 { 부터 마지막 } 까지 추출
+      if (!jsonString) {
+        const firstBrace = aiResponse.indexOf('{');
+        const lastBrace = aiResponse.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          jsonString = aiResponse.substring(firstBrace, lastBrace + 1);
+        }
+      }
+      
+      // JSON 파싱
+      if (jsonString) {
+        // JSON 문자열 정리 (주석 제거, 후행 쉼표 제거 등)
+        jsonString = jsonString
+          .replace(/\/\*[\s\S]*?\*\//g, '') // 블록 주석 제거
+          .replace(/\/\/.*$/gm, '') // 라인 주석 제거
+          .replace(/,(\s*[}\]])/g, '$1'); // 후행 쉼표 제거
+        
+        result = JSON.parse(jsonString);
+      } else {
+        throw new Error('JSON을 찾을 수 없습니다');
+      }
+    } catch (error: any) {
+      console.error('[AllInOne Studio] JSON 파싱 오류:', {
+        error: error.message,
+        responseLength: aiResponse.length,
+        responsePreview: aiResponse.substring(0, 200),
+      });
+      
+      // 폴백: 기본 구조 생성
+      result = createFallbackResult(step, prompt, aiResponse);
+      
+      console.log('[AllInOne Studio] 폴백 결과 사용:', result);
     }
 
     return NextResponse.json({

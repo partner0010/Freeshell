@@ -11,6 +11,69 @@ import { templateStorage } from '@/lib/templates/template-storage';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * 폴백 템플릿 생성 (JSON 파싱 실패 시)
+ */
+function createFallbackTemplate(options: TemplateGenerationOptions, rawResponse: string): any {
+  const templateId = `template-${Date.now()}`;
+  const now = Date.now();
+  
+  return {
+    metadata: {
+      id: templateId,
+      version: '1.0.0',
+      createdAt: now,
+      updatedAt: now,
+      author: 'AI (Fallback)',
+      tags: [options.category || 'other'],
+      description: options.description?.substring(0, 200) || '생성된 템플릿',
+    },
+    type: options.type || 'web',
+    category: options.category || 'other',
+    blocks: [
+      {
+        id: 'block-header-1',
+        type: 'heading',
+        content: {
+          text: options.description?.substring(0, 50) || '제목',
+          level: 1,
+        },
+        style: {
+          fontSize: '2rem',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          padding: '2rem',
+        },
+      },
+      {
+        id: 'block-content-1',
+        type: 'text',
+        content: {
+          text: rawResponse.substring(0, 500) || '콘텐츠',
+        },
+        style: {
+          padding: '1rem',
+          lineHeight: '1.6',
+        },
+      },
+    ],
+    editableFields: [],
+    previewInfo: {
+      width: 1200,
+      height: 800,
+      backgroundColor: '#ffffff',
+      deviceType: 'desktop',
+    },
+    styles: {
+      global: {
+        fontFamily: 'system-ui, sans-serif',
+        color: '#333333',
+        backgroundColor: '#ffffff',
+      },
+    },
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Rate Limiting
@@ -68,25 +131,69 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // JSON 파싱
+    // JSON 파싱 (강화된 로직)
     let template;
     try {
-      // JSON 추출 (코드 블록 제거)
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        template = JSON.parse(jsonMatch[0]);
-      } else {
-        template = JSON.parse(aiResponse);
+      // 1. 코드 블록 제거 (```json ... ```)
+      let cleanedResponse = aiResponse;
+      const codeBlockMatch = aiResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (codeBlockMatch) {
+        cleanedResponse = codeBlockMatch[1];
       }
-    } catch (error) {
-      console.error('JSON 파싱 오류:', error);
-      return NextResponse.json(
-        { 
-          error: 'AI 응답을 파싱할 수 없습니다.',
-          rawResponse: aiResponse.substring(0, 500),
-        },
-        { status: 500 }
-      );
+      
+      // 2. JSON 객체 추출 (여러 시도)
+      let jsonString = null;
+      
+      // 시도 1: 코드 블록 내부에서 JSON 찾기
+      const jsonInCodeBlock = cleanedResponse.match(/\{[\s\S]*\}/);
+      if (jsonInCodeBlock) {
+        jsonString = jsonInCodeBlock[0];
+      }
+      
+      // 시도 2: 전체 응답에서 JSON 찾기
+      if (!jsonString) {
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          jsonString = jsonMatch[0];
+        }
+      }
+      
+      // 시도 3: 직접 파싱 시도
+      if (!jsonString) {
+        jsonString = cleanedResponse.trim();
+      }
+      
+      // 시도 4: 첫 번째 { 부터 마지막 } 까지 추출
+      if (!jsonString) {
+        const firstBrace = aiResponse.indexOf('{');
+        const lastBrace = aiResponse.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          jsonString = aiResponse.substring(firstBrace, lastBrace + 1);
+        }
+      }
+      
+      // JSON 파싱
+      if (jsonString) {
+        // JSON 문자열 정리 (주석 제거, 후행 쉼표 제거 등)
+        jsonString = jsonString
+          .replace(/\/\*[\s\S]*?\*\//g, '') // 블록 주석 제거
+          .replace(/\/\/.*$/gm, '') // 라인 주석 제거
+          .replace(/,(\s*[}\]])/g, '$1'); // 후행 쉼표 제거
+        
+        template = JSON.parse(jsonString);
+      } else {
+        throw new Error('JSON을 찾을 수 없습니다');
+      }
+    } catch (error: any) {
+      console.error('[Template Generate] JSON 파싱 오류:', {
+        error: error.message,
+        responseLength: aiResponse.length,
+        responsePreview: aiResponse.substring(0, 200),
+      });
+      
+      // 폴백: 기본 템플릿 구조 생성
+      template = createFallbackTemplate(options, aiResponse);
+      console.log('[Template Generate] 폴백 템플릿 사용');
     }
 
     // 템플릿 유효성 검사

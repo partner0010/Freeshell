@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
 import AuthRequired from '@/components/AuthRequired';
+import Navbar from '@/components/Navbar';
 import { Sparkles, Loader2, Play, Check, ArrowRight, Layers } from 'lucide-react';
 
 type ContentType = 'shortform' | 'video' | 'animation' | 'movie';
@@ -206,7 +207,8 @@ export default function CreateContentPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <Navbar />
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
         {/* 헤더 */}
         <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-extrabold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">

@@ -177,16 +177,33 @@ export default function TemplateLibrary() {
       {filteredTemplates.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
           <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">검색 결과가 없습니다.</p>
-          <button
-            onClick={() => {
-              setSearchQuery('');
-              setSelectedCategory('all');
-            }}
-            className="mt-4 text-blue-600 hover:text-blue-700 font-semibold"
-          >
-            필터 초기화
-          </button>
+          {templates.length === 0 ? (
+            <>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">템플릿이 없습니다</h3>
+              <p className="text-gray-600 mb-6">AI로 템플릿을 생성하거나 템플릿 마켓플레이스에서 다운로드하세요</p>
+              <div className="flex gap-3 justify-center">
+                <a
+                  href="/templates/marketplace"
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  템플릿 마켓플레이스
+                </a>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-gray-600 mb-4">검색 결과가 없습니다.</p>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('all');
+                }}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                필터 초기화
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

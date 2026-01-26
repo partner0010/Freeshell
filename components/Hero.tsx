@@ -92,11 +92,11 @@ export default function Hero() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Link
-              href="/build"
+              href="/allinone-studio/create"
               className="group px-8 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-xl font-bold text-lg hover:shadow-2xl transition-all transform hover:scale-105 flex items-center gap-2"
             >
-              <Code className="w-5 h-5" />
-              <span>AI로 웹사이트/앱 만들기</span>
+              <Sparkles className="w-5 h-5" />
+              <span>AI 콘텐츠 생성</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
